@@ -3,11 +3,15 @@
    ========================================================== */
 
 .header-service-1 {
-  background-color: rgba(234, 242, 248, 0.75) !important;
+  background-color: transparent !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
   border-bottom-color: var(--service-1-border) !important;
 }
 body.dark .header-service-1 {
-  background-color: rgba(23, 34, 44, 0.85) !important;
+  background-color: transparent !important;
+  backdrop-filter: blur(40px) !important;
+  -webkit-backdrop-filter: blur(40px) !important;
   border-bottom-color: var(--service-1-border) !important;
 }
 

@@ -3,16 +3,16 @@
    ========================================================== */
 
 .hero-section {
-  background: linear-gradient(135deg, #E2DDD2 0%, #F3EFE7 50%, #ECE6DC 100%);
-  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  border-bottom: none;
   position: relative;
   overflow: hidden;
   transition: background 0.3s ease;
 }
 
 body.dark .hero-section {
-  background: linear-gradient(135deg, #151C17 0%, #1A231C 50%, #121713 100%);
-  border-bottom-color: #2D3A31;
+  background: transparent;
+  border-bottom-color: transparent;
 }
 
 .hero-container {

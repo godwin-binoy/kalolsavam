@@ -2,23 +2,23 @@
    MALA SUB-DISTRICT KALOLSAVAM - REUSABLE COMPONENTS CSS
    ========================================================== */
 
-/* Header & Nav (Organic Background Blending) */
+/* Header & Nav (Transparent & Highly Blurred) */
 .site-header {
-  border-bottom: 1px solid rgba(216, 223, 212, 0.5);
-  background-color: rgba(242, 239, 233, 0.65);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  background-color: transparent;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 4px 20px rgba(34, 43, 36, 0.02);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 body.dark .site-header {
-  border-bottom: 1px solid rgba(45, 58, 49, 0.6);
-  background-color: rgba(17, 20, 18, 0.8);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: transparent;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
 
 .header-container {
@@ -98,15 +98,33 @@ body.dark .nav-link-help:hover {
 }
 
 .mobile-menu-drawer {
-  background-color: var(--beige-card);
-  border-bottom: 1px solid var(--color-border);
-  padding: 1rem 1.25rem 1.5rem 1.25rem;
-  box-shadow: 0 12px 30px rgba(34, 43, 36, 0.08);
+  background-color: transparent;
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  padding: 0 1.25rem;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  visibility: hidden;
+  transform: translateY(-10px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
   border-bottom-left-radius: 1.5rem;
   border-bottom-right-radius: 1.5rem;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease, visibility 0.35s;
+}
+
+.mobile-menu-drawer.open {
+  max-height: 400px;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  padding: 1rem 1.25rem 1.5rem 1.25rem;
 }
 
 body.dark .mobile-menu-drawer {
+  background-color: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 

@@ -50,16 +50,16 @@ function initMobileMenu() {
   const menu = document.getElementById('mobile-menu');
   if (btn && menu) {
     btn.addEventListener('click', () => {
-      menu.classList.toggle('hidden');
+      menu.classList.toggle('open');
     });
     menu.querySelectorAll('a').forEach(link => {
       link.addEventListener('click', () => {
-        menu.classList.add('hidden');
+        menu.classList.remove('open');
       });
     });
     window.addEventListener('resize', () => {
       if (window.innerWidth >= 768) {
-        menu.classList.add('hidden');
+        menu.classList.remove('open');
       }
     });
   }
@@ -75,13 +75,21 @@ function initPrefetch() {
     fetch(fetchUrl, { mode: 'no-cors' }).catch(() => {});
   }
 
-  document.querySelectorAll('nav a, #mobile-menu a, .hero-section a').forEach(link => {
-    const href = link.getAttribute('href');
+  const links = document.querySelectorAll('nav a, #mobile-menu a, .hero-section a, .card-base');
+  links.forEach(link => {
+    const href = link.getAttribute('href') || (link.tagName === 'A' ? null : link.getAttribute('onclick') || link.querySelector('a')?.getAttribute('href'));
     if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('tel:') && !href.startsWith('mailto:')) {
+      prefetchPage(href);
       link.addEventListener('mouseenter', () => prefetchPage(href), { once: true });
       link.addEventListener('touchstart', () => prefetchPage(href), { once: true });
     }
   });
+
+  // Also proactively prefetch all inner pages on load for zero-delay switching
+  const internalPages = ['index.html', 'pages/venues.html', 'pages/competitions.html', 'pages/photos.html', 'pages/facilities.html', 'pages/help.html'];
+  setTimeout(() => {
+    internalPages.forEach(page => prefetchPage(page));
+  }, 200);
 }
 
 function initCardObservers() {
