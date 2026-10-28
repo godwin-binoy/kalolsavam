@@ -1,0 +1,148 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - COLOR & THEME VARIABLES
+   ========================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Material 3 (Material You) Light Theme Tokens */
+  --md-sys-color-primary: #38503B;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #CEE7C8;
+  --md-sys-color-on-primary-container: #002204;
+  
+  --md-sys-color-surface: #F8F6F0;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
+  --md-sys-color-surface-container-low: #F2EFE9;
+  --md-sys-color-surface-container: #ECE7DF;
+  --md-sys-color-surface-container-high: #E6E1D9;
+  --md-sys-color-surface-container-highest: #E0DBD3;
+  
+  --md-sys-color-on-surface: #1B1C19;
+  --md-sys-color-on-surface-variant: #434842;
+  --md-sys-color-outline: #737971;
+  --md-sys-color-outline-variant: #C2C8BF;
+
+  /* Olive Green & Warm Beige Light Theme Mappings */
+  --olive-dark: #222B24;               
+  --olive-mid: #435146;                
+  --olive-light: #D4E2CD;              
+  --beige-bg: #F2EFE9;                 
+  --beige-card: #FFFFFF;               
+  --beige-border: #D2DBCF;             
+
+  --gov-blue: var(--olive-dark);       
+  --gov-blue-dark: #161D18;          
+  --gov-accent: var(--olive-dark);
+  --gov-secondary: #EBF0E9;            
+  --gov-secondary-border: var(--beige-border);     
+  
+  --color-body-bg: var(--beige-bg);            
+  --color-text-main: #273129;          
+  --color-text-heading: #18201A;       
+  --color-text-muted: var(--olive-mid);         
+  --color-text-subtle: #738475;        
+  
+  --color-border: var(--beige-border);             
+  --color-border-light: #F4F3EF;       
+  
+  --color-card-bg: rgba(246, 244, 239, 0.7);            
+  --color-card-hover: rgba(248, 246, 241, 0.85);         
+  
+  --color-badge-live-text: #1B6535;    
+  --color-badge-live-bg: #E3F5E8;      
+  --color-badge-live-border: #B7E4C7;
+  
+  --color-badge-emergency-text: #A61C1C; 
+  --color-badge-emergency-bg: #FDF2F2;
+  --color-badge-emergency-border: #FAD2D2;
+
+  /* Service Unique Color Tokens (Light) */
+  --service-1-accent: #2E5A88; /* Ocean Blue for Stages */
+  --service-1-container: #EAF2F8;
+  --service-1-border: #BDD3E8;
+
+  --service-2-accent: #884A2E; /* Warm Amber for Competitions */
+  --service-2-container: #FDF3E7;
+  --service-2-border: #F5D6B8;
+
+  --service-3-accent: #5A2E88; /* Deep Purple for Photos */
+  --service-3-container: #F3EAF8;
+  --service-3-border: #D8BDD8;
+
+  --service-4-accent: #2E885A; /* Emerald Teal for Facilities */
+  --service-4-container: #EAF8F2;
+  --service-4-border: #BBDED0;
+
+  --service-5-accent: #882E2E; /* Crimson Red for Help */
+  --service-5-container: #F8EAEA;
+  --service-5-border: #E8BDBD;
+}
+
+/* Material 3 Dark Theme Variant */
+body.dark {
+  --md-sys-color-primary: #D4E2CD;
+  --md-sys-color-on-primary: #161D18;
+  --md-sys-color-primary-container: #2D3830;
+  --md-sys-color-on-primary-container: #CEE7C8;
+  
+  --md-sys-color-surface: #111412;
+  --md-sys-color-surface-container-lowest: #0C0E0D;
+  --md-sys-color-surface-container-low: #151C17;
+  --md-sys-color-surface-container: #1A211C;
+  --md-sys-color-surface-container-high: #222B24;
+  --md-sys-color-surface-container-highest: #2D3A31;
+  
+  --olive-dark: #D4E2CD;
+  --olive-mid: #A3B59D;
+  --olive-light: #2D3830;
+  --beige-bg: #111412;
+  --beige-card: #1A211C;
+  --beige-border: #2D3A31;
+
+  --gov-blue: #D4E2CD;
+  --gov-blue-dark: #FFFFFF;
+  --gov-secondary: #1F2822;
+  --gov-secondary-border: #2D3A31;
+
+  --color-body-bg: #111412;
+  --color-text-main: #E2E8DF;
+  --color-text-heading: #F5F7F4;
+  --color-text-muted: #A3B59D;
+  --color-text-subtle: #849485;
+
+  --color-border: #2D3A31;
+  --color-border-light: #1A211C;
+
+  --color-card-bg: rgba(26, 33, 28, 0.75);
+  --color-card-hover: rgba(33, 42, 36, 0.85);
+
+  --color-badge-live-text: #6EE7B7;
+  --color-badge-live-bg: rgba(6, 78, 59, 0.4);
+  --color-badge-live-border: rgba(52, 211, 153, 0.3);
+
+  --color-badge-emergency-text: #FCA5A5;
+  --color-badge-emergency-bg: rgba(127, 29, 29, 0.4);
+  --color-badge-emergency-border: rgba(248, 113, 113, 0.3);
+
+  /* Service Unique Color Tokens (Dark) */
+  --service-1-accent: #7EA9D8;
+  --service-1-container: #17222C;
+  --service-1-border: #2A3B4D;
+
+  --service-2-accent: #D89A7E;
+  --service-2-container: #2C2217;
+  --service-2-border: #4D3B2A;
+
+  --service-3-accent: #B27ED8;
+  --service-3-container: #25172C;
+  --service-3-border: #422A4D;
+
+  --service-4-accent: #7ED8A9;
+  --service-4-container: #172C22;
+  --service-4-border: #2A4D3B;
+
+  --service-5-accent: #D87E7E;
+  --service-5-container: #2C1717;
+  --service-5-border: #4D2A2A;
+}

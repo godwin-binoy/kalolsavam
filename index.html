@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mala Sub-District Kalolsavam | St. Antony's HSS Mala</title>
+  
+  <!-- Tailwind CSS (Structural layout only) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Modular CSS Architecture -->
+  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/pages/home.css">
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen">
+
+  <!-- INSTITUTION HEADER -->
+  <header class="site-header">
+    <div class="header-container flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="index.html" class="flex items-center gap-3 group text-decoration-none">
+          <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0">
+          <div class="pl-3">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors" style="transition: var(--transition-smooth);">
+              St. Antony's HSS Mala
+            </h1>
+            <p class="text-[11px] sm:text-xs text-muted font-medium">
+              Sub-District School Kalolsavam
+            </p>
+          </div>
+        </a>
+      </div>
+      
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="pages/venues.html" class="nav-link">Stages</a>
+        <a href="pages/competitions.html" class="nav-link">Competitions</a>
+        <a href="pages/photos.html" class="nav-link">Photos</a>
+        <a href="pages/facilities.html" class="nav-link">Facilities</a>
+        <a href="pages/help.html" class="nav-link-help font-semibold">Help / Emergency</a>
+        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link ml-1 p-2" title="Toggle Dark Mode">🌙</button>
+      </nav>
+
+      <!-- Mobile Menu Button & Live Badge -->
+      <div class="flex items-center gap-2 md:hidden">
+        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link p-2" title="Toggle Dark Mode">🌙</button>
+        <a href="pages/venues.html" class="btn-mobile-live">
+          Live
+        </a>
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted focus:outline-none rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden mobile-menu-drawer space-y-1">
+      <a href="index.html" class="mobile-menu-link active">Home Portal</a>
+      <a href="pages/venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
+      <a href="pages/competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
+      <a href="pages/photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
+      <a href="pages/facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
+      <a href="pages/help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-section">
+    <div class="hero-container">
+      <div class="max-w-3xl space-y-4">
+
+        <h2 class="page-title leading-snug">
+          Mala Sub-District <br class="hidden sm:inline">School Kalolsavam
+        </h2>
+        <p class="text-sm sm:text-base text-muted leading-relaxed max-w-2xl">
+          Welcome to the official web desk for participants, parents, and teachers. Track ongoing stage events, view official point tallies, locate amenities, and download performance photographs.
+        </p>
+
+        <div class="pt-2 flex flex-wrap gap-3">
+          <a href="#portal-menu" class="btn-primary">
+            Access Services ↓
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTAL NAVIGATION (The Clean Card Grid) -->
+  <main id="portal-menu" class="main-container">
+    
+    <div class="divider-bottom pb-3 mb-6">
+      <div>
+        <h3 class="section-title">Services</h3>
+        <p class="text-xs text-muted mt-0.5">Select a module to view updates and services</p>
+      </div>
+    </div>
+
+    <!-- 5 Clean Structural Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <!-- CARD 1: LIVE VENUES -->
+      <a href="pages/venues.html" class="group card-base card-service-1 flex flex-col justify-between text-decoration-none">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
+              01
+            </div>
+          </div>
+          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Stage &amp; Venues</h4>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">
+            Real-time stage queue, active chest numbers on stage, delays, and stage locations across campus.
+          </p>
+        </div>
+        <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
+          <span>Open Stage Tracker</span>
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      </a>
+
+      <!-- CARD 2: COMPETITIONS & RESULTS -->
+      <a href="pages/competitions.html" class="group card-base card-service-2 flex flex-col justify-between text-decoration-none">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
+              02
+            </div>
+          </div>
+          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Competitions &amp; Results</h4>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">
+            Category-wise schedules (LP, UP, HS, HSS), verified result announcements, and school points table.
+          </p>
+        </div>
+        <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
+          <span>View Scoreboard</span>
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      </a>
+
+      <!-- CARD 3: STAGE PHOTOS -->
+      <a href="pages/photos.html" class="group card-base card-service-3 flex flex-col justify-between text-decoration-none">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
+              03
+            </div>
+          </div>
+          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Stage Photos</h4>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">
+            Search and download performance photographs uploaded directly by the official media room.
+          </p>
+        </div>
+        <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
+          <span>Download Photos</span>
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      </a>
+
+      <!-- CARD 4: FACILITIES & CAMPUS MAP -->
+      <a href="pages/facilities.html" class="group card-base card-service-4 flex flex-col justify-between text-decoration-none">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
+              04
+            </div>
+          </div>
+          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Facilities &amp; Map</h4>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">
+            Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.
+          </p>
+        </div>
+        <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
+          <span>View Campus Map</span>
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      </a>
+
+      <!-- CARD 5: HELP DESK & EMERGENCY -->
+      <a href="pages/help.html" class="group card-base card-service-5 flex flex-col justify-between sm:col-span-2 lg:col-span-2 text-decoration-none">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
+              05
+            </div>
+          </div>
+          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Help Desk &amp; Coordination</h4>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">
+            Convenor contact numbers, First Aid / Medical unit location, Volunteer control room, and Lost &amp; Found counter.
+          </p>
+        </div>
+        <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
+          <span>View Contact Directory</span>
+          <span class="group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+      </a>
+
+    </div>
+
+    <!-- HOST INSTITUTION SUMMARY BAR -->
+    <div class="mt-8 p-4 rounded inner-box flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+      <div class="text-center sm:text-left">
+        <span class="font-semibold text-main">Venue Location:</span>
+        <span class="text-muted ml-1">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
+      </div>
+      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="font-semibold text-decoration-none card-base px-3 py-1.5 rounded shadow-sm shrink-0" style="color: var(--gov-blue);">
+        Google Maps ↗
+      </a>
+    </div>
+
+  </main>
+
+  <!-- INSTITUTIONAL FOOTER -->
+  <footer class="site-footer">
+    <div class="footer-container">
+      <div>
+        <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+        <p class="text-[11px] text-subtle mt-0.5">Official Festival On-Premise Information Desk</p>
+      </div>
+      <div class="text-[11px] text-subtle">
+        Operated by Host School IT &amp; Media Committee
+      </div>
+    </div>
+  </footer>
+
+  <!-- External JavaScript -->
+  <script src="./js/main.js"></script>
+
+</body>
+</html>

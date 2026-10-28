@@ -1,0 +1,19 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - FACILITIES PAGE CSS
+   ========================================================== */
+
+.header-service-4 {
+  background-color: rgba(234, 248, 242, 0.75) !important;
+  border-bottom-color: var(--service-4-border) !important;
+}
+body.dark .header-service-4 {
+  background-color: rgba(23, 44, 34, 0.85) !important;
+  border-bottom-color: var(--service-4-border) !important;
+}
+
+body.service-4-page {
+  background-color: #F4FCF8 !important;
+}
+body.dark.service-4-page {
+  background-color: #0E1A14 !important;
+}

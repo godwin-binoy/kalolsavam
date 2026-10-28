@@ -1,0 +1,19 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - PHOTOS PAGE CSS
+   ========================================================== */
+
+.header-service-3 {
+  background-color: rgba(243, 234, 248, 0.75) !important;
+  border-bottom-color: var(--service-3-border) !important;
+}
+body.dark .header-service-3 {
+  background-color: rgba(37, 23, 44, 0.85) !important;
+  border-bottom-color: var(--service-3-border) !important;
+}
+
+body.service-3-page {
+  background-color: #F8F4FC !important;
+}
+body.dark.service-3-page {
+  background-color: #140E1A !important;
+}

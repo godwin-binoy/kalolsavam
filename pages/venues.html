@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stage &amp; Venues | Mala Sub-District Kalolsavam</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/pages/venues.css">
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen service-1-page">
+
+  <header class="site-header header-service-1">
+    <div class="header-container flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../index.html" class="flex items-center gap-3 group text-decoration-none">
+          <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" />
+          <div class="pl-3">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors" style="transition: var(--transition-smooth);">
+              St. Antony's HSS Mala
+            </h1>
+            <p class="text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="venues.html" class="nav-link active">Stages</a>
+        <a href="competitions.html" class="nav-link">Competitions</a>
+        <a href="photos.html" class="nav-link">Photos</a>
+        <a href="facilities.html" class="nav-link">Facilities</a>
+        <a href="help.html" class="nav-link-help font-semibold">Help / Emergency</a>
+        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link ml-1 p-2" title="Toggle Dark Mode">🌙</button>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <div class="flex items-center gap-2 md:hidden">
+        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link p-2" title="Toggle Dark Mode">🌙</button>
+        <a href="venues.html" class="btn-mobile-live">
+          Live
+        </a>
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted focus:outline-none rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden mobile-menu-drawer space-y-1">
+      <a href="../index.html" class="mobile-menu-link">Home Portal</a>
+      <a href="venues.html" class="mobile-menu-link active">01. Stage &amp; Venues Live Tracker</a>
+      <a href="competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
+      <a href="photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
+      <a href="facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
+      <a href="help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-2" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">
+        Module 01 • Stages &amp; Venues
+      </div>
+      <h2 class="page-title">Stage &amp; Venues Live Tracker</h2>
+      <p class="text-xs sm:text-sm text-muted mt-1">Real-time stage queue, active chest numbers on stage, delays, and stage locations.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card-base" style="border-color: var(--service-1-border);">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <span class="badge-live">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              ON STAGE NOW
+            </span>
+            <h3 class="card-title mt-1.5">Stage 1: Main Auditorium</h3>
+            <p class="text-xs text-muted">HS Bharathanatyam (Girls)</p>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">Code: S101</span>
+        </div>
+        <div class="inner-box text-xs space-y-1.5">
+          <div class="flex justify-between items-center"><span class="text-muted">Current Chest No:</span><span class="font-bold text-main">142 - Ananya P.</span></div>
+          <div class="flex justify-between items-center"><span class="text-muted">Up Next:</span><span class="font-medium text-main">143, 145, 148</span></div>
+        </div>
+      </div>
+
+      <div class="card-base" style="border-color: var(--service-1-border);">
+        <div class="flex justify-between items-start mb-3">
+          <div>
+            <span class="badge-live">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              ON STAGE NOW
+            </span>
+            <h3 class="card-title mt-1.5">Stage 2: Open Air Theatre</h3>
+            <p class="text-xs text-muted">UP Oppana (Common)</p>
+          </div>
+          <span class="text-xs font-bold px-2.5 py-1 rounded" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">Code: S102</span>
+        </div>
+        <div class="inner-box text-xs space-y-1.5">
+          <div class="flex justify-between items-center"><span class="text-muted">Current Team:</span><span class="font-bold text-main">Team #08 - St. Antony's UPS</span></div>
+          <div class="flex justify-between items-center"><span class="text-muted">Up Next:</span><span class="font-medium text-main">Team #09, Team #10</span></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+      <a href="../index.html" class="text-decoration-none font-semibold" style="color: #38bdf8;">← Back to Home</a>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+
+</body>
+</html>

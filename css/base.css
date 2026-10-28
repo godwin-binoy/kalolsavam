@@ -1,0 +1,109 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - BASE & LAYOUT CSS
+   ========================================================== */
+
+body {
+  font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text-main);
+  background-color: var(--color-body-bg);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  touch-action: manipulation;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+/* Fast, Snappy Button Press & Horizontal View Transitions */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root) {
+  animation: m3SlideOutLeft 0.15s cubic-bezier(0.4, 0, 1, 1) both;
+}
+
+::view-transition-new(root) {
+  animation: m3SlideInRight 0.25s cubic-bezier(0.05, 0.7, 0.1, 1.0) both;
+}
+
+@keyframes m3SlideOutLeft {
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(-30px); }
+}
+
+@keyframes m3SlideInRight {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.btn-primary:active, .btn-secondary:active, .btn-mobile-live:active, .nav-link:active, .nav-link-help:active {
+  transform: scale(0.96) !important;
+  transition: transform 0.05s ease !important;
+}
+
+/* Typography Helpers */
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text-heading);
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+}
+
+@media (min-width: 640px) {
+  .page-title {
+    font-size: 2.5rem;
+    line-height: 1.15;
+  }
+}
+
+.section-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  letter-spacing: -0.02em;
+}
+
+.card-title {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  letter-spacing: -0.01em;
+}
+
+.text-main { color: var(--color-text-main); }
+.text-heading { color: var(--color-text-heading); }
+.text-muted { color: var(--color-text-muted); }
+.text-subtle { color: var(--color-text-subtle); }
+
+.main-container {
+  max-width: 72rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 3.5rem 1rem;
+  flex-grow: 1;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+@media (min-width: 640px) {
+  .main-container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.divider-top {
+  border-top: 1px solid var(--color-border);
+}
+
+.divider-bottom {
+  border-bottom: 1px solid var(--color-border);
+}

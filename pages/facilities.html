@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facilities &amp; Campus Map | Mala Sub-District Kalolsavam</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="../css/pages/facilities.css">
+</head>
+<body class="font-sans antialiased flex flex-col min-h-screen service-4-page">
+
+  <header class="site-header header-service-4">
+    <div class="header-container flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <a href="../index.html" class="flex items-center gap-3 group text-decoration-none">
+          <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" />
+          <div class="pl-3">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors" style="transition: var(--transition-smooth);">
+              St. Antony's HSS Mala
+            </h1>
+            <p class="text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</p>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Nav -->
+      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
+        <a href="../index.html" class="nav-link">Home</a>
+        <a href="venues.html" class="nav-link">Stages</a>
+        <a href="competitions.html" class="nav-link">Competitions</a>
+        <a href="photos.html" class="nav-link">Photos</a>
+        <a href="facilities.html" class="nav-link active">Facilities</a>
+        <a href="help.html" class="nav-link-help font-semibold">Help / Emergency</a>
+        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link ml-1 p-2" title="Toggle Dark Mode">🌙</button>
+      </nav>
+
+      <!-- Mobile Menu Button -->
+      <div class="flex items-center gap-2 md:hidden">
+        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link p-2" title="Toggle Dark Mode">🌙</button>
+        <a href="venues.html" class="btn-mobile-live">
+          Live
+        </a>
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted focus:outline-none rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Dropdown Navigation Drawer -->
+    <div id="mobile-menu" class="hidden md:hidden mobile-menu-drawer space-y-1">
+      <a href="../index.html" class="mobile-menu-link">Home Portal</a>
+      <a href="venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
+      <a href="competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
+      <a href="photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
+      <a href="facilities.html" class="mobile-menu-link active">04. Facilities &amp; Campus Map</a>
+      <a href="help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <div class="mb-8">
+      <div class="badge-gov mb-2">
+        Module 04
+      </div>
+      <h2 class="page-title">Campus Facilities &amp; Locations</h2>
+      <p class="text-xs sm:text-sm text-muted mt-1">Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="card-base">
+        <h3 class="card-title mb-1">Festival Dining Hall (Oottupura)</h3>
+        <p class="text-xs text-muted mb-3 font-medium">Main Block Ground Floor</p>
+        <p class="text-xs text-main leading-relaxed">
+          Continuous serving for participants, teachers, and officials from 11:30 AM to 03:30 PM.
+        </p>
+      </div>
+
+      <div class="card-base">
+        <h3 class="card-title mb-1">Green Rooms &amp; Dressing Areas</h3>
+        <p class="text-xs text-muted mb-3 font-medium">Higher Secondary Block (1st &amp; 2nd Floors)</p>
+        <p class="text-xs text-main leading-relaxed">
+          Separate rooms assigned for boys and girls with volunteer assistance and mirrors.
+        </p>
+      </div>
+
+      <div class="card-base">
+        <h3 class="card-title mb-1">Clean Drinking Water Points</h3>
+        <p class="text-xs text-muted mb-3 font-medium">Multiple Locations Across Campus</p>
+        <p class="text-xs text-main leading-relaxed">
+          RO purified water kiosks installed near the main auditorium and dining pavilion.
+        </p>
+      </div>
+
+      <div class="card-base">
+        <h3 class="card-title mb-1">Participant &amp; Visitor Parking</h3>
+        <p class="text-xs text-muted mb-3 font-medium">School Southern Ground</p>
+        <p class="text-xs text-main leading-relaxed">
+          Dedicated parking slots for school buses, team manager vehicles, and two-wheelers with security volunteers.
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-container">
+      <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+      <a href="../index.html" class="text-decoration-none font-semibold" style="color: #38bdf8;">← Back to Home</a>
+    </div>
+  </footer>
+
+  <script src="../js/main.js"></script>
+
+</body>
+</html>

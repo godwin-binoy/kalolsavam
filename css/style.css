@@ -1,0 +1,7 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - MAIN STYLESHEET BUNDLE
+   ========================================================== */
+
+@import url('./variables.css');
+@import url('./base.css');
+@import url('./components.css');
