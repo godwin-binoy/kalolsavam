@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mala Sub-District Kalolsavam | St. Antony's HSS Mala</title>
   
+  <!-- Anti-flash dark mode script -->
+  <script>
+    if (localStorage.getItem('kalolsavam_dark') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
+    }
+  </script>
+  
   <!-- Tailwind CSS (Structural layout only) -->
   <script src="https://cdn.tailwindcss.com"></script>
   

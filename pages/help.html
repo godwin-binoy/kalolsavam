@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help Desk &amp; Emergency | Mala Sub-District Kalolsavam</title>
+  <script>
+    if (localStorage.getItem('kalolsavam_dark') === 'true') {
+      document.documentElement.classList.add('dark');
+      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
+    }
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../css/style.css">
   <link rel="stylesheet" href="../css/pages/help.css">

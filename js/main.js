@@ -66,30 +66,29 @@ function initMobileMenu() {
 }
 
 function initPrefetch() {
-  const preloadedPages = new Map();
+  const internalPages = [
+    window.location.pathname.includes('/pages/') ? '../index.html' : './index.html',
+    window.location.pathname.includes('/pages/') ? 'venues.html' : './pages/venues.html',
+    window.location.pathname.includes('/pages/') ? 'competitions.html' : './pages/competitions.html',
+    window.location.pathname.includes('/pages/') ? 'photos.html' : './pages/photos.html',
+    window.location.pathname.includes('/pages/') ? 'facilities.html' : './pages/facilities.html',
+    window.location.pathname.includes('/pages/') ? 'help.html' : './pages/help.html'
+  ];
 
-  function prefetchPage(url) {
-    if (!url || preloadedPages.has(url)) return;
-    preloadedPages.set(url, true);
-    const fetchUrl = url.startsWith('http') ? url : new URL(url, window.location.href).href;
-    fetch(fetchUrl, { mode: 'no-cors' }).catch(() => {});
+  // Aggressively cache all pages instantly using Cache API and fetch
+  if ('caches' in window) {
+    caches.open('kalolsavam-ultra-cache-v1').then(cache => {
+      internalPages.forEach(url => {
+        cache.add(url).catch(() => {
+          fetch(url, { mode: 'no-cors' }).then(res => cache.put(url, res)).catch(() => {});
+        });
+      });
+    });
+  } else {
+    internalPages.forEach(url => {
+      fetch(url, { mode: 'no-cors' }).catch(() => {});
+    });
   }
-
-  const links = document.querySelectorAll('nav a, #mobile-menu a, .hero-section a, .card-base');
-  links.forEach(link => {
-    const href = link.getAttribute('href') || (link.tagName === 'A' ? null : link.getAttribute('onclick') || link.querySelector('a')?.getAttribute('href'));
-    if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('tel:') && !href.startsWith('mailto:')) {
-      prefetchPage(href);
-      link.addEventListener('mouseenter', () => prefetchPage(href), { once: true });
-      link.addEventListener('touchstart', () => prefetchPage(href), { once: true });
-    }
-  });
-
-  // Also proactively prefetch all inner pages on load for zero-delay switching
-  const internalPages = ['index.html', 'pages/venues.html', 'pages/competitions.html', 'pages/photos.html', 'pages/facilities.html', 'pages/help.html'];
-  setTimeout(() => {
-    internalPages.forEach(page => prefetchPage(page));
-  }, 200);
 }
 
 function initCardObservers() {
