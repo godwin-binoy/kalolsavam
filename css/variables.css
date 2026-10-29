@@ -6,6 +6,7 @@
 
 :root {
   /* Material 3 (Material You) Light Theme Tokens */
+  color-scheme: light;
   --md-sys-color-primary: #38503B;
   --md-sys-color-on-primary: #FFFFFF;
   --md-sys-color-primary-container: #CEE7C8;
@@ -83,8 +84,9 @@
   --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
-/* Material 3 Dark Theme Variant */
-body.dark {
+/* Material 3 Dark Theme Variant (class set pre-paint by js/theme.js bootstrap) */
+html.dark {
+  color-scheme: dark;
   --md-sys-color-primary: #D4E2CD;
   --md-sys-color-on-primary: #161D18;
   --md-sys-color-primary-container: #2D3830;

@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help Desk &amp; Emergency | Mala Sub-District Kalolsavam</title>
-  <script>
-    if (localStorage.getItem('kalolsavam_dark') === 'true') {
-      document.documentElement.classList.add('dark');
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
-    }
-  </script>
+  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
+       Inlined on purpose: one less blocking network request at page start. -->
+  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -85,7 +82,7 @@
         <p class="text-xs text-main leading-relaxed mb-4">
           Doctor, nursing staff, and ambulance service on standby throughout festival hours.
         </p>
-        <a href="tel:04802890100" class="inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full text-decoration-none transition-all" style="background-color: rgba(127, 29, 29, 0.4); color: #FCA5A5; border: 1px solid rgba(248, 113, 113, 0.4);">
+        <a href="tel:04802890100" class="btn-call-emergency inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full text-decoration-none transition-all">
           Call Medical Desk: 0480 2890100 ↗
         </a>
       </div>
@@ -98,7 +95,7 @@
         <p class="text-xs text-main leading-relaxed mb-4">
           For urgent queries regarding stage timings, chest number rescheduling, and committee approvals.
         </p>
-        <a href="tel:04802890000" class="inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full text-decoration-none transition-all" style="background-color: var(--gov-secondary); color: var(--olive-dark); border: 1px solid var(--gov-secondary-border);">
+        <a href="tel:04802890000" class="btn-call-desk inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full text-decoration-none transition-all">
           Call Control Room: 0480 2890000 ↗
         </a>
       </div>
@@ -107,8 +104,8 @@
 
   <footer class="site-footer">
     <div class="footer-container">
-      <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
-      <a href="../index.html" class="text-decoration-none font-semibold" style="color: #38bdf8;">← Back to Home</a>
+      <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+      <a href="../index.html" class="footer-back-link text-decoration-none font-semibold">← Back to Home</a>
     </div>
   </footer>
 

@@ -15,7 +15,7 @@
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
-body.dark .site-header {
+html.dark .site-header {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   background-color: transparent;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
@@ -69,7 +69,7 @@ body.dark .site-header {
   box-shadow: 0 2px 6px rgba(34, 43, 36, 0.2);
 }
 
-body.dark .nav-link.active {
+html.dark .nav-link.active {
   color: #161D18;
 }
 
@@ -84,13 +84,13 @@ body.dark .nav-link.active {
   box-shadow: 0 2px 6px rgba(155, 44, 44, 0.15);
 }
 
-body.dark .nav-link-help {
+html.dark .nav-link-help {
   color: #FCA5A5;
   background-color: rgba(127, 29, 29, 0.3);
   border: 1px solid rgba(248, 113, 113, 0.3);
 }
 
-body.dark .nav-link-help:hover {
+html.dark .nav-link-help:hover {
   background-color: rgba(127, 29, 29, 0.5);
 }
 
@@ -119,7 +119,7 @@ body.dark .nav-link-help:hover {
   padding: 1rem 1.25rem 1.5rem 1.25rem;
 }
 
-body.dark .mobile-menu-drawer {
+html.dark .mobile-menu-drawer {
   background-color: transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
@@ -151,7 +151,7 @@ body.dark .mobile-menu-drawer {
   color: #F8F6F0;
 }
 
-body.dark .mobile-menu-link.active {
+html.dark .mobile-menu-link.active {
   color: #161D18;
 }
 
@@ -162,7 +162,7 @@ body.dark .mobile-menu-link.active {
   margin-top: 0.5rem;
 }
 
-body.dark .mobile-menu-link-help {
+html.dark .mobile-menu-link-help {
   color: #FCA5A5;
   background-color: rgba(127, 29, 29, 0.3);
   border: 1px solid rgba(248, 113, 113, 0.3);
@@ -179,7 +179,11 @@ body.dark .mobile-menu-link-help {
   transition: background-color 0.3s ease;
 }
 
-body.dark .site-footer {
+.footer-text {
+  color: #e2e8f0;
+}
+
+html.dark .site-footer {
   background-color: #0C0E0D;
   color: #A3B59D;
 }
@@ -216,7 +220,7 @@ body.dark .site-footer {
   touch-action: manipulation;
 }
 
-body.dark .card-base {
+html.dark .card-base {
   background-color: var(--color-card-bg);
   border-color: rgba(45, 58, 49, 0.8);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
@@ -229,7 +233,7 @@ body.dark .card-base {
   background-color: var(--color-card-hover);
 }
 
-body.dark .card-base:hover {
+html.dark .card-base:hover {
   background-color: var(--color-card-hover);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
@@ -239,15 +243,22 @@ body.dark .card-base:hover {
   transition: transform 0.05s ease;
 }
 
-/* Scroll-reveal state (managed by JS; keeps hover lift working after reveal) */
+/* Scroll-reveal state (managed by JS; keeps hover lift working after reveal).
+   Only compositor-friendly properties animate: transform + opacity. */
 .card-base.reveal-card {
   opacity: 0;
-  transform: translateY(12px);
+  transform: translate3d(0, 12px, 0);
 }
 
 .card-base.revealed {
   opacity: 1;
   transform: none;
+  will-change: opacity; /* hint the compositor during the fade-in only */
+}
+
+/* Reveal transition lives on the base so hover transform stays instant */
+.card-base {
+  contain: layout paint style; /* isolate layout/paint of each card */
 }
 
 .inner-box {
@@ -258,7 +269,7 @@ body.dark .card-base:hover {
   transition: background-color 0.3s ease;
 }
 
-body.dark .inner-box {
+html.dark .inner-box {
   background-color: rgba(18, 24, 20, 0.6);
   border-color: rgba(45, 58, 49, 0.6);
 }
@@ -308,7 +319,7 @@ body.dark .inner-box {
   border: 1px solid var(--gov-secondary-border);
 }
 
-body.dark .badge-tag {
+html.dark .badge-tag {
   background-color: rgba(45, 58, 49, 0.4);
   color: #D4E2CD;
   border-color: #2D3A31;
@@ -336,12 +347,12 @@ body.dark .badge-tag {
   transform: translateY(-1px);
 }
 
-body.dark .btn-primary {
+html.dark .btn-primary {
   background-color: #D4E2CD;
   color: #161D18;
 }
 
-body.dark .btn-primary:hover {
+html.dark .btn-primary:hover {
   background-color: #B2C9AB;
 }
 
@@ -394,10 +405,10 @@ body.dark .btn-primary:hover {
   color: var(--svc-accent);
 }
 
-body.dark .card-service {
+html.dark .card-service {
   background-color: rgba(var(--svc-dark), 0.6);
 }
 
-body.dark .card-service:hover {
+html.dark .card-service:hover {
   background-color: rgba(var(--svc-dark), 0.85);
 }

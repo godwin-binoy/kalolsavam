@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stage &amp; Venues | Mala Sub-District Kalolsavam</title>
-  <script>
-    if (localStorage.getItem('kalolsavam_dark') === 'true') {
-      document.documentElement.classList.add('dark');
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
-    }
-  </script>
+  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
+       Inlined on purpose: one less blocking network request at page start. -->
+  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -69,7 +66,7 @@
 
   <main class="main-container">
     <div class="mb-8">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-2" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">
+      <div class="chip-service inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-2">
         Module 01 • Stages &amp; Venues
       </div>
       <h2 class="page-title">Stage &amp; Venues Live Tracker</h2>
@@ -87,7 +84,7 @@
             <h3 class="card-title mt-1.5">Stage 1: Main Auditorium</h3>
             <p class="text-xs text-muted">HS Bharathanatyam (Girls)</p>
           </div>
-          <span class="text-xs font-bold px-2.5 py-1 rounded" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">Code: S101</span>
+          <span class="chip-service text-xs font-bold px-2.5 py-1 rounded">Code: S101</span>
         </div>
         <div class="inner-box text-xs space-y-1.5">
           <div class="flex justify-between items-center"><span class="text-muted">Current Chest No:</span><span class="font-bold text-main">142 - Ananya P.</span></div>
@@ -105,7 +102,7 @@
             <h3 class="card-title mt-1.5">Stage 2: Open Air Theatre</h3>
             <p class="text-xs text-muted">UP Oppana (Common)</p>
           </div>
-          <span class="text-xs font-bold px-2.5 py-1 rounded" style="background-color: var(--service-1-container); color: var(--service-1-accent); border: 1px solid var(--service-1-border);">Code: S102</span>
+          <span class="chip-service text-xs font-bold px-2.5 py-1 rounded">Code: S102</span>
         </div>
         <div class="inner-box text-xs space-y-1.5">
           <div class="flex justify-between items-center"><span class="text-muted">Current Team:</span><span class="font-bold text-main">Team #08 - St. Antony's UPS</span></div>
@@ -117,8 +114,8 @@
 
   <footer class="site-footer">
     <div class="footer-container">
-      <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
-      <a href="../index.html" class="text-decoration-none font-semibold" style="color: #38bdf8;">← Back to Home</a>
+      <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+      <a href="../index.html" class="footer-back-link text-decoration-none font-semibold">← Back to Home</a>
     </div>
   </footer>
 

@@ -5,13 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mala Sub-District Kalolsavam | St. Antony's HSS Mala</title>
   
-  <!-- Anti-flash dark mode script -->
-  <script>
-    if (localStorage.getItem('kalolsavam_dark') === 'true') {
-      document.documentElement.classList.add('dark');
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
-    }
-  </script>
+  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
+       Inlined on purpose: one less blocking network request at page start. -->
+  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   
   <!-- Preconnect for faster font/CDN handshake -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -216,7 +212,7 @@
         <span class="font-semibold text-main">Venue Location:</span>
         <span class="text-muted ml-1">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
       </div>
-      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="font-semibold text-decoration-none card-base px-3 py-1.5 rounded shadow-sm shrink-0" style="color: var(--gov-blue);">
+      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="text-gov-blue font-semibold text-decoration-none card-base px-3 py-1.5 rounded shadow-sm shrink-0">
         Google Maps ↗
       </a>
     </div>
@@ -227,7 +223,7 @@
   <footer class="site-footer">
     <div class="footer-container">
       <div>
-        <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+        <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
         <p class="text-[11px] text-subtle mt-0.5">Official Festival On-Premise Information Desk</p>
       </div>
       <div class="text-[11px] text-subtle">
