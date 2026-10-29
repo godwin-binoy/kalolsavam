@@ -1,207 +1,173 @@
 /* ==========================================================
    MALA SUB-DISTRICT KALOLSAVAM - COLOR & THEME VARIABLES
-   Single source of truth for design tokens. Theme state lives
-   ONLY on <html class="dark"> (set pre-paint by js/theme-boot.js).
+   Material You + Translucent Frosted Glass + Festive Card Themes
    ========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
-  /* Material 3 (Material You) Light Theme Tokens */
   color-scheme: light;
+
+  /* Material 3 Base Surface & Brand Tokens */
   --md-sys-color-primary: #38503B;
   --md-sys-color-on-primary: #FFFFFF;
-  --md-sys-color-primary-container: #CEE7C8;
-  --md-sys-color-on-primary-container: #002204;
-
   --md-sys-color-surface: #F8F6F0;
-  --md-sys-color-surface-container-lowest: #FFFFFF;
-  --md-sys-color-surface-container-low: #F2EFE9;
   --md-sys-color-surface-container: #ECE7DF;
   --md-sys-color-surface-container-high: #E6E1D9;
-  --md-sys-color-surface-container-highest: #E0DBD3;
+  --md-sys-color-surface-container-low: #F2EFE9;
+  --md-sys-color-surface-container-lowest: #FFFFFF;
 
-  --md-sys-color-on-surface: #1B1C19;
-  --md-sys-color-on-surface-variant: #434842;
-  --md-sys-color-outline: #737971;
-  --md-sys-color-outline-variant: #C2C8BF;
-
-  /* Olive Green & Warm Beige Light Theme Mappings */
   --olive-dark: #222B24;
   --olive-mid: #435146;
   --olive-light: #D4E2CD;
-  --beige-bg: #F2EFE9;
-  --beige-card: #FFFFFF;
-  --beige-border: #D2DBCF;
+  --beige-bg: #F8F6F0;
+  --beige-border: #DDE4DB;
 
-  --gov-blue: var(--olive-dark);
-  --gov-accent: var(--olive-dark);
-  --gov-secondary: #EBF0E9;
-  --gov-secondary-border: var(--beige-border);
+  --gov-blue: #1E293B;
+  --gov-secondary: #EEF2EC;
+  --gov-secondary-border: #D2DBCF;
 
   --color-body-bg: #F8F6F0;
+  --color-pattern-dot: rgba(30, 41, 59, 0.07);
   --color-text-main: #273129;
-  --color-text-heading: #18201A;
-  --color-text-muted: var(--olive-mid);
-  --color-text-subtle: #738475;
-  --color-on-brand: #F8F6F0;
+  --color-text-heading: #111827;
+  --color-text-muted: #526356;
+  --color-text-subtle: #798D7C;
+  --color-on-brand: #FFFFFF;
+  --color-border: #E2E8F0;
 
-  --color-border: var(--beige-border);
-
-  --color-card-bg: rgba(246, 244, 239, 0.7);
-  --color-card-hover: rgba(248, 246, 241, 0.85);
-  --color-card-border: rgba(216, 223, 212, 0.6);
+  /* Frosted Glass Aesthetics */
+  --color-card-bg: rgba(255, 255, 255, 0.72);
+  --color-card-border: rgba(255, 255, 255, 0.65);
+  --color-card-hover: rgba(255, 255, 255, 0.88);
+  --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+  --shadow-card-hover: 0 18px 40px -12px rgba(15, 23, 42, 0.16);
   --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.03);
-  --shadow-card: 0 4px 16px rgba(34, 43, 36, 0.03);
-  --shadow-card-hover: 0 6px 24px rgba(67, 81, 70, 0.06);
-  --shadow-drawer: 0 12px 30px rgba(0, 0, 0, 0.08);
+  --shadow-drawer: 0 16px 40px rgba(0, 0, 0, 0.1);
 
-  --color-badge-live-text: #1B6535;
-  --color-badge-live-bg: #E3F5E8;
-  --color-badge-live-border: #B7E4C7;
+  /* Inner Item Action Pills (Inside Cards) */
+  --action-item-bg: rgba(255, 255, 255, 0.82);
+  --action-item-border: rgba(226, 232, 240, 0.85);
+  --action-item-hover-bg: #FFFFFF;
+  --action-item-hover-border: #CBD5E1;
+  --action-item-icon-bg: #F1F5F9;
 
-  --color-badge-emergency-text: #A61C1C;
-  --color-badge-emergency-bg: #FDF2F2;
-  --color-badge-emergency-border: #FAD2D2;
-
-  --color-footer-bg: #161D18;
-  --color-footer-fg: #E6E1D9;
-  --color-footer-text: #E2E8F0;
+  /* Badges & Live Status */
+  --color-badge-live-text: #047857;
+  --color-badge-live-bg: #ECFDF5;
+  --color-badge-live-border: #A7F3D0;
   --color-dot-live: #10B981;
 
-  /* Service Unique Color Tokens (Light) */
-  --service-1-accent: #2E5A88; /* Ocean Blue for Stages */
-  --service-1-container: #EAF2F8;
-  --service-1-border: #BDD3E8;
-  --service-1-tint: 234, 242, 248;
-  --service-1-shadow: 46, 90, 136;
+  --color-badge-emergency-text: #BE123C;
+  --color-badge-emergency-bg: #FFF1F2;
+  --color-badge-emergency-border: #FECDD3;
+
+  --color-footer-bg: #141A16;
+  --color-footer-fg: #E2E8F0;
+  --color-footer-text: #CBD5E1;
+
+  /* Colorful Category Banner Tokens (from reference image) */
+  --banner-purple-from: #5835E5;
+  --banner-purple-to: #4324D6;
+  --banner-pink-from: #E11D48;
+  --banner-pink-to: #BE123C;
+  --banner-teal-from: #0D9488;
+  --banner-teal-to: #0F766E;
+  --banner-orange-from: #EA580C;
+  --banner-orange-to: #C2410C;
+  --banner-blue-from: #2563EB;
+  --banner-blue-to: #1D4ED8;
+
+  /* Service aliases */
+  --service-1-accent: #2563EB;
+  --service-1-container: #EFF6FF;
+  --service-1-border: #BFDBFE;
   --service-1-page-bg: #F4F8FC;
 
-  --service-2-accent: #884A2E; /* Warm Amber for Competitions */
-  --service-2-container: #FDF3E7;
-  --service-2-border: #F5D6B8;
-  --service-2-tint: 253, 243, 231;
-  --service-2-shadow: 136, 74, 46;
-  --service-2-page-bg: #FAF6F0;
+  --service-2-accent: #5835E5;
+  --service-2-container: #EEF2FF;
+  --service-2-border: #C7D2FE;
+  --service-2-page-bg: #F8F6FF;
 
-  --service-3-accent: #5A2E88; /* Deep Purple for Photos */
-  --service-3-container: #F3EAF8;
-  --service-3-border: #D8BDD8;
-  --service-3-tint: 243, 234, 248;
-  --service-3-shadow: 90, 46, 136;
-  --service-3-page-bg: #F8F4FC;
+  --service-3-accent: #E11D48;
+  --service-3-container: #FFF1F2;
+  --service-3-border: #FECDD3;
+  --service-3-page-bg: #FFF5F7;
 
-  --service-4-accent: #2E885A; /* Emerald Teal for Facilities */
-  --service-4-container: #EAF8F2;
-  --service-4-border: #BBDED0;
-  --service-4-tint: 234, 248, 242;
-  --service-4-shadow: 46, 136, 90;
-  --service-4-page-bg: #F4FCF8;
+  --service-4-accent: #0D9488;
+  --service-4-container: #F0FDFA;
+  --service-4-border: #99F6E4;
+  --service-4-page-bg: #F0FDF8;
 
-  --service-5-accent: #882E2E; /* Crimson Red for Help */
-  --service-5-container: #F8EAEA;
-  --service-5-border: #E8BDBD;
-  --service-5-tint: 248, 234, 234;
-  --service-5-shadow: 136, 46, 46;
-  --service-5-page-bg: #FCF4F4;
+  --service-5-accent: #BE123C;
+  --service-5-container: #FFF1F2;
+  --service-5-border: #FECDD3;
+  --service-5-page-bg: #FFF5F5;
 
-  /* Shared Motion Tokens */
-  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasized-out: cubic-bezier(0.2, 0, 0, 1);
-  --theme-fade: 0.3s ease; /* theme cross-fade duration (JS mirrors this) */
+  --theme-fade: 0.3s ease;
 }
 
-/* Material 3 Dark Theme Variant — the ONLY place dark values are set.
-   Everything else in the system consumes tokens and needs no dark rules. */
+/* Dark Mode Overrides */
 html.dark {
   color-scheme: dark;
-  --md-sys-color-primary: #D4E2CD;
-  --md-sys-color-on-primary: #161D18;
-  --md-sys-color-primary-container: #2D3830;
-  --md-sys-color-on-primary-container: #CEE7C8;
 
-  --md-sys-color-surface: #111412;
-  --md-sys-color-surface-container-lowest: #0C0E0D;
-  --md-sys-color-surface-container-low: #151C17;
-  --md-sys-color-surface-container: #1A211C;
-  --md-sys-color-surface-container-high: #222B24;
-  --md-sys-color-surface-container-highest: #2D3A31;
-
-  --md-sys-color-on-surface: #E2E8DF;
-  --md-sys-color-on-surface-variant: #A3B59D;
-  --md-sys-color-outline: #849485;
-  --md-sys-color-outline-variant: #2D3A31;
+  --md-sys-color-surface: #111513;
+  --md-sys-color-surface-container: #19201C;
+  --md-sys-color-surface-container-high: #212A25;
+  --md-sys-color-surface-container-low: #141B17;
+  --md-sys-color-surface-container-lowest: #0E1210;
 
   --olive-dark: #D4E2CD;
   --olive-mid: #A3B59D;
-  --olive-light: #2D3830;
-  --beige-bg: #111412;
-  --beige-card: #1A211C;
-  --beige-border: #2D3A31;
+  --olive-light: #253328;
+  --beige-bg: #111513;
+  --beige-border: #2B382F;
 
-  --gov-blue: #D4E2CD;
-  --gov-accent: #D4E2CD;
-  --gov-secondary: #1F2822;
-  --gov-secondary-border: #2D3A31;
+  --gov-blue: #E2E8F0;
+  --gov-secondary: #1F2A23;
+  --gov-secondary-border: #2F3E34;
 
-  --color-body-bg: #111412;
+  --color-body-bg: #0F1311;
+  --color-pattern-dot: rgba(255, 255, 255, 0.06);
   --color-text-main: #E2E8DF;
-  --color-text-heading: #F5F7F4;
-  --color-text-muted: #A3B59D;
-  --color-text-subtle: #849485;
-  --color-on-brand: #161D18;
+  --color-text-heading: #F8FAFC;
+  --color-text-muted: #94A3B8;
+  --color-text-subtle: #64748B;
+  --color-on-brand: #0F1311;
+  --color-border: #27342C;
 
-  --color-border: #2D3A31;
+  /* Frosted Obsidian Glass */
+  --color-card-bg: rgba(22, 28, 24, 0.72);
+  --color-card-border: rgba(255, 255, 255, 0.08);
+  --color-card-hover: rgba(30, 39, 33, 0.85);
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 18px 40px -12px rgba(0, 0, 0, 0.6);
+  --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.3);
+  --shadow-drawer: 0 16px 40px rgba(0, 0, 0, 0.5);
 
-  --color-card-bg: rgba(26, 33, 28, 0.75);
-  --color-card-hover: rgba(33, 42, 36, 0.85);
-  --color-card-border: rgba(45, 58, 49, 0.8);
-  --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.2);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.2);
-  --shadow-card-hover: 0 6px 24px rgba(0, 0, 0, 0.3);
-  --shadow-drawer: 0 12px 30px rgba(0, 0, 0, 0.4);
+  --action-item-bg: rgba(255, 255, 255, 0.04);
+  --action-item-border: rgba(255, 255, 255, 0.07);
+  --action-item-hover-bg: rgba(255, 255, 255, 0.09);
+  --action-item-hover-border: rgba(255, 255, 255, 0.15);
+  --action-item-icon-bg: rgba(255, 255, 255, 0.08);
 
   --color-badge-live-text: #6EE7B7;
   --color-badge-live-bg: rgba(6, 78, 59, 0.4);
   --color-badge-live-border: rgba(52, 211, 153, 0.3);
 
-  --color-badge-emergency-text: #FCA5A5;
-  --color-badge-emergency-bg: rgba(127, 29, 29, 0.4);
-  --color-badge-emergency-border: rgba(248, 113, 113, 0.3);
+  --color-badge-emergency-text: #FDA4AF;
+  --color-badge-emergency-bg: rgba(159, 18, 57, 0.35);
+  --color-badge-emergency-border: rgba(244, 63, 94, 0.3);
 
-  --color-footer-bg: #0C0E0D;
-  --color-footer-fg: #A3B59D;
-  --color-footer-text: #A3B59D;
-  --color-dot-live: #34D399;
+  --color-footer-bg: #0A0D0B;
+  --color-footer-fg: #94A3B8;
+  --color-footer-text: #94A3B8;
 
-  /* Service Unique Color Tokens (Dark) */
-  --service-1-accent: #7EA9D8;
-  --service-1-container: #17222C;
-  --service-1-border: #2A3B4D;
-  --service-1-tint: 23, 34, 44;
-  --service-1-page-bg: #0E141A;
-
-  --service-2-accent: #D89A7E;
-  --service-2-container: #2C2217;
-  --service-2-border: #4D3B2A;
-  --service-2-tint: 44, 34, 23;
-  --service-2-page-bg: #16120E;
-
-  --service-3-accent: #B27ED8;
-  --service-3-container: #25172C;
-  --service-3-border: #422A4D;
-  --service-3-tint: 37, 23, 44;
-  --service-3-page-bg: #140E1A;
-
-  --service-4-accent: #7ED8A9;
-  --service-4-container: #172C22;
-  --service-4-border: #2A4D3B;
-  --service-4-tint: 23, 44, 34;
-  --service-4-page-bg: #0E1A14;
-
-  --service-5-accent: #D87E7E;
-  --service-5-container: #2C1717;
-  --service-5-border: #4D2A2A;
-  --service-5-tint: 44, 23, 23;
-  --service-5-page-bg: #1A0E0E;
+  --service-1-page-bg: #0B111A;
+  --service-2-page-bg: #120D1F;
+  --service-3-page-bg: #1C0A10;
+  --service-4-page-bg: #091713;
+  --service-5-page-bg: #1A0909;
 }

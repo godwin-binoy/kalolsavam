@@ -5,8 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Competitions &amp; Results | Mala Sub-District Kalolsavam</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
-  <!-- Theme bootstrap runs BEFORE first paint (prevents dark-mode white flash).
-       Canonical logic lives in js/theme-boot.js and is inlined here at build time. -->
   <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#111412' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,7 +17,7 @@
     <div class="header-container flex items-center justify-between">
       <a href="../index.html" class="flex items-center gap-3 group">
         <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
-        <span class="pl-3">
+        <span class="pl-2">
           <span class="block text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">St. Antony's HSS Mala</span>
           <span class="block text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</span>
         </span>
@@ -61,12 +59,146 @@
 
   <main class="main-container">
     <div class="mb-8">
-      <div class="chip-service chip mb-2">Module 02 &bull; Competitions &amp; Results</div>
-      <h2 class="page-title">Competitions &amp; Results Tabulation</h2>
-      <p class="text-xs sm:text-sm text-muted mt-1">Category-wise schedules, verified result announcements, and school points table.</p>
+      <div class="badge-gov mb-2">Category Portals</div>
+      <h2 class="page-title">Competitions &amp; Tabulation</h2>
+      <p class="text-xs sm:text-sm text-muted mt-1">Select a category below for declared results, chest numbers, and official school point tallies.</p>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- EXACT 4 CARDS AS GIVEN IN THE REFERENCE IMAGE -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
+
+      <!-- Card 1: HS GENERAL (Purple) -->
+      <div class="fest-card">
+        <div class="fest-header banner-purple">
+          <h3 class="fest-title">HS GENERAL</h3>
+          <span class="fest-subtitle">FESTIVAL CATEGORY</span>
+          <svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 13c-.83 0-1.5-.67-1.5-1.5S9.17 12 10 12s1.5.67 1.5 1.5S10.83 15 10 15zm0-5c-.83 0-1.5-.67-1.5-1.5S9.17 7 10 7s1.5.67 1.5 1.5S10.83 10 10 10zm4 5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+        </div>
+        <div class="fest-body">
+          <a href="#results-feed" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+              <span>Results Declared</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+              <span>District Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span>
+              <span>School Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 2: HSS GENERAL (Pink) -->
+      <div class="fest-card">
+        <div class="fest-header banner-pink">
+          <h3 class="fest-title">HSS GENERAL</h3>
+          <span class="fest-subtitle">FESTIVAL CATEGORY</span>
+          <svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.49 2 2 6.49 2 12c0 4.14 2.53 7.69 6.13 9.17.48.2.87-.23.87-.71v-.96c0-1.66 1.34-3 3-3h1.5c3.58 0 6.5-2.92 6.5-6.5C20 5.37 16.42 2 12 2zm-5 8c-.83 0-1.5-.67-1.5-1.5S6.17 7 7 7s1.5.67 1.5 1.5S7.83 10 7 10zm3-3c-.83 0-1.5-.67-1.5-1.5S9.17 4 10 4s1.5.67 1.5 1.5S10.83 7 10 7zm4 0c-.83 0-1.5-.67-1.5-1.5S13.17 4 14 4s1.5.67 1.5 1.5S14.83 7 14 7zm3 3c-.83 0-1.5-.67-1.5-1.5S16.17 7 17 7s1.5.67 1.5 1.5S17.83 10 17 10z"/></svg>
+        </div>
+        <div class="fest-body">
+          <a href="#results-feed" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+              <span>Results Declared</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+              <span>District Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span>
+              <span>School Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 3: HS ARABIC (Teal) -->
+      <div class="fest-card">
+        <div class="fest-header banner-teal">
+          <h3 class="fest-title">HS ARABIC</h3>
+          <span class="fest-subtitle">FESTIVAL CATEGORY</span>
+          <svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.75C6.5 7.5 4 10 4 12c0 2 2.5 3.5 5 2 4.5-2.7 7-6 8-6z"/></svg>
+        </div>
+        <div class="fest-body">
+          <a href="#results-feed" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+              <span>Results Declared</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+              <span>District Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span>
+              <span>School Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Card 4: HS SANSKRIT (Orange) -->
+      <div class="fest-card">
+        <div class="fest-header banner-orange">
+          <h3 class="fest-title">HS SANSKRIT</h3>
+          <span class="fest-subtitle">FESTIVAL CATEGORY</span>
+          <svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M21.71 3.29a1 1 0 00-1.42 0l-9.04 9.04a3 3 0 00-.78 1.45l-.47 2.37 2.37-.47a3 3 0 001.45-.78l9.04-9.04a1 1 0 000-1.42l-1.15-1.15zM4 20h16v2H4z"/></svg>
+        </div>
+        <div class="fest-body">
+          <a href="#results-feed" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg></span>
+              <span>Results Declared</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></span>
+              <span>District Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+          <a href="#points-table" class="fest-action-item">
+            <div class="flex items-center">
+              <span class="fest-item-icon"><svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></span>
+              <span>School Points</span>
+            </div>
+            <svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- TABULATION & RESULTS DETAIL SECTION -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="results-feed">
       <div class="lg:col-span-2 space-y-6">
         <div class="card-base">
           <h3 class="card-title mb-4 flex items-center justify-between">
@@ -75,19 +207,36 @@
           </h3>
 
           <div class="space-y-4">
-            <div class="inner-box p-4 rounded">
+            <div class="inner-box">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs mb-2 gap-2">
-                <span class="chip-service chip-sm">Item #12 - HS Bharathanatyam (Girls)</span>
+                <span class="badge-gov">Item #12 &bull; HS Bharathanatyam (Girls)</span>
                 <span class="badge-live">Verified &amp; Published</span>
               </div>
               <div class="space-y-1.5 text-xs pt-1">
                 <div class="flex flex-col sm:flex-row justify-between py-1 divider-bottom gap-1">
-                  <span class="font-medium text-main">1st Place: Ananya P. (Chest No. 142)</span>
+                  <span class="font-bold text-main">1st Place: Ananya P. (Chest No. 142)</span>
                   <span class="text-muted">St. Antony's HSS Mala (A Grade)</span>
                 </div>
                 <div class="flex flex-col sm:flex-row justify-between py-1 gap-1">
-                  <span class="font-medium text-main">2nd Place: Sneha K. (Chest No. 108)</span>
+                  <span class="font-bold text-main">2nd Place: Sneha K. (Chest No. 108)</span>
                   <span class="text-muted">GVHSS Annamanada (A Grade)</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="inner-box">
+              <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs mb-2 gap-2">
+                <span class="badge-gov">Item #24 &bull; HSS Oppana (Common)</span>
+                <span class="badge-live">Verified &amp; Published</span>
+              </div>
+              <div class="space-y-1.5 text-xs pt-1">
+                <div class="flex flex-col sm:flex-row justify-between py-1 divider-bottom gap-1">
+                  <span class="font-bold text-main">1st Place: Team #08 (St. Antony's HSS)</span>
+                  <span class="text-muted">St. Antony's HSS Mala (A Grade)</span>
+                </div>
+                <div class="flex flex-col sm:flex-row justify-between py-1 gap-1">
+                  <span class="font-bold text-main">2nd Place: Team #04 (Carmel HSS)</span>
+                  <span class="text-muted">Carmel HSS Mala (A Grade)</span>
                 </div>
               </div>
             </div>
@@ -95,21 +244,25 @@
         </div>
       </div>
 
-      <div>
+      <div id="points-table">
         <div class="card-base">
-          <h3 class="card-title mb-3">Points Tally (Top Schools)</h3>
+          <h3 class="card-title mb-3">Overall School Points</h3>
           <div class="space-y-2 text-xs">
-            <div class="chip-service chip-row font-semibold">
+            <div class="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800 flex justify-between items-center font-bold text-purple-900 dark:text-purple-200">
               <span>1. St. Antony's HSS Mala</span>
               <span>145 pts</span>
             </div>
-            <div class="chip-row inner-box">
+            <div class="p-3 rounded-xl inner-box flex justify-between items-center">
               <span class="font-medium text-main">2. GVHSS Annamanada</span>
-              <span class="text-muted font-medium">112 pts</span>
+              <span class="text-muted font-bold">112 pts</span>
             </div>
-            <div class="chip-row inner-box">
+            <div class="p-3 rounded-xl inner-box flex justify-between items-center">
               <span class="font-medium text-main">3. Carmel HSS Mala</span>
-              <span class="text-muted font-medium">98 pts</span>
+              <span class="text-muted font-bold">98 pts</span>
+            </div>
+            <div class="p-3 rounded-xl inner-box flex justify-between items-center">
+              <span class="font-medium text-main">4. GHS Mala</span>
+              <span class="text-muted font-bold">84 pts</span>
             </div>
           </div>
         </div>
@@ -123,7 +276,7 @@
         <p class="footer-text font-medium">Sub-District School Kalolsavam &bull; St. Antony's HSS Mala</p>
         <p class="text-[11px] text-subtle mt-0.5">Official Festival On-Premise Information Desk</p>
       </div>
-      <div class="text-[11px] text-subtle">Operated by Host School IT &amp; Media Committee</div>
+      <div class="text-[11px] text-subtle">Operated by Host School IT & Media Committee</div>
     </div>
   </footer>
 
