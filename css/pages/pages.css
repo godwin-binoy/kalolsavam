@@ -1,0 +1,31 @@
+/* ==========================================================
+   MALA SUB-DISTRICT KALOLSAVAM - SERVICE PAGES CSS
+   (Single parameterized file replacing the 5 near-identical
+   per-page stylesheets. Set data-service="N" on <body>.)
+   ========================================================== */
+
+/* Per-service header border + page background tokens */
+body[data-service="1"] { --svc-border: var(--service-1-border); --svc-bg: #F4F8FC; --svc-bg-dark: #0E141A; }
+body[data-service="2"] { --svc-border: var(--service-2-border); --svc-bg: #FAF6F0; --svc-bg-dark: #16120E; }
+body[data-service="3"] { --svc-border: var(--service-3-border); --svc-bg: #F8F4FC; --svc-bg-dark: #140E1A; }
+body[data-service="4"] { --svc-border: var(--service-4-border); --svc-bg: #F4FCF8; --svc-bg-dark: #0E1A14; }
+body[data-service="5"] { --svc-border: var(--service-5-border); --svc-bg: #FCF4F4; --svc-bg-dark: #1A0E0E; }
+
+/* Tinted page background (light + dark) */
+body[data-service] {
+  background-color: var(--svc-bg);
+}
+
+body.dark[data-service] {
+  background-color: var(--svc-bg-dark);
+}
+
+/* Service-tinted sticky header accent */
+.header-service {
+  border-bottom-color: var(--svc-border);
+}
+
+/* Subtle service-tinted card borders on service pages (no per-card inline styles needed) */
+body[data-service] .card-base {
+  border-color: var(--svc-border);
+}

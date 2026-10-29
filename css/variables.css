@@ -77,6 +77,10 @@
   --service-5-accent: #882E2E; /* Crimson Red for Help */
   --service-5-container: #F8EAEA;
   --service-5-border: #E8BDBD;
+
+  /* Shared Motion Tokens */
+  --transition-smooth: all 0.3s cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.05, 0.7, 0.1, 1);
 }
 
 /* Material 3 Dark Theme Variant */

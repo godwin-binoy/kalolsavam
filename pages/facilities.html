@@ -10,19 +10,20 @@
       document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
     }
   </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../css/style.css">
-  <link rel="stylesheet" href="../css/pages/facilities.css">
 </head>
-<body class="font-sans antialiased flex flex-col min-h-screen service-4-page">
+<body data-service="4" class="font-sans antialiased flex flex-col min-h-screen">
 
-  <header class="site-header header-service-4">
+  <header class="site-header header-service">
     <div class="header-container flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="../index.html" class="flex items-center gap-3 group text-decoration-none">
-          <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" />
+          <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
           <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors" style="transition: var(--transition-smooth);">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors heading-transition">
               St. Antony's HSS Mala
             </h1>
             <p class="text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</p>
@@ -117,7 +118,7 @@
     </div>
   </footer>
 
-  <script src="../js/main.js"></script>
+  <script defer src="../js/main.js"></script>
 
 </body>
 </html>
