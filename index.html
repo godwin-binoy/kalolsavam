@@ -7,6 +7,7 @@
   
   <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
        Inlined on purpose: one less blocking network request at page start. -->
+  <!-- Keep this snippet in sync with js/theme.js (documented copy). -->
   <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   
   <!-- Preconnect for faster font/CDN handshake -->
@@ -26,10 +27,10 @@
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="index.html" class="flex items-center gap-3 group text-decoration-none">
+        <a href="index.html" class="flex items-center gap-3 group">
           <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async">
           <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors heading-transition">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">
               St. Antony's HSS Mala
             </h1>
             <p class="text-[11px] sm:text-xs text-muted font-medium">
@@ -47,16 +48,16 @@
         <a href="pages/photos.html" class="nav-link">Photos</a>
         <a href="pages/facilities.html" class="nav-link">Facilities</a>
         <a href="pages/help.html" class="nav-link-help font-semibold">Help / Emergency</a>
-        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link ml-1 p-2" title="Toggle Dark Mode">🌙</button>
+        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1" title="Toggle Dark Mode"></button>
       </nav>
 
       <!-- Mobile Menu Button & Live Badge -->
       <div class="flex items-center gap-2 md:hidden">
-        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link p-2" title="Toggle Dark Mode">🌙</button>
+        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link theme-toggle" title="Toggle Dark Mode"></button>
         <a href="pages/venues.html" class="btn-mobile-live">
           Live
         </a>
-        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted focus:outline-none rounded-md">
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted rounded-md">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
@@ -76,7 +77,7 @@
   </header>
 
   <!-- HERO SECTION -->
-  <section class="hero-section">
+  <section>
     <div class="hero-container">
       <div class="max-w-3xl space-y-4">
 
@@ -110,7 +111,7 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
       <!-- CARD 1: LIVE VENUES -->
-      <a href="pages/venues.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="1">
+      <a href="pages/venues.html" class="group card-base card-service flex flex-col justify-between" data-service="1">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
@@ -129,7 +130,7 @@
       </a>
 
       <!-- CARD 2: COMPETITIONS & RESULTS -->
-      <a href="pages/competitions.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="2">
+      <a href="pages/competitions.html" class="group card-base card-service flex flex-col justify-between" data-service="2">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
@@ -148,7 +149,7 @@
       </a>
 
       <!-- CARD 3: STAGE PHOTOS -->
-      <a href="pages/photos.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="3">
+      <a href="pages/photos.html" class="group card-base card-service flex flex-col justify-between" data-service="3">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
@@ -167,7 +168,7 @@
       </a>
 
       <!-- CARD 4: FACILITIES & CAMPUS MAP -->
-      <a href="pages/facilities.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="4">
+      <a href="pages/facilities.html" class="group card-base card-service flex flex-col justify-between" data-service="4">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
@@ -186,7 +187,7 @@
       </a>
 
       <!-- CARD 5: HELP DESK & EMERGENCY -->
-      <a href="pages/help.html" class="group card-base card-service flex flex-col justify-between sm:col-span-2 lg:col-span-2 text-decoration-none" data-service="5">
+      <a href="pages/help.html" class="group card-base card-service flex flex-col justify-between sm:col-span-2 lg:col-span-2" data-service="5">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
@@ -212,7 +213,7 @@
         <span class="font-semibold text-main">Venue Location:</span>
         <span class="text-muted ml-1">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
       </div>
-      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="text-gov-blue font-semibold text-decoration-none card-base px-3 py-1.5 rounded shadow-sm shrink-0">
+      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="text-gov-blue font-semibold card-base px-3 py-1.5 rounded shadow-sm shrink-0">
         Google Maps ↗
       </a>
     </div>

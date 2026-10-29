@@ -46,44 +46,35 @@ button, a, input, select {
   touch-action: manipulation;
 }
 
-/* Fast, Snappy Button Press & Cross-Document View Transitions */
+/* Plain links carry no underline anywhere in this design system */
+a {
+  text-decoration: none;
+}
+
+/* Sticky header must never cover the target of in-page anchors (e.g. #portal-menu) */
+[id] {
+  scroll-margin-top: 6rem;
+}
+
+/* Cross-Document View Transitions — the swap animates via pre-captured
+   compositor snapshots (transform/opacity only = hardware accelerated). */
 @view-transition {
   navigation: auto;
 }
 
-/* Only composite GPU-accelerated properties during page transitions */
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  will-change: transform, opacity;
+  /* Snapshots are already on the GPU; skip any extra fade for a snappier cut. */
+  animation-duration: 0.15s;
+  animation-timing-function: var(--ease-emphasized-out);
 }
 
-::view-transition-old(root) {
-  animation: vtSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) both;
-}
-
-::view-transition-new(root) {
-  animation: vtSlideIn 0.28s cubic-bezier(0.05, 0.7, 0.1, 1) both;
-}
-
-@keyframes vtSlideOut {
-  from { opacity: 1; transform: translateX(0); }
-  to   { opacity: 0; transform: translateX(-24px); }
-}
-
-@keyframes vtSlideIn {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.btn-primary:active, .btn-secondary:active, .btn-mobile-live:active, .nav-link:active, .nav-link-help:active {
-  transform: scale(0.96) !important;
-  transition: transform 0.05s ease !important;
-}
-
-/* Only composite GPU-friendly properties during page transitions */
-::view-transition-old(root),
-::view-transition-new(root) {
-  will-change: transform, opacity;
+/* Instant press feedback (transform-only, stays on the compositor thread) */
+.btn-primary:active,
+.btn-mobile-live:active,
+.nav-link:active,
+.nav-link-help:active {
+  transform: scale(0.96);
 }
 
 /* Typography Helpers */

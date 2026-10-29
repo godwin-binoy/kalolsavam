@@ -15,14 +15,8 @@ body[data-service] {
   background-color: var(--svc-bg);
 }
 
-html.dark body[data-service],
-body.dark[data-service] {
+html.dark body[data-service] {
   background-color: var(--svc-bg-dark);
-}
-
-/* Service-tinted sticky header accent */
-.header-service {
-  border-bottom-color: var(--svc-border);
 }
 
 /* Subtle service-tinted card borders on service pages */
