@@ -1,8 +1,11 @@
 /* ==========================================================
    MALA SUB-DISTRICT KALOLSAVAM - REUSABLE COMPONENTS CSS
+   All colors/shadows come from tokens (variables.css), so this
+   file contains NO theme or dark-mode overrides whatsoever.
+   Service theming is parameterized via [data-service="N"].
    ========================================================== */
 
-/* Header & Nav (Transparent & Highly Blurred — no border/outline) */
+/* ---------- Header & Nav (frosted glass, no border/outline) ---------- */
 .site-header {
   background-color: transparent;
   backdrop-filter: blur(40px);
@@ -10,11 +13,7 @@
   position: sticky;
   top: 0;
   z-index: 50;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-}
-
-html.dark .site-header {
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--shadow-header);
 }
 
 .header-container {
@@ -25,20 +24,17 @@ html.dark .site-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
 }
 
 @media (min-width: 640px) {
   .header-container {
-    padding-left: 2rem;
-    padding-right: 2rem;
-    padding-top: 1rem;
-    padding-bottom: 1rem;
+    padding: 1rem 2rem;
   }
 }
 
-/* Shared pill style for all nav links / icon buttons */
-.nav-link,
-.nav-link-help {
+/* Shared pill base for every nav link / icon button */
+.nav-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -46,21 +42,9 @@ html.dark .site-header {
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  transition: var(--transition-smooth);
-}
-
-/* Theme-toggle icon buttons (fixed square so light/dark SVG swap never shifts layout) */
-.theme-toggle {
-  width: 2.25rem;
-  height: 2.25rem;
-  padding: 0.5rem;
-  border: none;
-  background-color: transparent;
-  cursor: pointer;
-}
-
-.nav-link {
   color: var(--olive-mid);
+  transition: color var(--theme-fade), background-color var(--theme-fade),
+              transform 0.15s var(--ease-emphasized);
 }
 
 .nav-link:hover {
@@ -70,17 +54,12 @@ html.dark .site-header {
 
 .nav-link.active {
   background-color: var(--olive-dark);
-  color: #F8F6F0;
+  color: var(--color-on-brand);
   box-shadow: 0 2px 6px rgba(34, 43, 36, 0.2);
 }
 
-html.dark .nav-link.active {
-  color: #161D18;
-}
-
-/* Help link — semantic red theme via shared state tokens (light + dark handled once) */
-.nav-link-help,
-.mobile-menu-link-help {
+/* Help link — semantic red theme via shared emergency state tokens */
+.nav-link-help {
   color: var(--color-badge-emergency-text);
   background-color: var(--color-badge-emergency-bg);
   border: 1px solid var(--color-badge-emergency-border);
@@ -90,6 +69,17 @@ html.dark .nav-link.active {
   box-shadow: 0 2px 6px rgba(155, 44, 44, 0.15);
 }
 
+/* Theme-toggle icon buttons: fixed square so the SVG swap never shifts layout */
+.theme-toggle {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.5rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+}
+
+/* ---------- Mobile drawer ---------- */
 .mobile-menu-drawer {
   background-color: transparent;
   backdrop-filter: blur(40px);
@@ -100,12 +90,16 @@ html.dark .nav-link.active {
   overflow: hidden;
   visibility: hidden;
   transform: translateY(-10px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--shadow-drawer);
   border-bottom-left-radius: 1.5rem;
   border-bottom-right-radius: 1.5rem;
   /* Compositor-friendly: animate transform/opacity only; max-height is the
      single exception needed to collapse the drawer's layout space. */
-  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease, visibility 0.35s;
+  transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.3s ease,
+              transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              padding 0.35s ease,
+              visibility 0.35s;
 }
 
 .mobile-menu-drawer.open {
@@ -116,23 +110,15 @@ html.dark .nav-link.active {
   padding: 1rem 1.25rem 1.5rem 1.25rem;
 }
 
-html.dark .mobile-menu-drawer {
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-}
-
 /* Shared mobile drawer link style */
-.mobile-menu-link,
-.mobile-menu-link-help {
+.mobile-menu-link {
   display: block;
   padding: 0.75rem 1rem;
   border-radius: 1rem;
   font-size: 0.9rem;
   font-weight: 600;
-  transition: var(--transition-smooth);
-}
-
-.mobile-menu-link {
   color: var(--color-text-main);
+  transition: background-color var(--theme-fade), color var(--theme-fade);
 }
 
 .mobile-menu-link:hover {
@@ -142,37 +128,28 @@ html.dark .mobile-menu-drawer {
 
 .mobile-menu-link.active {
   background-color: var(--olive-dark);
-  color: #F8F6F0;
+  color: var(--color-on-brand);
 }
 
-html.dark .mobile-menu-link.active {
-  color: #161D18;
-}
-
-/* Help entry gets a little breathing room from the list above it
-   (its red theme comes from the shared .nav-link-help rule) */
+/* Help entry: red theme from shared emergency tokens + breathing room */
 .mobile-menu-link-help {
   margin-top: 0.5rem;
+  color: var(--color-badge-emergency-text);
+  background-color: var(--color-badge-emergency-bg);
+  border: 1px solid var(--color-badge-emergency-border);
 }
 
-/* Footer */
+/* ---------- Footer ---------- */
 .site-footer {
-  background-color: #161D18;
-  color: #E6E1D9;
+  background-color: var(--color-footer-bg);
+  color: var(--color-footer-fg);
   font-size: 0.8125rem;
   padding: 2.5rem 1.5rem;
-  border-top: 1px solid var(--beige-border);
   margin-top: auto;
-  transition: background-color 0.3s ease;
 }
 
 .footer-text {
-  color: #e2e8f0;
-}
-
-html.dark .site-footer {
-  background-color: #0C0E0D;
-  color: #A3B59D;
+  color: var(--color-footer-text);
 }
 
 .footer-container {
@@ -194,49 +171,38 @@ html.dark .site-footer {
   }
 }
 
-/* M3 Cards (Blended Organic Frosted Surfaces) */
+/* ---------- Cards (blended organic frosted surfaces) ---------- */
 .card-base {
   background-color: var(--color-card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(216, 223, 212, 0.6);
+  border: 1px solid var(--color-card-border);
   border-radius: 1.5rem;
   padding: 1.75rem;
-  box-shadow: 0 4px 16px rgba(34, 43, 36, 0.03);
+  box-shadow: var(--shadow-card);
   touch-action: manipulation;
   /* Isolate each card's layout/paint so hover lifts never reflow siblings */
   contain: layout paint style;
-  /* Hover lift is transform-only (compositor thread); color/shadow changes
-     are cheap paint work — no need for the "all" transition anymore */
-  transition:
-    transform 0.15s var(--ease-emphasized),
-    box-shadow 0.15s ease,
-    border-color 0.15s ease,
-    background-color 0.15s ease;
-}
-
-html.dark .card-base {
-  border-color: rgba(45, 58, 49, 0.8);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  /* Hover lift is transform-only (compositor thread) */
+  transition: transform 0.15s var(--ease-emphasized),
+              box-shadow 0.15s ease,
+              border-color 0.15s ease,
+              background-color 0.15s ease;
 }
 
 .card-base:hover {
   border-color: var(--olive-mid);
-  box-shadow: 0 6px 24px rgba(67, 81, 70, 0.06);
+  box-shadow: var(--shadow-card-hover);
   transform: translateY(-2px);
   background-color: var(--color-card-hover);
-}
-
-html.dark .card-base:hover {
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .card-base:active {
   transform: scale(0.985);
 }
 
-/* Scroll-reveal states (managed by js/main.js). Reveal uses its own explicit
-   transition below so it never overrides the hover-lift transition above. */
+/* Scroll-reveal states (managed by js/main.js). Reveal declares its own
+   transition so it never clobbers the hover-lift transition above. */
 .card-base.reveal-card {
   opacity: 0;
   transform: translate3d(0, 12px, 0);
@@ -245,9 +211,8 @@ html.dark .card-base:hover {
 .card-base.revealed {
   opacity: 1;
   transform: none;
-  transition:
-    opacity 0.4s ease var(--reveal-delay, 0s),
-    transform 0.4s var(--ease-emphasized) var(--reveal-delay, 0s);
+  transition: opacity 0.4s ease var(--reveal-delay, 0s),
+              transform 0.4s var(--ease-emphasized) var(--reveal-delay, 0s);
 }
 
 .inner-box {
@@ -255,18 +220,13 @@ html.dark .card-base:hover {
   border: 1px solid var(--beige-border);
   border-radius: 1rem;
   padding: 1.25rem;
-  transition: background-color 0.3s ease;
 }
 
-html.dark .inner-box {
-  background-color: rgba(18, 24, 20, 0.6);
-  border-color: rgba(45, 58, 49, 0.6);
-}
-
-/* Badges & Chips (shared pill base for all status badges) */
+/* ---------- Badges, chips & dots (shared pill bases) ---------- */
 .badge-gov,
 .badge-live,
-.badge-emergency {
+.badge-emergency,
+.chip {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
@@ -302,7 +262,37 @@ html.dark .inner-box {
   border-color: var(--color-badge-emergency-border);
 }
 
-/* Buttons */
+/* Pulsing "on stage" dot (replaces inline Tailwind utility stacks) */
+.live-dot {
+  display: inline-block;
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background-color: var(--color-dot-live);
+  animation: pulse-dot 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.45; }
+}
+
+/* Arrow affordance on service cards (SVG-free, transform-only hover slide) */
+.arrow-icon {
+  display: inline-block;
+  width: 0.875rem;
+  height: 0.875rem;
+  transition: transform 0.15s var(--ease-emphasized);
+  background-color: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14m-6-6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12h14m-6-6 6 6-6 6'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.group:hover .arrow-icon {
+  transform: translateX(4px);
+}
+
+/* ---------- Buttons ---------- */
 .btn-primary {
   display: inline-flex;
   align-items: center;
@@ -312,24 +302,17 @@ html.dark .inner-box {
   font-size: 0.875rem;
   font-weight: 700;
   background-color: var(--olive-dark);
-  color: #F8F6F0;
+  color: var(--color-on-brand);
   box-shadow: 0 4px 14px rgba(34, 43, 36, 0.15);
-  transition: transform 0.15s var(--ease-emphasized), background-color 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s var(--ease-emphasized),
+              background-color 0.15s ease,
+              box-shadow 0.15s ease;
 }
 
 .btn-primary:hover {
   background-color: var(--olive-mid);
   box-shadow: 0 6px 20px rgba(34, 43, 36, 0.25);
   transform: translateY(-1px);
-}
-
-html.dark .btn-primary {
-  background-color: #D4E2CD;
-  color: #161D18;
-}
-
-html.dark .btn-primary:hover {
-  background-color: #B2C9AB;
 }
 
 .btn-mobile-live {
@@ -340,10 +323,10 @@ html.dark .btn-primary:hover {
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 800;
+  text-transform: uppercase;
   color: var(--color-badge-live-text);
   background-color: var(--color-badge-live-bg);
   border: 1px solid var(--color-badge-live-border);
-  text-transform: uppercase;
 }
 
 .logo-box {
@@ -352,12 +335,27 @@ html.dark .btn-primary:hover {
   border-radius: 0.75rem;
 }
 
-/* Distinct Service Card Themes — one parameterized pattern via [data-service] */
-[data-service="1"] { --svc-accent: var(--service-1-accent); --svc-container: var(--service-1-container); --svc-border: var(--service-1-border); --svc-tint: 234, 242, 248; --svc-dark: 23, 34, 44; --svc-shadow: 46, 90, 136; }
-[data-service="2"] { --svc-accent: var(--service-2-accent); --svc-container: var(--service-2-container); --svc-border: var(--service-2-border); --svc-tint: 253, 243, 231; --svc-dark: 44, 34, 23; --svc-shadow: 136, 74, 46; }
-[data-service="3"] { --svc-accent: var(--service-3-accent); --svc-container: var(--service-3-container); --svc-border: var(--service-3-border); --svc-tint: 243, 234, 248; --svc-dark: 37, 23, 44; --svc-shadow: 90, 46, 136; }
-[data-service="4"] { --svc-accent: var(--service-4-accent); --svc-container: var(--service-4-container); --svc-border: var(--service-4-border); --svc-tint: 234, 248, 242; --svc-dark: 23, 44, 34; --svc-shadow: 46, 136, 90; }
-[data-service="5"] { --svc-accent: var(--service-5-accent); --svc-container: var(--service-5-container); --svc-border: var(--service-5-border); --svc-tint: 248, 234, 234; --svc-dark: 44, 23, 23; --svc-shadow: 136, 46, 46; }
+/* ---------- Service theming: ONE pattern for all five modules ----------
+   [data-service] maps semantic aliases onto per-module token sets; every
+   themed rule below consumes only the aliases (--svc-*). Adding module #6
+   = adding one token block in variables.css + one mapping line here. */
+[data-service="1"], body[data-service="1"] { --svc-accent: var(--service-1-accent); --svc-container: var(--service-1-container); --svc-border: var(--service-1-border); --svc-tint: var(--service-1-tint); --svc-shadow: var(--service-1-shadow); --svc-page-bg: var(--service-1-page-bg); }
+[data-service="2"], body[data-service="2"] { --svc-accent: var(--service-2-accent); --svc-container: var(--service-2-container); --svc-border: var(--service-2-border); --svc-tint: var(--service-2-tint); --svc-shadow: var(--service-2-shadow); --svc-page-bg: var(--service-2-page-bg); }
+[data-service="3"], body[data-service="3"] { --svc-accent: var(--service-3-accent); --svc-container: var(--service-3-container); --svc-border: var(--service-3-border); --svc-tint: var(--service-3-tint); --svc-shadow: var(--service-3-shadow); --svc-page-bg: var(--service-3-page-bg); }
+[data-service="4"], body[data-service="4"] { --svc-accent: var(--service-4-accent); --svc-container: var(--service-4-container); --svc-border: var(--service-4-border); --svc-tint: var(--service-4-tint); --svc-shadow: var(--service-4-shadow); --svc-page-bg: var(--service-4-page-bg); }
+[data-service="5"], body[data-service="5"] { --svc-accent: var(--service-5-accent); --svc-container: var(--service-5-container); --svc-border: var(--service-5-border); --svc-tint: var(--service-5-tint); --svc-shadow: var(--service-5-shadow); --svc-page-bg: var(--service-5-page-bg); }
+
+/* Tinted canvas for service pages (html keeps the neutral boot color for
+   frame #1; body paints the tint once styles are ready — same hue family,
+   so there is no perceptible flash either way). */
+body[data-service] {
+  background-color: var(--svc-page-bg);
+}
+
+/* Subtle service-tinted borders on cards within a service page */
+body[data-service] .card-base {
+  border-color: var(--svc-border);
+}
 
 .card-service {
   background-color: rgba(var(--svc-tint), 0.5);
@@ -380,10 +378,70 @@ html.dark .btn-primary:hover {
   color: var(--svc-accent);
 }
 
-html.dark .card-service {
-  background-color: rgba(var(--svc-dark), 0.6);
+/* Service chip variants */
+.chip {
+  font-size: 0.75rem;
 }
 
-html.dark .card-service:hover {
-  background-color: rgba(var(--svc-dark), 0.85);
+.chip-service {
+  background-color: var(--svc-container);
+  color: var(--svc-accent);
+  border: 1px solid var(--svc-border);
+}
+
+.chip-sm {
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chip-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.625rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+}
+
+/* Help-desk call buttons (theme-aware through emergency/secondary tokens) */
+.btn-call {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.625rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: transform 0.15s var(--ease-emphasized), filter 0.15s ease;
+}
+
+.btn-call:hover {
+  filter: brightness(0.97);
+  transform: translateY(-1px);
+}
+
+html.dark .btn-call:hover {
+  filter: brightness(1.15);
+}
+
+.btn-call-emergency {
+  background-color: var(--color-badge-emergency-bg);
+  color: var(--color-badge-emergency-text);
+  border: 1px solid var(--color-badge-emergency-border);
+}
+
+.btn-call-desk {
+  background-color: var(--gov-secondary);
+  color: var(--gov-blue);
+  border: 1px solid var(--gov-secondary-border);
+}
+
+/* Photo card cover image */
+.photo-cover {
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+  display: block;
 }

@@ -1,32 +1,22 @@
 /* ==========================================================
-   MALA SUB-DISTRICT KALOLSAVAM - BASE & LAYOUT CSS
+   MALA SUB-DISTRICT KALOLSAVAM - BASE, LAYOUT & MOTION
+   Everything theme-dependent flows through tokens from
+   variables.css — this file has ZERO dark-mode overrides.
    ========================================================== */
 
 html {
   scroll-behavior: smooth;
   /* Painted by the inline theme bootstrap before stylesheets load —
-     guarantees the first frame already matches the saved theme. */
-  background-color: var(--boot-bg, #F8F6F0);
-  /* The "root" backdrop covers overscroll areas AND is the canvas
-     browsers snapshot for cross-document view transitions (no white flash). */
-}
-
-html::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  /* --boot-bg is set synchronously by the head bootstrap (theme-correct
-     from frame 1). The fallback only applies with JS disabled. */
-  background-color: var(--boot-bg, #F8F6F0);
-  transition: background-color 0.3s ease;
+     guarantees frame #1 already matches the saved theme (no flash).
+     The var() fallback only applies when JS is disabled. */
+  background-color: var(--boot-bg, var(--color-body-bg));
 }
 
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text-main);
-  /* Transparent so the html/::before backdrop (theme-correct from frame 1) shows through */
+  /* Transparent so the html canvas (theme-correct from frame 1) shows
+     through during View-Transition snapshots. */
   background-color: transparent;
   margin: 0;
   display: flex;
@@ -35,12 +25,7 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
-  transition: color 0.3s ease;
 }
-
-/* Service-page tint is applied on <body> via body[data-service] rules in
-   css/pages/pages.css. The pre-paint bootstrap paints a neutral theme-correct
-   backdrop (above) so there is never a white flash, even before CSS loads. */
 
 button, a, input, select {
   touch-action: manipulation;
@@ -56,15 +41,41 @@ a {
   scroll-margin-top: 6rem;
 }
 
-/* Cross-Document View Transitions — the swap animates via pre-captured
-   compositor snapshots (transform/opacity only = hardware accelerated). */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+:focus-visible {
+  outline: 2px solid var(--olive-mid);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ---------- Theme cross-fade ------------------------------------------------
+   Applied via <html data-theme-anim> for ~350ms around a toggle (see
+   js/main.js), then removed. Cost is paid ONLY on explicit toggles — page
+   loads, navigation and View Transitions stay instant, and hover/reveal
+   transitions are never clobbered by broad "transition: all" rules. */
+html[data-theme-anim] *,
+html[data-theme-anim] *::before,
+html[data-theme-anim] *::after {
+  transition: background-color var(--theme-fade), border-color var(--theme-fade),
+              color var(--theme-fade), fill var(--theme-fade),
+              stroke var(--theme-fade), box-shadow var(--theme-fade) !important;
+  transition-delay: 0s !important;
+}
+
+/* ---------- Cross-document View Transitions -------------------------------
+   The swap animates via pre-captured compositor snapshots (transform/opacity
+   only = hardware accelerated). The old page freezes at its real rendered
+   pixels, so it keeps whatever theme was active — no re-light flicker. */
 @view-transition {
   navigation: auto;
 }
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  /* Snapshots are already on the GPU; skip any extra fade for a snappier cut. */
   animation-duration: 0.15s;
   animation-timing-function: var(--ease-emphasized-out);
 }
@@ -72,12 +83,19 @@ a {
 /* Instant press feedback (transform-only, stays on the compositor thread) */
 .btn-primary:active,
 .btn-mobile-live:active,
-.nav-link:active,
-.nav-link-help:active {
+.nav-link:active {
   transform: scale(0.96);
 }
 
-/* Typography Helpers */
+/* ---------- Typography helpers (replace repeated utility strings) -------- */
+.text-xs   { font-size: 0.75rem;   line-height: 1rem; }
+.text-sm   { font-size: 0.875rem;  line-height: 1.25rem; }
+.text-base { font-size: 1rem;      line-height: 1.5rem; }
+.text-lg   { font-size: 1.125rem;  line-height: 1.75rem; }
+.font-medium   { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold     { font-weight: 700; }
+
 .page-title {
   font-size: 1.75rem;
   font-weight: 800;
@@ -107,43 +125,56 @@ a {
   letter-spacing: -0.01em;
 }
 
-.text-main { color: var(--color-text-main); }
+.text-main    { color: var(--color-text-main); }
 .text-heading { color: var(--color-text-heading); }
-.text-muted { color: var(--color-text-muted); }
-.text-subtle { color: var(--color-text-subtle); }
+.text-muted   { color: var(--color-text-muted); }
+.text-subtle  { color: var(--color-text-subtle); }
 .text-gov-blue { color: var(--gov-blue); }
 
-/* Smooth theme-aware color transitions for headings */
+/* Headings fade with the theme (cheap property list, no layout work) */
 .heading-transition {
-  transition: var(--transition-smooth);
+  transition: color var(--theme-fade), background-color var(--theme-fade);
 }
 
-.main-container {
+/* ---------- Layout containers ---------- */
+.main-container,
+.hero-container {
   max-width: 72rem;
   margin-left: auto;
   margin-right: auto;
-  padding: 3.5rem 1rem;
-  flex-grow: 1;
   width: 100%;
   box-sizing: border-box;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.main-container {
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
+  flex-grow: 1;
+}
+
+.hero-container {
+  padding-top: 3.5rem;
+  padding-bottom: 3.5rem;
 }
 
 @media (min-width: 640px) {
-  .main-container {
+  .main-container,
+  .hero-container {
     padding-left: 2rem;
     padding-right: 2rem;
   }
+  .hero-container {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
 }
 
-.divider-top {
-  border-top: 1px solid var(--color-border);
-}
+.divider-top    { border-top: 1px solid var(--color-border); }
+.divider-bottom { border-bottom: 1px solid var(--color-border); }
 
-.divider-bottom {
-  border-bottom: 1px solid var(--color-border);
-}
-
-/* Respect users who prefer reduced motion */
+/* ---------- Respect reduced-motion users (last: wins by order) ---------- */
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
