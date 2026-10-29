@@ -56,7 +56,14 @@ img {
    Applied via <html data-theme-anim> for ~350ms around a toggle (see
    js/main.js), then removed. Cost is paid ONLY on explicit toggles — page
    loads, navigation and View Transitions stay instant, and hover/reveal
-   transitions are never clobbered by broad "transition: all" rules. */
+   transitions are never clobbered by broad "transition: all" rules.
+
+   IMPORTANT: the * selector has specificity 0-0-0, so any element with its
+   OWN transition rule (e.g. .card-base's transform hover lift) would override
+   this fade for that element. The :where() wrapper contributes ZERO
+   specificity to the html[data-theme-anim] prefix, letting the fade win over
+   class-level transitions during a toggle while still losing to utility
+   classes like .heading-transition (specificity 0-1-0 vs 0-1-1). */
 html[data-theme-anim] *,
 html[data-theme-anim] *::before,
 html[data-theme-anim] *::after {
@@ -64,6 +71,15 @@ html[data-theme-anim] *::after {
               color var(--theme-fade), fill var(--theme-fade),
               stroke var(--theme-fade), box-shadow var(--theme-fade) !important;
   transition-delay: 0s !important;
+}
+
+html:where([data-theme-anim]) *,
+html:where([data-theme-anim]) *::before,
+html:where([data-theme-anim]) *::after {
+  transition: background-color var(--theme-fade), border-color var(--theme-fade),
+              color var(--theme-fade), fill var(--theme-fade),
+              stroke var(--theme-fade), box-shadow var(--theme-fade);
+  transition-delay: 0s;
 }
 
 /* ---------- Cross-document View Transitions -------------------------------
