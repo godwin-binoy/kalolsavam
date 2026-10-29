@@ -4,18 +4,18 @@
    per-page stylesheets. Set data-service="N" on <body>.)
    ========================================================== */
 
-/* Per-service header border + page background tokens */
+/* Per-service tokens + tinted page background (light + dark) */
 body[data-service="1"] { --svc-border: var(--service-1-border); --svc-bg: #F4F8FC; --svc-bg-dark: #0E141A; }
 body[data-service="2"] { --svc-border: var(--service-2-border); --svc-bg: #FAF6F0; --svc-bg-dark: #16120E; }
 body[data-service="3"] { --svc-border: var(--service-3-border); --svc-bg: #F8F4FC; --svc-bg-dark: #140E1A; }
 body[data-service="4"] { --svc-border: var(--service-4-border); --svc-bg: #F4FCF8; --svc-bg-dark: #0E1A14; }
 body[data-service="5"] { --svc-border: var(--service-5-border); --svc-bg: #FCF4F4; --svc-bg-dark: #1A0E0E; }
 
-/* Tinted page background (light + dark) */
 body[data-service] {
   background-color: var(--svc-bg);
 }
 
+html.dark body[data-service],
 body.dark[data-service] {
   background-color: var(--svc-bg-dark);
 }
@@ -25,7 +25,32 @@ body.dark[data-service] {
   border-bottom-color: var(--svc-border);
 }
 
-/* Subtle service-tinted card borders on service pages (no per-card inline styles needed) */
+/* Subtle service-tinted card borders on service pages */
 body[data-service] .card-base {
   border-color: var(--svc-border);
+}
+
+/* Shared service chip (replaces the repeated inline styles per page) */
+.chip-service {
+  background-color: var(--svc-container);
+  color: var(--svc-accent);
+  border: 1px solid var(--svc-border);
+}
+
+/* Help desk call buttons (theme-aware, were inline-styled) */
+.btn-call-emergency {
+  background-color: var(--color-badge-emergency-bg);
+  color: var(--color-badge-emergency-text);
+  border: 1px solid var(--color-badge-emergency-border);
+}
+
+.btn-call-desk {
+  background-color: var(--gov-secondary);
+  color: var(--gov-blue);
+  border: 1px solid var(--gov-secondary-border);
+}
+
+/* Footer "back to home" link */
+.footer-back-link {
+  color: #38bdf8;
 }

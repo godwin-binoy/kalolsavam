@@ -4,12 +4,30 @@
 
 html {
   scroll-behavior: smooth;
+  /* Painted by the inline theme bootstrap before stylesheets load —
+     guarantees the first frame already matches the saved theme. */
+  background-color: var(--boot-bg, #F8F6F0);
+  /* The "root" backdrop covers overscroll areas AND is the canvas
+     browsers snapshot for cross-document view transitions (no white flash). */
+}
+
+html::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  /* --boot-bg is set synchronously by the head bootstrap (theme-correct
+     from frame 1). The fallback only applies with JS disabled. */
+  background-color: var(--boot-bg, #F8F6F0);
+  transition: background-color 0.3s ease;
 }
 
 body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text-main);
-  background-color: var(--color-body-bg);
+  /* Transparent so the html/::before backdrop (theme-correct from frame 1) shows through */
+  background-color: transparent;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -17,34 +35,44 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: color 0.3s ease;
 }
+
+/* Service-page tint is applied on <body> via body[data-service] rules in
+   css/pages/pages.css. The pre-paint bootstrap paints a neutral theme-correct
+   backdrop (above) so there is never a white flash, even before CSS loads. */
 
 button, a, input, select {
   touch-action: manipulation;
 }
 
-/* Fast, Snappy Button Press & Horizontal View Transitions */
+/* Fast, Snappy Button Press & Cross-Document View Transitions */
 @view-transition {
   navigation: auto;
 }
 
+/* Only composite GPU-accelerated properties during page transitions */
+::view-transition-old(root),
+::view-transition-new(root) {
+  will-change: transform, opacity;
+}
+
 ::view-transition-old(root) {
-  animation: m3SlideOutLeft 0.15s cubic-bezier(0.4, 0, 1, 1) both;
+  animation: vtSlideOut 0.18s cubic-bezier(0.4, 0, 1, 1) both;
 }
 
 ::view-transition-new(root) {
-  animation: m3SlideInRight 0.25s cubic-bezier(0.05, 0.7, 0.1, 1.0) both;
+  animation: vtSlideIn 0.28s cubic-bezier(0.05, 0.7, 0.1, 1) both;
 }
 
-@keyframes m3SlideOutLeft {
+@keyframes vtSlideOut {
   from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(-30px); }
+  to   { opacity: 0; transform: translateX(-24px); }
 }
 
-@keyframes m3SlideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
+@keyframes vtSlideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 .btn-primary:active, .btn-secondary:active, .btn-mobile-live:active, .nav-link:active, .nav-link-help:active {
@@ -92,6 +120,7 @@ button, a, input, select {
 .text-heading { color: var(--color-text-heading); }
 .text-muted { color: var(--color-text-muted); }
 .text-subtle { color: var(--color-text-subtle); }
+.text-gov-blue { color: var(--gov-blue); }
 
 /* Smooth theme-aware color transitions for headings */
 .heading-transition {

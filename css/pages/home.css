@@ -10,7 +10,7 @@
   transition: background 0.3s ease;
 }
 
-body.dark .hero-section {
+html.dark .hero-section {
   background: transparent;
   border-bottom-color: transparent;
 }

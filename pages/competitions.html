@@ -4,12 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Competitions &amp; Results | Mala Sub-District Kalolsavam</title>
-  <script>
-    if (localStorage.getItem('kalolsavam_dark') === 'true') {
-      document.documentElement.classList.add('dark');
-      document.addEventListener('DOMContentLoaded', () => document.body.classList.add('dark'));
-    }
-  </script>
+  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
+       Inlined on purpose: one less blocking network request at page start. -->
+  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -69,7 +66,7 @@
 
   <main class="main-container">
     <div class="mb-8">
-      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-2" style="background-color: var(--service-2-container); color: var(--service-2-accent); border: 1px solid var(--service-2-border);">
+      <div class="chip-service inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mb-2">
         Module 02 • Competitions &amp; Results
       </div>
       <h2 class="page-title">Competitions &amp; Results Tabulation</h2>
@@ -87,7 +84,7 @@
           <div class="space-y-4">
             <div class="inner-box p-4 rounded">
               <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs mb-2 gap-2">
-                <span class="font-bold px-2 py-0.5 rounded" style="color: var(--service-2-accent); background-color: var(--service-2-container); border: 1px solid var(--service-2-border);">Item #12 - HS Bharathanatyam (Girls)</span>
+                <span class="chip-service font-bold px-2 py-0.5 rounded">Item #12 - HS Bharathanatyam (Girls)</span>
                 <span class="badge-live">Verified &amp; Published</span>
               </div>
               <div class="space-y-1.5 text-xs pt-1">
@@ -109,7 +106,7 @@
         <div class="card-base">
           <h3 class="card-title mb-3">Points Tally (Top Schools)</h3>
           <div class="space-y-2 text-xs">
-            <div class="flex justify-between p-2.5 rounded font-semibold" style="background-color: var(--service-2-container); border: 1px solid var(--service-2-border); color: var(--service-2-accent);">
+            <div class="chip-service flex justify-between p-2.5 rounded font-semibold">
               <span>1. St. Antony's HSS Mala</span>
               <span>145 pts</span>
             </div>
@@ -129,8 +126,8 @@
 
   <footer class="site-footer">
     <div class="footer-container">
-      <p class="font-medium" style="color: #e2e8f0;">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
-      <a href="../index.html" class="text-decoration-none font-semibold" style="color: #38bdf8;">← Back to Home</a>
+      <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+      <a href="../index.html" class="footer-back-link text-decoration-none font-semibold">← Back to Home</a>
     </div>
   </footer>
 
