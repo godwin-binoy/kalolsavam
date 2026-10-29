@@ -6,6 +6,7 @@
   <title>Stage Photos &amp; Media | Mala Sub-District Kalolsavam</title>
   <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
        Inlined on purpose: one less blocking network request at page start. -->
+  <!-- Keep this snippet in sync with js/theme.js (documented copy). -->
   <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,13 +15,13 @@
 </head>
 <body data-service="3" class="font-sans antialiased flex flex-col min-h-screen">
 
-  <header class="site-header header-service">
+  <header class="site-header">
     <div class="header-container flex items-center justify-between">
       <div class="flex items-center gap-3">
-        <a href="../index.html" class="flex items-center gap-3 group text-decoration-none">
+        <a href="../index.html" class="flex items-center gap-3 group">
           <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
           <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors heading-transition">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">
               St. Antony's HSS Mala
             </h1>
             <p class="text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</p>
@@ -36,16 +37,16 @@
         <a href="photos.html" class="nav-link active">Photos</a>
         <a href="facilities.html" class="nav-link">Facilities</a>
         <a href="help.html" class="nav-link-help font-semibold">Help / Emergency</a>
-        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link ml-1 p-2" title="Toggle Dark Mode">🌙</button>
+        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1" title="Toggle Dark Mode"></button>
       </nav>
 
       <!-- Mobile Menu Button -->
       <div class="flex items-center gap-2 md:hidden">
-        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link p-2" title="Toggle Dark Mode">🌙</button>
+        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link theme-toggle" title="Toggle Dark Mode"></button>
         <a href="venues.html" class="btn-mobile-live">
           Live
         </a>
-        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted focus:outline-none rounded-md">
+        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted rounded-md">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
@@ -82,7 +83,7 @@
           <p class="text-xs text-muted mt-0.5">Uploaded 1 hour ago</p>
           <div class="mt-4 pt-3 divider-top flex justify-between items-center text-xs">
             <span class="text-muted font-medium">High Resolution</span>
-            <a href="../res/school.jpeg" download class="text-gov-blue font-semibold text-decoration-none">Download ↗</a>
+            <a href="../res/school.jpeg" download class="text-gov-blue font-semibold">Download ↗</a>
           </div>
         </div>
       </div>
@@ -95,7 +96,7 @@
           <p class="text-xs text-muted mt-0.5">Uploaded 2 hours ago</p>
           <div class="mt-4 pt-3 divider-top flex justify-between items-center text-xs">
             <span class="text-muted font-medium">High Resolution</span>
-            <a href="../res/school.jpeg" download class="text-gov-blue font-semibold text-decoration-none">Download ↗</a>
+            <a href="../res/school.jpeg" download class="text-gov-blue font-semibold">Download ↗</a>
           </div>
         </div>
       </div>
@@ -105,7 +106,7 @@
   <footer class="site-footer">
     <div class="footer-container">
       <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
-      <a href="../index.html" class="footer-back-link text-decoration-none font-semibold">← Back to Home</a>
+      <a href="../index.html" class="footer-back-link font-semibold">← Back to Home</a>
     </div>
   </footer>
 

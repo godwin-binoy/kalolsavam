@@ -2,9 +2,8 @@
    MALA SUB-DISTRICT KALOLSAVAM - REUSABLE COMPONENTS CSS
    ========================================================== */
 
-/* Header & Nav (Transparent & Highly Blurred) */
+/* Header & Nav (Transparent & Highly Blurred — no border/outline) */
 .site-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   background-color: transparent;
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
@@ -12,12 +11,9 @@
   top: 0;
   z-index: 50;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 html.dark .site-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  background-color: transparent;
   box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
 }
 
@@ -45,12 +41,22 @@ html.dark .site-header {
 .nav-link-help {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  text-decoration: none;
   transition: var(--transition-smooth);
+}
+
+/* Theme-toggle icon buttons (fixed square so light/dark SVG swap never shifts layout) */
+.theme-toggle {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0.5rem;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
 }
 
 .nav-link {
@@ -65,7 +71,6 @@ html.dark .site-header {
 .nav-link.active {
   background-color: var(--olive-dark);
   color: #F8F6F0;
-  font-weight: 600;
   box-shadow: 0 2px 6px rgba(34, 43, 36, 0.2);
 }
 
@@ -73,32 +78,22 @@ html.dark .nav-link.active {
   color: #161D18;
 }
 
-.nav-link-help {
-  color: #9B2C2C;
-  background-color: #FDF2F2;
-  border: 1px solid #FAD2D2;
+/* Help link — semantic red theme via shared state tokens (light + dark handled once) */
+.nav-link-help,
+.mobile-menu-link-help {
+  color: var(--color-badge-emergency-text);
+  background-color: var(--color-badge-emergency-bg);
+  border: 1px solid var(--color-badge-emergency-border);
 }
 
 .nav-link-help:hover {
-  background-color: #F9E8E8;
   box-shadow: 0 2px 6px rgba(155, 44, 44, 0.15);
-}
-
-html.dark .nav-link-help {
-  color: #FCA5A5;
-  background-color: rgba(127, 29, 29, 0.3);
-  border: 1px solid rgba(248, 113, 113, 0.3);
-}
-
-html.dark .nav-link-help:hover {
-  background-color: rgba(127, 29, 29, 0.5);
 }
 
 .mobile-menu-drawer {
   background-color: transparent;
   backdrop-filter: blur(40px);
   -webkit-backdrop-filter: blur(40px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   padding: 0 1.25rem;
   max-height: 0;
   opacity: 0;
@@ -108,6 +103,8 @@ html.dark .nav-link-help:hover {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
   border-bottom-left-radius: 1.5rem;
   border-bottom-right-radius: 1.5rem;
+  /* Compositor-friendly: animate transform/opacity only; max-height is the
+     single exception needed to collapse the drawer's layout space. */
   transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), padding 0.35s ease, visibility 0.35s;
 }
 
@@ -120,8 +117,6 @@ html.dark .nav-link-help:hover {
 }
 
 html.dark .mobile-menu-drawer {
-  background-color: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
@@ -133,7 +128,6 @@ html.dark .mobile-menu-drawer {
   border-radius: 1rem;
   font-size: 0.9rem;
   font-weight: 600;
-  text-decoration: none;
   transition: var(--transition-smooth);
 }
 
@@ -155,17 +149,10 @@ html.dark .mobile-menu-link.active {
   color: #161D18;
 }
 
+/* Help entry gets a little breathing room from the list above it
+   (its red theme comes from the shared .nav-link-help rule) */
 .mobile-menu-link-help {
-  color: #9B2C2C;
-  background-color: #FDF2F2;
-  border: 1px solid #FAD2D2;
   margin-top: 0.5rem;
-}
-
-html.dark .mobile-menu-link-help {
-  color: #FCA5A5;
-  background-color: rgba(127, 29, 29, 0.3);
-  border: 1px solid rgba(248, 113, 113, 0.3);
 }
 
 /* Footer */
@@ -215,13 +202,20 @@ html.dark .site-footer {
   border: 1px solid rgba(216, 223, 212, 0.6);
   border-radius: 1.5rem;
   padding: 1.75rem;
-  transition: transform 0.15s var(--ease-emphasized), box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   box-shadow: 0 4px 16px rgba(34, 43, 36, 0.03);
   touch-action: manipulation;
+  /* Isolate each card's layout/paint so hover lifts never reflow siblings */
+  contain: layout paint style;
+  /* Hover lift is transform-only (compositor thread); color/shadow changes
+     are cheap paint work — no need for the "all" transition anymore */
+  transition:
+    transform 0.15s var(--ease-emphasized),
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    background-color 0.15s ease;
 }
 
 html.dark .card-base {
-  background-color: var(--color-card-bg);
   border-color: rgba(45, 58, 49, 0.8);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -234,17 +228,15 @@ html.dark .card-base {
 }
 
 html.dark .card-base:hover {
-  background-color: var(--color-card-hover);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .card-base:active {
-  transform: scale(0.985) translateY(0);
-  transition: transform 0.05s ease;
+  transform: scale(0.985);
 }
 
-/* Scroll-reveal state (managed by JS; keeps hover lift working after reveal).
-   Only compositor-friendly properties animate: transform + opacity. */
+/* Scroll-reveal states (managed by js/main.js). Reveal uses its own explicit
+   transition below so it never overrides the hover-lift transition above. */
 .card-base.reveal-card {
   opacity: 0;
   transform: translate3d(0, 12px, 0);
@@ -253,12 +245,9 @@ html.dark .card-base:hover {
 .card-base.revealed {
   opacity: 1;
   transform: none;
-  will-change: opacity; /* hint the compositor during the fade-in only */
-}
-
-/* Reveal transition lives on the base so hover transform stays instant */
-.card-base {
-  contain: layout paint style; /* isolate layout/paint of each card */
+  transition:
+    opacity 0.4s ease var(--reveal-delay, 0s),
+    transform 0.4s var(--ease-emphasized) var(--reveal-delay, 0s);
 }
 
 .inner-box {
@@ -313,18 +302,6 @@ html.dark .inner-box {
   border-color: var(--color-badge-emergency-border);
 }
 
-.badge-tag {
-  background-color: var(--gov-secondary);
-  color: var(--gov-blue);
-  border: 1px solid var(--gov-secondary-border);
-}
-
-html.dark .badge-tag {
-  background-color: rgba(45, 58, 49, 0.4);
-  color: #D4E2CD;
-  border-color: #2D3A31;
-}
-
 /* Buttons */
 .btn-primary {
   display: inline-flex;
@@ -337,8 +314,7 @@ html.dark .badge-tag {
   background-color: var(--olive-dark);
   color: #F8F6F0;
   box-shadow: 0 4px 14px rgba(34, 43, 36, 0.15);
-  transition: var(--transition-smooth);
-  text-decoration: none;
+  transition: transform 0.15s var(--ease-emphasized), background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .btn-primary:hover {
@@ -367,7 +343,6 @@ html.dark .btn-primary:hover {
   color: var(--color-badge-live-text);
   background-color: var(--color-badge-live-bg);
   border: 1px solid var(--color-badge-live-border);
-  text-decoration: none;
   text-transform: uppercase;
 }
 

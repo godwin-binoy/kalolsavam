@@ -1,5 +1,5 @@
 /* ==========================================================
-   KALOLSAVAM - THEME BOOTSTRAP REFERENCE COPY
+   KALOLSAVAM - THEME BOOTSTRAP (single source of truth)
    ------------------------------------------------------------
    The ACTUAL bootstrap is inlined in every page's <head> (see
    index.html / pages/*.html) so it executes BEFORE first paint
@@ -8,11 +8,14 @@
 
    It solves the dark-mode white flash on navigation:
    1. Reads localStorage synchronously and puts .dark on <html>
-      before any content renders (theme tokens live on html.dark).
+      before any content renders (all theme tokens/selectors key
+      off html.dark — body never needs a mirror class).
    2. Paints the theme-correct background color directly on <html>
       (and via --boot-bg into the html::before fixed backdrop), so
       frame #1 — and every View-Transition snapshot taken before
       stylesheets arrive — is already dark. No light->dark flip.
+
+   KEEP IN SYNC with the inline snippet in each HTML head.
    ========================================================== */
 (function () {
   var html = document.documentElement, dark, bg;

@@ -1,6 +1,6 @@
 /* ==========================================================
    MALA SUB-DISTRICT KALOLSAVAM - SHARED BEHAVIORS
-   Dark mode sync, mobile drawer, prefetch & scroll-reveal.
+   Dark mode toggle, mobile drawer, prefetch & scroll reveal.
 
    NOTE: The dark-mode *bootstrap* (pre-paint theme application)
    is inlined in every page's <head> so it runs before the first
@@ -10,10 +10,14 @@
    ========================================================== */
 
 const DARK_KEY = 'kalolsavam_dark';
-const CACHE_NAME = 'kalolsavam-ultra-cache-v3';
 
-const SUN_SVG = '<svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>';
-const MOON_SVG = '<svg class="w-4 h-4 inline-block" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>';
+/* Theme-toggle icons: one SVG per state, swapped by updateToggleUI().
+   Fixed 16px size + .theme-toggle keeps button dimensions identical
+   across states, so toggling never shifts the header layout. */
+const TOGGLE_ICONS = {
+  light: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>',
+  dark: '<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"></circle><path stroke-linecap="round" stroke-linejoin="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path></svg>'
+};
 
 document.addEventListener('DOMContentLoaded', () => {
   initDarkMode();
@@ -24,30 +28,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /* ---------- Dark Mode (single delegated listener) ---------- */
 function initDarkMode() {
-  // The inline bootstrap already decided the theme on <html>; mirror it
-  // onto <body> (some legacy selectors still target body.dark) and keep
-  // both in sync on every toggle so back-forwards navigation never flashes.
-  const isDark = document.documentElement.classList.contains('dark');
-  document.body.classList.toggle('dark', isDark);
+  // The inline bootstrap already decided the theme on <html>; all theme
+  // selectors key off html.dark, so we only sync the toggle icons here.
+  updateToggleUI(document.documentElement.classList.contains('dark'));
 
   // One listener on <body> handles both desktop + mobile toggles via delegation.
   document.body.addEventListener('click', (e) => {
-    const toggle = e.target.closest('#dark-mode-toggle, #dark-mode-toggle-mobile');
-    if (!toggle) return;
+    if (!e.target.closest('#dark-mode-toggle, #dark-mode-toggle-mobile')) return;
 
-    const active = !document.documentElement.classList.contains('dark');
-    document.documentElement.classList.toggle('dark', active);
-    document.body.classList.toggle('dark', active);
+    const active = document.documentElement.classList.toggle('dark');
     localStorage.setItem(DARK_KEY, String(active));
     updateToggleUI(active);
   });
-
-  updateToggleUI(isDark);
 }
 
 function updateToggleUI(isDark) {
   document.querySelectorAll('#dark-mode-toggle, #dark-mode-toggle-mobile').forEach((btn) => {
-    btn.innerHTML = isDark ? SUN_SVG : MOON_SVG;
+    btn.innerHTML = isDark ? TOGGLE_ICONS.dark : TOGGLE_ICONS.light;
     btn.setAttribute('title', isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode');
     btn.setAttribute('aria-pressed', String(isDark));
   });
@@ -84,7 +81,7 @@ function initMobileMenu() {
    instant is the next document already living in the HTTP cache.
    Strategy: warm all six pages during idle time, and re-warm a page the
    moment its nav link is hovered/focused/touched (zero-cost if cached). */
-const ALL_PAGES = [
+const SITE_PAGES = [
   'index.html',
   'pages/venues.html',
   'pages/competitions.html',
@@ -93,11 +90,14 @@ const ALL_PAGES = [
   'pages/help.html'
 ];
 
+/* Resolve any same-origin href to its absolute URL, minus #hash/?query noise. */
 function warmUrl(href) {
   try {
     const url = new URL(href, window.location.href);
     if (url.origin !== window.location.origin) return null;
-    return url.href.split('#')[0].split('?')[0];
+    url.hash = '';
+    url.search = '';
+    return url.href;
   } catch (e) {
     return null;
   }
@@ -105,37 +105,24 @@ function warmUrl(href) {
 
 function prefetchHref(href) {
   const url = warmUrl(href);
-  if (!url) return;
-  fetch(url, { credentials: 'same-origin' }).catch(() => {});
+  if (url) fetch(url, { credentials: 'same-origin' }).catch(() => {});
 }
 
 function initPrefetch() {
   const root = window.location.pathname.includes('/pages/') ? '../' : './';
-  const urls = ALL_PAGES.map((p) => root + p);
+  const urls = SITE_PAGES.map((p) => root + p);
 
+  // Warm everything once, off the critical path.
   const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 300));
-  idle(() => {
-    if ('caches' in window) {
-      caches.open(CACHE_NAME).then((cache) => {
-        urls.forEach((url) => cache.add(url).catch(() => {}));
-      }).catch(() => {
-        urls.forEach((url) => prefetchHref(url));
-      });
-    } else {
-      urls.forEach((url) => prefetchHref(url));
-    }
-  });
+  idle(() => urls.forEach(prefetchHref));
 
   // Opportunistic hover/focus warming — fires even if the idle pass raced.
-  document.addEventListener('pointerover', (e) => {
+  const warmFromEvent = (e) => {
     const a = e.target.closest && e.target.closest('a[href]');
     if (a) prefetchHref(a.href);
-  }, { passive: true });
-
-  document.addEventListener('focusin', (e) => {
-    const a = e.target.closest && e.target.closest('a[href]');
-    if (a) prefetchHref(a.href);
-  }, { passive: true });
+  };
+  document.addEventListener('pointerover', warmFromEvent, { passive: true });
+  document.addEventListener('focusin', warmFromEvent, { passive: true });
 }
 
 /* ---------- Scroll Reveal (CSS-driven, GPU friendly) ---------- */
@@ -149,19 +136,16 @@ function initCardObservers() {
   const observer = new IntersectionObserver((entries) => {
     entries.forEach((entry) => {
       if (!entry.isIntersecting) return;
-      const el = entry.target;
-      el.style.transitionDelay = el.dataset.revealDelay || '0s';
-      el.classList.add('revealed');
-      observer.unobserve(el);
-      // Drop the compositor hint shortly after the fade completes.
-      setTimeout(() => { el.style.transitionDelay = ''; }, 400);
+      entry.target.classList.add('revealed');
+      observer.unobserve(entry.target);
     });
   }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
 
   cards.forEach((card, index) => {
     card.classList.add('reveal-card');
-    // Precompute stagger delay once (kept small so the page feels instant).
-    card.dataset.revealDelay = `${Math.min(index * 0.03, 0.15)}s`;
+    // Stagger via a CSS custom property so JS never touches inline styles
+    // or transition declarations (hover lift stays intact after reveal).
+    card.style.setProperty('--reveal-delay', `${Math.min(index * 0.03, 0.15)}s`);
     observer.observe(card);
   });
 }

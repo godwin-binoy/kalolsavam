@@ -2,19 +2,6 @@
    MALA SUB-DISTRICT KALOLSAVAM - HOME PAGE CSS
    ========================================================== */
 
-.hero-section {
-  background: transparent;
-  border-bottom: none;
-  position: relative;
-  overflow: hidden;
-  transition: background 0.3s ease;
-}
-
-html.dark .hero-section {
-  background: transparent;
-  border-bottom-color: transparent;
-}
-
 .hero-container {
   max-width: 72rem;
   margin-left: auto;
