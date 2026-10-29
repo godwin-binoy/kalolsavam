@@ -52,12 +52,6 @@
   background-color: var(--md-sys-color-surface-container);
 }
 
-.nav-link.active {
-  background-color: var(--olive-dark);
-  color: var(--color-on-brand);
-  box-shadow: 0 2px 6px rgba(34, 43, 36, 0.2);
-}
-
 /* Help link — semantic red theme via shared emergency state tokens */
 .nav-link-help {
   color: var(--color-badge-emergency-text);
@@ -69,7 +63,11 @@
   box-shadow: 0 2px 6px rgba(155, 44, 44, 0.15);
 }
 
-/* Theme-toggle icon buttons: fixed square so the SVG swap never shifts layout */
+/* Theme-toggle icon buttons: fixed square so the SVG swap never shifts layout.
+   IMPORTANT: this rule must stay AFTER every .nav-link* rule in this file —
+   it intentionally resets the shared pill chrome (background/border) back to
+   a bare icon button. Reordering these blocks re-tints the toggle and makes
+   dark mode LOOK broken even though the state itself is correct. */
 .theme-toggle {
   width: 2.25rem;
   height: 2.25rem;
@@ -77,6 +75,14 @@
   border: none;
   background-color: transparent;
   cursor: pointer;
+}
+
+/* Active desktop nav pill — theme-correct via tokens (dark flips
+   --olive-dark to a light olive automatically). No per-theme overrides. */
+.nav-link.active:not(.theme-toggle) {
+  background-color: var(--olive-dark);
+  color: var(--color-on-brand);
+  box-shadow: 0 2px 6px rgba(34, 43, 36, 0.2);
 }
 
 /* ---------- Mobile drawer ---------- */

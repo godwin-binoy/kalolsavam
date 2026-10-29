@@ -360,7 +360,7 @@ TEMPLATE = """<!DOCTYPE html>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="{r}css/style.css">{home_css}
+  <link rel="stylesheet" href="{r}css/style.css">
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen"{body_attrs}>
 
@@ -471,7 +471,6 @@ def main():
             title=page["title"],
             boot=boot_inline,
             r=r,
-            home_css='\n  <link rel="stylesheet" href="./css/pages/home.css">' if key == "home" else "",
             body_attrs=body_attrs,
             school=SITE["school"],
             tagline=SITE["tagline"],

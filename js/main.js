@@ -54,6 +54,9 @@
     return html.classList.contains(CONFIG.darkClass);
   }
 
+  /* Paint the current state onto every toggle button. Written as a pure
+     function of `isDark()` so it can be re-run after any DOM change
+     (e.g. the mobile drawer cloning its controls) and always converge. */
   function syncToggleUI() {
     var dark = isDark();
     document.querySelectorAll(CONFIG.toggleSelector).forEach(function (btn) {
@@ -63,6 +66,11 @@
     });
   }
 
+  /* The ONLY place the theme changes: toggle <html class="dark"> once,
+     persist it, then re-sync icon + labels + ARIA from the new state.
+     Note: we never mutate aria-checked here — these are <button>s, so
+     aria-pressed is the correct live state attribute (and toggling
+     aria-checked too caused screen readers to announce stale states). */
   function toggleTheme() {
     var dark = html.classList.toggle(CONFIG.darkClass);
     try {
@@ -89,9 +97,26 @@
   function initTheme() {
     // Bootstrap already set <html class="dark"> pre-paint; only sync icons.
     syncToggleUI();
-    // One click handler covers desktop + mobile toggles via delegation.
+
+    /* One DELEGATED click handler on <body> covers every toggle — desktop,
+       mobile drawer, and any future copy — with zero per-element wiring.
+       Delegation is what keeps the two buttons in lockstep: both resolve
+       to the same toggleTheme(), which reads/writes exactly one class. */
     document.body.addEventListener('click', function (e) {
-      if (e.target.closest(CONFIG.toggleSelector)) toggleTheme();
+      var btn = e.target.closest && e.target.closest(CONFIG.toggleSelector);
+      if (btn) {
+        e.preventDefault(); // buttons are type=button already; safe no-op guard
+        toggleTheme();
+      }
+    });
+
+    /* Keep multiple tabs in sync: when another tab flips the theme, adopt
+       its state and repaint this page's toggles (no storage write needed). */
+    window.addEventListener('storage', function (e) {
+      if (e.key !== CONFIG.storageKey) return;
+      var dark = e.newValue === 'true';
+      html.classList.toggle(CONFIG.darkClass, dark);
+      syncToggleUI();
     });
   }
 
