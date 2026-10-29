@@ -13,6 +13,10 @@
     }
   </script>
   
+  <!-- Preconnect for faster font/CDN handshake -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
   <!-- Tailwind CSS (Structural layout only) -->
   <script src="https://cdn.tailwindcss.com"></script>
   
@@ -27,9 +31,9 @@
     <div class="header-container flex items-center justify-between">
       <div class="flex items-center gap-3">
         <a href="index.html" class="flex items-center gap-3 group text-decoration-none">
-          <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0">
+          <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async">
           <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors" style="transition: var(--transition-smooth);">
+            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading transition-colors heading-transition">
               St. Antony's HSS Mala
             </h1>
             <p class="text-[11px] sm:text-xs text-muted font-medium">
@@ -110,14 +114,14 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
       <!-- CARD 1: LIVE VENUES -->
-      <a href="pages/venues.html" class="group card-base card-service-1 flex flex-col justify-between text-decoration-none">
+      <a href="pages/venues.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="1">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
               01
             </div>
           </div>
-          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Stage &amp; Venues</h4>
+          <h4 class="font-semibold text-heading text-base heading-transition">Stage &amp; Venues</h4>
           <p class="text-xs text-muted mt-1.5 leading-relaxed">
             Real-time stage queue, active chest numbers on stage, delays, and stage locations across campus.
           </p>
@@ -129,14 +133,14 @@
       </a>
 
       <!-- CARD 2: COMPETITIONS & RESULTS -->
-      <a href="pages/competitions.html" class="group card-base card-service-2 flex flex-col justify-between text-decoration-none">
+      <a href="pages/competitions.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="2">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
               02
             </div>
           </div>
-          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Competitions &amp; Results</h4>
+          <h4 class="font-semibold text-heading text-base heading-transition">Competitions &amp; Results</h4>
           <p class="text-xs text-muted mt-1.5 leading-relaxed">
             Category-wise schedules (LP, UP, HS, HSS), verified result announcements, and school points table.
           </p>
@@ -148,14 +152,14 @@
       </a>
 
       <!-- CARD 3: STAGE PHOTOS -->
-      <a href="pages/photos.html" class="group card-base card-service-3 flex flex-col justify-between text-decoration-none">
+      <a href="pages/photos.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="3">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
               03
             </div>
           </div>
-          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Stage Photos</h4>
+          <h4 class="font-semibold text-heading text-base heading-transition">Stage Photos</h4>
           <p class="text-xs text-muted mt-1.5 leading-relaxed">
             Search and download performance photographs uploaded directly by the official media room.
           </p>
@@ -167,14 +171,14 @@
       </a>
 
       <!-- CARD 4: FACILITIES & CAMPUS MAP -->
-      <a href="pages/facilities.html" class="group card-base card-service-4 flex flex-col justify-between text-decoration-none">
+      <a href="pages/facilities.html" class="group card-base card-service flex flex-col justify-between text-decoration-none" data-service="4">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
               04
             </div>
           </div>
-          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Facilities &amp; Map</h4>
+          <h4 class="font-semibold text-heading text-base heading-transition">Facilities &amp; Map</h4>
           <p class="text-xs text-muted mt-1.5 leading-relaxed">
             Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.
           </p>
@@ -186,14 +190,14 @@
       </a>
 
       <!-- CARD 5: HELP DESK & EMERGENCY -->
-      <a href="pages/help.html" class="group card-base card-service-5 flex flex-col justify-between sm:col-span-2 lg:col-span-2 text-decoration-none">
+      <a href="pages/help.html" class="group card-base card-service flex flex-col justify-between sm:col-span-2 lg:col-span-2 text-decoration-none" data-service="5">
         <div>
           <div class="flex items-center justify-between mb-3">
             <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
               05
             </div>
           </div>
-          <h4 class="font-semibold text-heading text-base" style="transition: var(--transition-smooth);">Help Desk &amp; Coordination</h4>
+          <h4 class="font-semibold text-heading text-base heading-transition">Help Desk &amp; Coordination</h4>
           <p class="text-xs text-muted mt-1.5 leading-relaxed">
             Convenor contact numbers, First Aid / Medical unit location, Volunteer control room, and Lost &amp; Found counter.
           </p>
@@ -233,7 +237,7 @@
   </footer>
 
   <!-- External JavaScript -->
-  <script src="./js/main.js"></script>
+  <script defer src="./js/main.js"></script>
 
 </body>
 </html>

@@ -40,16 +40,21 @@ body.dark .site-header {
   }
 }
 
-.nav-link {
+/* Shared pill style for all nav links / icon buttons */
+.nav-link,
+.nav-link-help {
   display: inline-flex;
   align-items: center;
   padding: 0.5rem 1rem;
   border-radius: 9999px;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--olive-mid);
-  transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
   text-decoration: none;
+  transition: var(--transition-smooth);
+}
+
+.nav-link {
+  color: var(--olive-mid);
 }
 
 .nav-link:hover {
@@ -69,15 +74,7 @@ body.dark .nav-link.active {
 }
 
 .nav-link-help {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-size: 0.8125rem;
-  font-weight: 600;
   color: #9B2C2C;
-  transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
-  text-decoration: none;
   background-color: #FDF2F2;
   border: 1px solid #FAD2D2;
 }
@@ -128,15 +125,20 @@ body.dark .mobile-menu-drawer {
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
 }
 
-.mobile-menu-link {
+/* Shared mobile drawer link style */
+.mobile-menu-link,
+.mobile-menu-link-help {
   display: block;
   padding: 0.75rem 1rem;
   border-radius: 1rem;
   font-size: 0.9rem;
   font-weight: 600;
-  color: var(--color-text-main);
   text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+  transition: var(--transition-smooth);
+}
+
+.mobile-menu-link {
+  color: var(--color-text-main);
 }
 
 .mobile-menu-link:hover {
@@ -147,7 +149,6 @@ body.dark .mobile-menu-drawer {
 .mobile-menu-link.active {
   background-color: var(--olive-dark);
   color: #F8F6F0;
-  font-weight: 600;
 }
 
 body.dark .mobile-menu-link.active {
@@ -155,14 +156,7 @@ body.dark .mobile-menu-link.active {
 }
 
 .mobile-menu-link-help {
-  display: block;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem;
-  font-size: 0.9rem;
-  font-weight: 600;
   color: #9B2C2C;
-  text-decoration: none;
-  transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
   background-color: #FDF2F2;
   border: 1px solid #FAD2D2;
   margin-top: 0.5rem;
@@ -211,20 +205,19 @@ body.dark .site-footer {
 
 /* M3 Cards (Blended Organic Frosted Surfaces) */
 .card-base {
-  background-color: rgba(246, 244, 239, 0.7);
+  background-color: var(--color-card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(216, 223, 212, 0.6);
   border-radius: 1.5rem;
   padding: 1.75rem;
-  transition: transform 0.15s cubic-bezier(0.05, 0.7, 0.1, 1), box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  transition: transform 0.15s var(--ease-emphasized), box-shadow 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
   box-shadow: 0 4px 16px rgba(34, 43, 36, 0.03);
-  will-change: transform, box-shadow;
   touch-action: manipulation;
 }
 
 body.dark .card-base {
-  background-color: rgba(26, 33, 28, 0.75);
+  background-color: var(--color-card-bg);
   border-color: rgba(45, 58, 49, 0.8);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
 }
@@ -233,17 +226,28 @@ body.dark .card-base {
   border-color: var(--olive-mid);
   box-shadow: 0 6px 24px rgba(67, 81, 70, 0.06);
   transform: translateY(-2px);
-  background-color: rgba(248, 246, 241, 0.85);
+  background-color: var(--color-card-hover);
 }
 
 body.dark .card-base:hover {
-  background-color: rgba(33, 42, 36, 0.85);
+  background-color: var(--color-card-hover);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.3);
 }
 
 .card-base:active {
   transform: scale(0.985) translateY(0);
   transition: transform 0.05s ease;
+}
+
+/* Scroll-reveal state (managed by JS; keeps hover lift working after reveal) */
+.card-base.reveal-card {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.card-base.revealed {
+  opacity: 1;
+  transform: none;
 }
 
 .inner-box {
@@ -259,50 +263,43 @@ body.dark .inner-box {
   border-color: rgba(45, 58, 49, 0.6);
 }
 
-/* Badges & Chips */
-.badge-gov {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--olive-dark);
-  background-color: var(--olive-light);
-  padding: 0.4rem 0.95rem;
-  border-radius: 9999px;
-  border: 1px solid var(--beige-border);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.badge-live {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--color-badge-live-text);
-  background-color: var(--color-badge-live-bg);
-  padding: 0.4rem 0.85rem;
-  border-radius: 9999px;
-  border: 1px solid var(--color-badge-live-border);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
+/* Badges & Chips (shared pill base for all status badges) */
+.badge-gov,
+.badge-live,
 .badge-emergency {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 700;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.badge-gov {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.95rem;
+  color: var(--olive-dark);
+  background-color: var(--olive-light);
+  border-color: var(--beige-border);
+}
+
+.badge-live {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--color-badge-live-text);
+  background-color: var(--color-badge-live-bg);
+  border-color: var(--color-badge-live-border);
+}
+
+.badge-emergency {
   font-size: 11px;
   font-weight: 800;
   color: var(--color-badge-emergency-text);
   background-color: var(--color-badge-emergency-bg);
-  padding: 0.4rem 0.85rem;
-  border-radius: 9999px;
-  border: 1px solid var(--color-badge-emergency-border);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  border-color: var(--color-badge-emergency-border);
 }
 
 .badge-tag {
@@ -329,7 +326,7 @@ body.dark .badge-tag {
   background-color: var(--olive-dark);
   color: #F8F6F0;
   box-shadow: 0 4px 14px rgba(34, 43, 36, 0.15);
-  transition: all 0.3s cubic-bezier(0.2, 0.0, 0, 1.0);
+  transition: var(--transition-smooth);
   text-decoration: none;
 }
 
@@ -369,123 +366,38 @@ body.dark .btn-primary:hover {
   border-radius: 0.75rem;
 }
 
-/* Distinct Service Card Themes (Fully matched to service color ideology) */
-.card-service-1 {
-  background-color: rgba(234, 242, 248, 0.5) !important;
-  border-color: var(--service-1-border) !important;
-}
-body.dark .card-service-1 {
-  background-color: rgba(23, 34, 44, 0.6) !important;
-}
-.card-service-1:hover {
-  background-color: rgba(234, 242, 248, 0.85) !important;
-  border-color: var(--service-1-accent) !important;
-  box-shadow: 0 8px 24px rgba(46, 90, 136, 0.15) !important;
-}
-body.dark .card-service-1:hover {
-  background-color: rgba(23, 34, 44, 0.85) !important;
-}
-.card-service-1 .service-icon {
-  background-color: var(--service-1-container) !important;
-  color: var(--service-1-accent) !important;
-  border: 1px solid var(--service-1-border);
-}
-.card-service-1 .service-arrow {
-  color: var(--service-1-accent) !important;
+/* Distinct Service Card Themes — one parameterized pattern via [data-service] */
+[data-service="1"] { --svc-accent: var(--service-1-accent); --svc-container: var(--service-1-container); --svc-border: var(--service-1-border); --svc-tint: 234, 242, 248; --svc-dark: 23, 34, 44; --svc-shadow: 46, 90, 136; }
+[data-service="2"] { --svc-accent: var(--service-2-accent); --svc-container: var(--service-2-container); --svc-border: var(--service-2-border); --svc-tint: 253, 243, 231; --svc-dark: 44, 34, 23; --svc-shadow: 136, 74, 46; }
+[data-service="3"] { --svc-accent: var(--service-3-accent); --svc-container: var(--service-3-container); --svc-border: var(--service-3-border); --svc-tint: 243, 234, 248; --svc-dark: 37, 23, 44; --svc-shadow: 90, 46, 136; }
+[data-service="4"] { --svc-accent: var(--service-4-accent); --svc-container: var(--service-4-container); --svc-border: var(--service-4-border); --svc-tint: 234, 248, 242; --svc-dark: 23, 44, 34; --svc-shadow: 46, 136, 90; }
+[data-service="5"] { --svc-accent: var(--service-5-accent); --svc-container: var(--service-5-container); --svc-border: var(--service-5-border); --svc-tint: 248, 234, 234; --svc-dark: 44, 23, 23; --svc-shadow: 136, 46, 46; }
+
+.card-service {
+  background-color: rgba(var(--svc-tint), 0.5);
+  border-color: var(--svc-border);
 }
 
-.card-service-2 {
-  background-color: rgba(253, 243, 231, 0.5) !important;
-  border-color: var(--service-2-border) !important;
-}
-body.dark .card-service-2 {
-  background-color: rgba(44, 34, 23, 0.6) !important;
-}
-.card-service-2:hover {
-  background-color: rgba(253, 243, 231, 0.85) !important;
-  border-color: var(--service-2-accent) !important;
-  box-shadow: 0 8px 24px rgba(136, 74, 46, 0.15) !important;
-}
-body.dark .card-service-2:hover {
-  background-color: rgba(44, 34, 23, 0.85) !important;
-}
-.card-service-2 .service-icon {
-  background-color: var(--service-2-container) !important;
-  color: var(--service-2-accent) !important;
-  border: 1px solid var(--service-2-border);
-}
-.card-service-2 .service-arrow {
-  color: var(--service-2-accent) !important;
+.card-service:hover {
+  background-color: rgba(var(--svc-tint), 0.85);
+  border-color: var(--svc-accent);
+  box-shadow: 0 8px 24px rgba(var(--svc-shadow), 0.15);
 }
 
-.card-service-3 {
-  background-color: rgba(243, 234, 248, 0.5) !important;
-  border-color: var(--service-3-border) !important;
-}
-body.dark .card-service-3 {
-  background-color: rgba(37, 23, 44, 0.6) !important;
-}
-.card-service-3:hover {
-  background-color: rgba(243, 234, 248, 0.85) !important;
-  border-color: var(--service-3-accent) !important;
-  box-shadow: 0 8px 24px rgba(90, 46, 136, 0.15) !important;
-}
-body.dark .card-service-3:hover {
-  background-color: rgba(37, 23, 44, 0.85) !important;
-}
-.card-service-3 .service-icon {
-  background-color: var(--service-3-container) !important;
-  color: var(--service-3-accent) !important;
-  border: 1px solid var(--service-3-border);
-}
-.card-service-3 .service-arrow {
-  color: var(--service-3-accent) !important;
+.card-service .service-icon {
+  background-color: var(--svc-container);
+  color: var(--svc-accent);
+  border: 1px solid var(--svc-border);
 }
 
-.card-service-4 {
-  background-color: rgba(234, 248, 242, 0.5) !important;
-  border-color: var(--service-4-border) !important;
-}
-body.dark .card-service-4 {
-  background-color: rgba(23, 44, 34, 0.6) !important;
-}
-.card-service-4:hover {
-  background-color: rgba(234, 248, 242, 0.85) !important;
-  border-color: var(--service-4-accent) !important;
-  box-shadow: 0 8px 24px rgba(46, 136, 90, 0.15) !important;
-}
-body.dark .card-service-4:hover {
-  background-color: rgba(23, 44, 34, 0.85) !important;
-}
-.card-service-4 .service-icon {
-  background-color: var(--service-4-container) !important;
-  color: var(--service-4-accent) !important;
-  border: 1px solid var(--service-4-border);
-}
-.card-service-4 .service-arrow {
-  color: var(--service-4-accent) !important;
+.card-service .service-arrow {
+  color: var(--svc-accent);
 }
 
-.card-service-5 {
-  background-color: rgba(248, 234, 234, 0.5) !important;
-  border-color: var(--service-5-border) !important;
+body.dark .card-service {
+  background-color: rgba(var(--svc-dark), 0.6);
 }
-body.dark .card-service-5 {
-  background-color: rgba(44, 23, 23, 0.6) !important;
-}
-.card-service-5:hover {
-  background-color: rgba(248, 234, 234, 0.85) !important;
-  border-color: var(--service-5-accent) !important;
-  box-shadow: 0 8px 24px rgba(136, 46, 46, 0.15) !important;
-}
-body.dark .card-service-5:hover {
-  background-color: rgba(44, 23, 23, 0.85) !important;
-}
-.card-service-5 .service-icon {
-  background-color: var(--service-5-container) !important;
-  color: var(--service-5-accent) !important;
-  border: 1px solid var(--service-5-border);
-}
-.card-service-5 .service-arrow {
-  color: var(--service-5-accent) !important;
+
+body.dark .card-service:hover {
+  background-color: rgba(var(--svc-dark), 0.85);
 }

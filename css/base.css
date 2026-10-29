@@ -52,6 +52,12 @@ button, a, input, select {
   transition: transform 0.05s ease !important;
 }
 
+/* Only composite GPU-friendly properties during page transitions */
+::view-transition-old(root),
+::view-transition-new(root) {
+  will-change: transform, opacity;
+}
+
 /* Typography Helpers */
 .page-title {
   font-size: 1.75rem;
@@ -87,6 +93,11 @@ button, a, input, select {
 .text-muted { color: var(--color-text-muted); }
 .text-subtle { color: var(--color-text-subtle); }
 
+/* Smooth theme-aware color transitions for headings */
+.heading-transition {
+  transition: var(--transition-smooth);
+}
+
 .main-container {
   max-width: 72rem;
   margin-left: auto;
@@ -110,4 +121,30 @@ button, a, input, select {
 
 .divider-bottom {
   border-bottom: 1px solid var(--color-border);
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+
+  .card-base.reveal-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
