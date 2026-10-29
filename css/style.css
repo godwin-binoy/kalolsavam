@@ -1,8 +1,11 @@
 /* ==========================================================
-   MALA SUB-DISTRICT KALOLSAVAM - MAIN STYLESHEET BUNDLE
+   MALA SUB-DISTRICT KALOLSAVAM - STYLESHEET BUNDLE
+   ------------------------------------------------------------
+   Single blocking <link> per page. Import ORDER is load-bearing:
+   variables (tokens) -> base (layout/motion) -> components.
+   Add a new layer by appending an @import here, never in HTML.
    ========================================================== */
 
 @import url('./variables.css');
 @import url('./base.css');
 @import url('./components.css');
-@import url('./pages/pages.css');

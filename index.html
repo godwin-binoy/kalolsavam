@@ -1,78 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mala Sub-District Kalolsavam | St. Antony's HSS Mala</title>
-  
-  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
-       Inlined on purpose: one less blocking network request at page start. -->
-  <!-- Keep this snippet in sync with js/theme.js (documented copy). -->
-  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
-  
-  <!-- Preconnect for faster font/CDN handshake -->
+  <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
+  <!-- Theme bootstrap runs BEFORE first paint (prevents dark-mode white flash).
+       Canonical logic lives in js/theme-boot.js and is inlined here at build time. -->
+  <script>/* ========================================================================== KALOLSAVAM THEME BOOTSTRAP — canonical source (inlined at build time) -------------------------------------------------------------------------- tools/build.py reads THIS file and inlines it into every page's <head>, so there is exactly one copy of this logic anywhere in the project. It must run synchronously BEFORE first paint; never add `defer`/`async` to the inline tag and never move it below the stylesheet links. Contract with the rest of the codebase: 1. Theme state lives ONLY on <html class="dark">. No body mirror, no data-attribute duplication — CSS (`html.dark …`) and JS both read it. 2. Storage key "kalolsavam_dark" ("true"/"false") is the persistence layer; js/main.js writes it, this snippet reads it. One key, one format. 3. --boot-bg + html background-color are painted here before CSS loads, so frame #1 (and View-Transition snapshots) already match the theme. Colors below MUST stay in sync with --color-body-bg in css/variables.css. ========================================================================== */ (function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#111412' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Tailwind CSS (Structural layout only) -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Modular CSS Architecture -->
   <link rel="stylesheet" href="./css/style.css">
   <link rel="stylesheet" href="./css/pages/home.css">
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen">
 
-  <!-- INSTITUTION HEADER -->
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="index.html" class="flex items-center gap-3 group">
-          <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async">
-          <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">
-              St. Antony's HSS Mala
-            </h1>
-            <p class="text-[11px] sm:text-xs text-muted font-medium">
-              Sub-District School Kalolsavam
-            </p>
-          </div>
-        </a>
-      </div>
-      
+      <a href="./index.html" class="flex items-center gap-3 group">
+        <img src="./res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
+        <span class="pl-3">
+          <span class="block text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">St. Antony's HSS Mala</span>
+          <span class="block text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</span>
+        </span>
+      </a>
+
       <!-- Desktop Nav -->
       <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
-        <a href="index.html" class="nav-link active">Home</a>
-        <a href="pages/venues.html" class="nav-link">Stages</a>
-        <a href="pages/competitions.html" class="nav-link">Competitions</a>
-        <a href="pages/photos.html" class="nav-link">Photos</a>
-        <a href="pages/facilities.html" class="nav-link">Facilities</a>
-        <a href="pages/help.html" class="nav-link-help font-semibold">Help / Emergency</a>
-        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1" title="Toggle Dark Mode"></button>
+        <a href="./index.html" class="nav-link active">Home</a>
+        <a href="./pages/venues.html" class="nav-link">Stages</a>
+        <a href="./pages/competitions.html" class="nav-link">Competitions</a>
+        <a href="./pages/photos.html" class="nav-link">Photos</a>
+        <a href="./pages/facilities.html" class="nav-link">Facilities</a>
+        <a href="./pages/help.html" class="nav-link-help">Help / Emergency</a>
+        <button id="dark-mode-toggle" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1"></button>
       </nav>
 
-      <!-- Mobile Menu Button & Live Badge -->
+      <!-- Mobile controls -->
       <div class="flex items-center gap-2 md:hidden">
-        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link theme-toggle" title="Toggle Dark Mode"></button>
-        <a href="pages/venues.html" class="btn-mobile-live">
-          Live
-        </a>
-        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted rounded-md">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="dark-mode-toggle-mobile" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle"></button>
+        <a href="./pages/venues.html" class="btn-mobile-live">Live</a>
+        <button id="mobile-menu-btn" type="button" aria-label="Toggle Menu" aria-expanded="false" class="p-2 text-muted rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Mobile Dropdown Navigation Drawer -->
+    <!-- Mobile Drawer -->
     <div id="mobile-menu" class="md:hidden mobile-menu-drawer space-y-1">
-      <a href="index.html" class="mobile-menu-link active">Home Portal</a>
-      <a href="pages/venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
-      <a href="pages/competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
-      <a href="pages/photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
-      <a href="pages/facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
-      <a href="pages/help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
+        <a href="./index.html" class="mobile-menu-link active">Home Portal</a>
+        <a href="./pages/venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
+        <a href="./pages/competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
+        <a href="./pages/photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
+        <a href="./pages/facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
+        <a href="./pages/help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
     </div>
   </header>
 
@@ -89,9 +73,7 @@
         </p>
 
         <div class="pt-2 flex flex-wrap gap-3">
-          <a href="#portal-menu" class="btn-primary">
-            Access Services ↓
-          </a>
+          <a href="#portal-menu" class="btn-primary">Access Services</a>
         </div>
       </div>
     </div>
@@ -99,7 +81,7 @@
 
   <!-- PORTAL NAVIGATION (The Clean Card Grid) -->
   <main id="portal-menu" class="main-container">
-    
+
     <div class="divider-bottom pb-3 mb-6">
       <div>
         <h3 class="section-title">Services</h3>
@@ -107,104 +89,63 @@
       </div>
     </div>
 
-    <!-- 5 Clean Structural Cards -->
+    <!-- One card per module, generated from MODULES/CARD_COPY config -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-      <!-- CARD 1: LIVE VENUES -->
-      <a href="pages/venues.html" class="group card-base card-service flex flex-col justify-between" data-service="1">
+      <a href="./pages/venues.html" class="group card-base card-service flex flex-col justify-between" data-service="1">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
-              01
-            </div>
-          </div>
+          <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm mb-3">01</div>
           <h4 class="font-semibold text-heading text-base heading-transition">Stage &amp; Venues</h4>
-          <p class="text-xs text-muted mt-1.5 leading-relaxed">
-            Real-time stage queue, active chest numbers on stage, delays, and stage locations across campus.
-          </p>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">Real-time stage queue, active chest numbers on stage, delays, and stage locations across campus.</p>
         </div>
         <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
           <span>Open Stage Tracker</span>
-          <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <span class="arrow-icon" aria-hidden="true"></span>
         </div>
       </a>
-
-      <!-- CARD 2: COMPETITIONS & RESULTS -->
-      <a href="pages/competitions.html" class="group card-base card-service flex flex-col justify-between" data-service="2">
+      <a href="./pages/competitions.html" class="group card-base card-service flex flex-col justify-between" data-service="2">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
-              02
-            </div>
-          </div>
+          <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm mb-3">02</div>
           <h4 class="font-semibold text-heading text-base heading-transition">Competitions &amp; Results</h4>
-          <p class="text-xs text-muted mt-1.5 leading-relaxed">
-            Category-wise schedules (LP, UP, HS, HSS), verified result announcements, and school points table.
-          </p>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">Category-wise schedules (LP, UP, HS, HSS), verified result announcements, and school points table.</p>
         </div>
         <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
           <span>View Scoreboard</span>
-          <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <span class="arrow-icon" aria-hidden="true"></span>
         </div>
       </a>
-
-      <!-- CARD 3: STAGE PHOTOS -->
-      <a href="pages/photos.html" class="group card-base card-service flex flex-col justify-between" data-service="3">
+      <a href="./pages/photos.html" class="group card-base card-service flex flex-col justify-between" data-service="3">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
-              03
-            </div>
-          </div>
+          <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm mb-3">03</div>
           <h4 class="font-semibold text-heading text-base heading-transition">Stage Photos</h4>
-          <p class="text-xs text-muted mt-1.5 leading-relaxed">
-            Search and download performance photographs uploaded directly by the official media room.
-          </p>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">Search and download performance photographs uploaded directly by the official media room.</p>
         </div>
         <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
           <span>Download Photos</span>
-          <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <span class="arrow-icon" aria-hidden="true"></span>
         </div>
       </a>
-
-      <!-- CARD 4: FACILITIES & CAMPUS MAP -->
-      <a href="pages/facilities.html" class="group card-base card-service flex flex-col justify-between" data-service="4">
+      <a href="./pages/facilities.html" class="group card-base card-service flex flex-col justify-between" data-service="4">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
-              04
-            </div>
-          </div>
+          <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm mb-3">04</div>
           <h4 class="font-semibold text-heading text-base heading-transition">Facilities &amp; Map</h4>
-          <p class="text-xs text-muted mt-1.5 leading-relaxed">
-            Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.
-          </p>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.</p>
         </div>
         <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
           <span>View Campus Map</span>
-          <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <span class="arrow-icon" aria-hidden="true"></span>
         </div>
       </a>
-
-      <!-- CARD 5: HELP DESK & EMERGENCY -->
-      <a href="pages/help.html" class="group card-base card-service flex flex-col justify-between sm:col-span-2 lg:col-span-2" data-service="5">
+      <a href="./pages/help.html" class="group card-base card-service flex flex-col justify-between sm:col-span-2 lg:col-span-2" data-service="5">
         <div>
-          <div class="flex items-center justify-between mb-3">
-            <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm">
-              05
-            </div>
-          </div>
+          <div class="w-9 h-9 rounded service-icon flex items-center justify-center font-bold text-sm mb-3">05</div>
           <h4 class="font-semibold text-heading text-base heading-transition">Help Desk &amp; Coordination</h4>
-          <p class="text-xs text-muted mt-1.5 leading-relaxed">
-            Convenor contact numbers, First Aid / Medical unit location, Volunteer control room, and Lost &amp; Found counter.
-          </p>
+          <p class="text-xs text-muted mt-1.5 leading-relaxed">Convenor contact numbers, First Aid / Medical unit location, Volunteer control room, and Lost &amp; Found counter.</p>
         </div>
         <div class="pt-4 mt-4 divider-top flex items-center justify-between text-xs font-semibold service-arrow">
           <span>View Contact Directory</span>
-          <span class="group-hover:translate-x-1 transition-transform">→</span>
+          <span class="arrow-icon" aria-hidden="true"></span>
         </div>
       </a>
-
     </div>
 
     <!-- HOST INSTITUTION SUMMARY BAR -->
@@ -213,27 +154,21 @@
         <span class="font-semibold text-main">Venue Location:</span>
         <span class="text-muted ml-1">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
       </div>
-      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" class="text-gov-blue font-semibold card-base px-3 py-1.5 rounded shadow-sm shrink-0">
-        Google Maps ↗
-      </a>
+      <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" rel="noopener" class="text-gov-blue font-semibold card-base px-3 py-1.5 rounded shadow-sm shrink-0">Google Maps</a>
     </div>
 
   </main>
 
-  <!-- INSTITUTIONAL FOOTER -->
   <footer class="site-footer">
     <div class="footer-container">
       <div>
-        <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
+        <p class="footer-text font-medium">Sub-District School Kalolsavam &bull; St. Antony's HSS Mala</p>
         <p class="text-[11px] text-subtle mt-0.5">Official Festival On-Premise Information Desk</p>
       </div>
-      <div class="text-[11px] text-subtle">
-        Operated by Host School IT &amp; Media Committee
-      </div>
+      <div class="text-[11px] text-subtle">Operated by Host School IT &amp; Media Committee</div>
     </div>
   </footer>
 
-  <!-- External JavaScript -->
   <script defer src="./js/main.js"></script>
 
 </body>

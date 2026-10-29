@@ -4,109 +4,96 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Help Desk &amp; Emergency | Mala Sub-District Kalolsavam</title>
-  <!-- Theme bootstrap: runs BEFORE first paint (no white flash in dark mode).
-       Inlined on purpose: one less blocking network request at page start. -->
-  <!-- Keep this snippet in sync with js/theme.js (documented copy). -->
-  <script>(function(){var h=document.documentElement,d,bg;try{d=localStorage.getItem('kalolsavam_dark')==='true'}catch(e){d=false}if(d)h.classList.add('dark');bg=d?'#111412':'#F8F6F0';h.style.backgroundColor=bg;h.style.setProperty('--boot-bg',bg)})();</script>
+  <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
+  <!-- Theme bootstrap runs BEFORE first paint (prevents dark-mode white flash).
+       Canonical logic lives in js/theme-boot.js and is inlined here at build time. -->
+  <script>/* ========================================================================== KALOLSAVAM THEME BOOTSTRAP — canonical source (inlined at build time) -------------------------------------------------------------------------- tools/build.py reads THIS file and inlines it into every page's <head>, so there is exactly one copy of this logic anywhere in the project. It must run synchronously BEFORE first paint; never add `defer`/`async` to the inline tag and never move it below the stylesheet links. Contract with the rest of the codebase: 1. Theme state lives ONLY on <html class="dark">. No body mirror, no data-attribute duplication — CSS (`html.dark …`) and JS both read it. 2. Storage key "kalolsavam_dark" ("true"/"false") is the persistence layer; js/main.js writes it, this snippet reads it. One key, one format. 3. --boot-bg + html background-color are painted here before CSS loads, so frame #1 (and View-Transition snapshots) already match the theme. Colors below MUST stay in sync with --color-body-bg in css/variables.css. ========================================================================== */ (function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#111412' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="../css/style.css">
 </head>
-<body data-service="5" class="font-sans antialiased flex flex-col min-h-screen">
+<body class="font-sans antialiased flex flex-col min-h-screen" data-service="5">
 
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <a href="../index.html" class="flex items-center gap-3 group">
-          <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
-          <div class="pl-3">
-            <h1 class="text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">
-              St. Antony's HSS Mala
-            </h1>
-            <p class="text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</p>
-          </div>
-        </a>
-      </div>
+      <a href="../index.html" class="flex items-center gap-3 group">
+        <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
+        <span class="pl-3">
+          <span class="block text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">St. Antony's HSS Mala</span>
+          <span class="block text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</span>
+        </span>
+      </a>
 
       <!-- Desktop Nav -->
       <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
         <a href="../index.html" class="nav-link">Home</a>
-        <a href="venues.html" class="nav-link">Stages</a>
-        <a href="competitions.html" class="nav-link">Competitions</a>
-        <a href="photos.html" class="nav-link">Photos</a>
-        <a href="facilities.html" class="nav-link">Facilities</a>
-        <a href="help.html" class="nav-link-help font-semibold">Help / Emergency</a>
-        <button id="dark-mode-toggle" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1" title="Toggle Dark Mode"></button>
+        <a href="../pages/venues.html" class="nav-link">Stages</a>
+        <a href="../pages/competitions.html" class="nav-link">Competitions</a>
+        <a href="../pages/photos.html" class="nav-link">Photos</a>
+        <a href="../pages/facilities.html" class="nav-link">Facilities</a>
+        <a href="../pages/help.html" class="nav-link-help active">Help / Emergency</a>
+        <button id="dark-mode-toggle" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1"></button>
       </nav>
 
-      <!-- Mobile Menu Button -->
+      <!-- Mobile controls -->
       <div class="flex items-center gap-2 md:hidden">
-        <button id="dark-mode-toggle-mobile" aria-label="Toggle Dark Mode" class="nav-link theme-toggle" title="Toggle Dark Mode"></button>
-        <a href="venues.html" class="btn-mobile-live">
-          Live
-        </a>
-        <button id="mobile-menu-btn" aria-label="Toggle Menu" class="p-2 text-muted rounded-md">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <button id="dark-mode-toggle-mobile" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle"></button>
+        <a href="../pages/venues.html" class="btn-mobile-live">Live</a>
+        <button id="mobile-menu-btn" type="button" aria-label="Toggle Menu" aria-expanded="false" class="p-2 text-muted rounded-md">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
         </button>
       </div>
     </div>
 
-    <!-- Mobile Dropdown Navigation Drawer -->
+    <!-- Mobile Drawer -->
     <div id="mobile-menu" class="md:hidden mobile-menu-drawer space-y-1">
-      <a href="../index.html" class="mobile-menu-link">Home Portal</a>
-      <a href="venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
-      <a href="competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
-      <a href="photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
-      <a href="facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
-      <a href="help.html" class="mobile-menu-link-help">05. Help Desk &amp; Emergency</a>
+        <a href="../index.html" class="mobile-menu-link">Home Portal</a>
+        <a href="../pages/venues.html" class="mobile-menu-link">01. Stage &amp; Venues Live Tracker</a>
+        <a href="../pages/competitions.html" class="mobile-menu-link">02. Competitions &amp; Results</a>
+        <a href="../pages/photos.html" class="mobile-menu-link">03. Stage Photos &amp; Media</a>
+        <a href="../pages/facilities.html" class="mobile-menu-link">04. Facilities &amp; Campus Map</a>
+        <a href="../pages/help.html" class="mobile-menu-link-help active">05. Help Desk &amp; Emergency</a>
     </div>
   </header>
 
   <main class="main-container">
     <div class="mb-8">
-      <div class="badge-emergency mb-2">
-        Emergency &amp; Coordination
-      </div>
+      <div class="badge-emergency mb-2">Emergency &amp; Coordination</div>
       <h2 class="page-title">Help Desk &amp; Emergency Directory</h2>
       <p class="text-xs sm:text-sm text-muted mt-1">Convenor contact numbers, First Aid / Medical unit location, and Volunteer control room.</p>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="card-base">
-        <h3 class="card-title mb-1">
-          Medical &amp; First Aid Unit
-        </h3>
+        <h3 class="card-title mb-1">Medical &amp; First Aid Unit</h3>
         <p class="text-xs text-muted mb-3 font-medium">Main Office Room 102</p>
         <p class="text-xs text-main leading-relaxed mb-4">
           Doctor, nursing staff, and ambulance service on standby throughout festival hours.
         </p>
-        <a href="tel:04802890100" class="btn-call-emergency inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full transition-all">
-          Call Medical Desk: 0480 2890100 ↗
-        </a>
+        <a href="tel:04802890100" class="btn-call-emergency btn-call">Call Medical Desk: 0480 2890100</a>
       </div>
 
       <div class="card-base">
-        <h3 class="card-title mb-1">
-          General Convener Desk
-        </h3>
+        <h3 class="card-title mb-1">General Convener Desk</h3>
         <p class="text-xs text-muted mb-3 font-medium">Control Room (Auditorium Lobby)</p>
         <p class="text-xs text-main leading-relaxed mb-4">
           For urgent queries regarding stage timings, chest number rescheduling, and committee approvals.
         </p>
-        <a href="tel:04802890000" class="btn-call-desk inline-flex items-center justify-center text-xs font-semibold px-4 py-2.5 rounded-full transition-all">
-          Call Control Room: 0480 2890000 ↗
-        </a>
+        <a href="tel:04802890000" class="btn-call-desk btn-call">Call Control Room: 0480 2890000</a>
       </div>
     </div>
   </main>
 
   <footer class="site-footer">
     <div class="footer-container">
-      <p class="footer-text font-medium">Sub-District School Kalolsavam • St. Antony's HSS Mala</p>
-      <a href="../index.html" class="footer-back-link font-semibold">← Back to Home</a>
+      <div>
+        <p class="footer-text font-medium">Sub-District School Kalolsavam &bull; St. Antony's HSS Mala</p>
+        <p class="text-[11px] text-subtle mt-0.5">Official Festival On-Premise Information Desk</p>
+      </div>
+      <div class="text-[11px] text-subtle">Operated by Host School IT &amp; Media Committee</div>
     </div>
   </footer>
 
