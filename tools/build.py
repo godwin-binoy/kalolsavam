@@ -51,23 +51,25 @@ PAGES = {
     <div class="hero-container">
       <div class="max-w-3xl space-y-4">
         <span class="badge-gov">Official Live Portal</span>
-        <h2 class="page-title leading-tight">
+        <h1 class="page-title leading-tight">
           Mala Sub-District <br class="hidden sm:inline">School Kalolsavam
-        </h2>
+        </h1>
         <p class="text-sm sm:text-base text-muted leading-relaxed max-w-2xl">
           Welcome to the official web desk for participants, parents, and teachers. Track real-time stage events, access verified result declarations, view school points tallies, and download high-resolution stage photographs.
         </p>
 
         <div class="pt-2 flex flex-wrap gap-3">
           <a href="#portal-menu" class="btn-primary">Explore Services</a>
-          <a href="{r}pages/venues.html" class="nav-link bg-white/70 dark:bg-neutral-800/80 border border-black/5 dark:border-white/10 px-5 py-3">Live Stages</a>
+          <a href="{r}pages/venues.html" class="btn-secondary">Live Stages</a>
         </div>
       </div>
     </div>
   </section>
 
   <!-- PORTAL NAVIGATION (Festive Colorful Cards) -->
-  <main id="portal-menu" class="main-container">
+  <main id="main-content" class="main-container">
+    <h1 class="sr-only">Mala Sub-District School Kalolsavam — Official Portal</h1>
+    <span id="portal-menu" aria-hidden="true"></span>
     <div class="divider-bottom pb-4 mb-8">
       <div>
         <h3 class="section-title">Festival Services &amp; Portals</h3>
@@ -249,10 +251,10 @@ PAGES = {
         "title": f"{MODULES['competitions'][2]} | Mala Sub-District Kalolsavam",
         "service": 2,
         "main": """
-  <main class="main-container">
+  <main id="main-content" class="main-container">
     <div class="mb-8">
       <div class="badge-gov mb-2">Category Portals</div>
-      <h2 class="page-title">Competitions &amp; Tabulation</h2>
+      <h1 class="page-title">Competitions &amp; Tabulation</h1>
       <p class="text-xs sm:text-sm text-muted mt-1">Select a category below for declared results, chest numbers, and official school point tallies.</p>
     </div>
 
@@ -467,10 +469,10 @@ PAGES = {
         "title": f"{MODULES['venues'][2]} | Mala Sub-District Kalolsavam",
         "service": 1,
         "main": """
-  <main class="main-container">
+  <main id="main-content" class="main-container">
     <div class="mb-8">
       <div class="badge-gov mb-2">Module 01 &bull; Live Tracker</div>
-      <h2 class="page-title">Stage &amp; Venues Live Tracker</h2>
+      <h1 class="page-title">Stage &amp; Venues Live Tracker</h1>
       <p class="text-xs sm:text-sm text-muted mt-1">Real-time stage queue, active chest numbers on stage, delays, and stage locations across campus.</p>
     </div>
 
@@ -554,10 +556,10 @@ PAGES = {
         "title": f"{MODULES['photos'][2]} | Mala Sub-District Kalolsavam",
         "service": 3,
         "main": """
-  <main class="main-container">
+  <main id="main-content" class="main-container">
     <div class="mb-8">
       <div class="badge-gov mb-2">Module 03 &bull; Media Room</div>
-      <h2 class="page-title">Official Media &amp; Stage Photographs</h2>
+      <h1 class="page-title">Official Media &amp; Stage Photographs</h1>
       <p class="text-xs sm:text-sm text-muted mt-1">Search and download performance photographs uploaded directly by the official media room.</p>
     </div>
 
@@ -599,10 +601,10 @@ PAGES = {
         "title": f"{MODULES['facilities'][2]} | Mala Sub-District Kalolsavam",
         "service": 4,
         "main": """
-  <main class="main-container">
+  <main id="main-content" class="main-container">
     <div class="mb-8">
       <div class="badge-gov mb-2">Module 04 &bull; Amenities</div>
-      <h2 class="page-title">Campus Facilities &amp; Locations</h2>
+      <h1 class="page-title">Campus Facilities &amp; Locations</h1>
       <p class="text-xs sm:text-sm text-muted mt-1">Locations for dining hall, clean drinking water, green rooms, washrooms, and designated vehicle parking.</p>
     </div>
 
@@ -648,10 +650,10 @@ PAGES = {
         "title": f"{MODULES['help'][2]} | Mala Sub-District Kalolsavam",
         "service": 5,
         "main": """
-  <main class="main-container">
+  <main id="main-content" class="main-container">
     <div class="mb-8">
       <div class="badge-emergency mb-2">Emergency Desk</div>
-      <h2 class="page-title">Help Desk &amp; Emergency Directory</h2>
+      <h1 class="page-title">Help Desk &amp; Emergency Directory</h1>
       <p class="text-xs sm:text-sm text-muted mt-1">Convenor contact numbers, First Aid / Medical unit location, and Volunteer control room.</p>
     </div>
 
@@ -705,12 +707,17 @@ TEMPLATE = """<!DOCTYPE html>
   <script>{boot}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
-  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap"></noscript>
+  <!-- Fonts actually referenced by css/base.css + components.css:
+       Inter (body), Sora (titles/headings), Playfair Display (card banners).
+       Loading "Plus Jakarta Sans" here was a bug — nothing uses it. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Playfair+Display:wght@700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Playfair+Display:wght@700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&family=Playfair+Display:wght@700;800&display=swap"></noscript>
   <link rel="stylesheet" href="{r}css/style.css">
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen"{body_attrs}>
+
+  <a class="skip-link" href="#main-content">Skip to main content</a>
 
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
@@ -723,7 +730,7 @@ TEMPLATE = """<!DOCTYPE html>
       </a>
 
       <!-- Desktop Nav -->
-      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold">
+      <nav class="hidden md:flex items-center gap-1 text-xs font-semibold" aria-label="Primary">
 {desktop_nav}        <button id="dark-mode-toggle" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle ml-1"></button>
       </nav>
 
@@ -731,7 +738,7 @@ TEMPLATE = """<!DOCTYPE html>
       <div class="flex items-center gap-2 md:hidden">
         <button id="dark-mode-toggle-mobile" type="button" aria-label="Toggle Dark Mode" class="nav-link theme-toggle"></button>
         <a href="{r}pages/venues.html" class="btn-mobile-live">Live</a>
-        <button id="mobile-menu-btn" type="button" aria-label="Toggle Menu" aria-expanded="false" class="p-2 text-muted rounded-md">
+        <button id="mobile-menu-btn" type="button" aria-label="Toggle Menu" aria-expanded="false" aria-controls="mobile-menu" class="menu-btn text-muted">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>

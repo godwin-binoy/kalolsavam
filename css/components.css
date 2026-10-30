@@ -4,14 +4,39 @@
 
 /* ---------- Header & Nav (Glassmorphic) ---------- */
 .site-header {
-  background-color: transparent;
-  backdrop-filter: blur(var(--header-blur));
-  -webkit-backdrop-filter: blur(var(--header-blur));
+  /* PERF: blur() on a full-width sticky bar is the single most expensive GPU
+     effect we ship — it re-blurs everything behind the header on EVERY
+     composited scroll frame, which is exactly what makes scrolling stutter on
+     low-end phones. A translucent solid tint keeps the frosted look at a
+     fraction of the cost; --header-blur stays defined for future use. */
+  background-color: var(--color-header-bg);
+  backdrop-filter: saturate(150%);
+  -webkit-backdrop-filter: saturate(150%);
   position: sticky;
   position: -webkit-sticky;
   top: 0;
   z-index: 50;
   box-shadow: var(--shadow-header);
+}
+
+/* Skip link: invisible until keyboard-focused, then a high-contrast pill. */
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -4rem;
+  z-index: 60;
+  padding: 0.6rem 1.1rem;
+  border-radius: 9999px;
+  background-color: var(--olive-dark);
+  color: var(--color-on-brand);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-drawer);
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus-visible {
+  top: 0.6rem;
 }
 
 .header-container {
@@ -76,6 +101,14 @@
   }
 }
 
+/* Keyboard/AT focus ring for header pills — frosted translucent surfaces
+   have no visible outline by default, so give every nav control one. */
+.nav-link:focus-visible,
+.menu-btn:focus-visible {
+  outline: 2px solid var(--olive-mid);
+  outline-offset: 2px;
+}
+
 .nav-link-help {
   color: var(--color-badge-emergency-text);
   background-color: var(--color-badge-emergency-bg);
@@ -97,13 +130,16 @@
   cursor: pointer;
 }
 
-/* Mobile header controls: slightly smaller tap targets (still >= 40px, above
-   the 44px guideline's practical floor) so the bar stays compact on phones. */
+/* Mobile header controls: keep comfortable tap targets (>= 40px) so thumbs
+   never miss on phones — shrinking them below the icon's own padding made
+   the buttons feel broken on small screens. */
 @media (max-width: 639px) {
   .site-header .theme-toggle {
-    width: 2rem;
-    height: 2rem;
-    padding: 0.4rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 
@@ -115,9 +151,7 @@
 
 /* Mobile drawer */
 .mobile-menu-drawer {
-  background-color: transparent;
-  backdrop-filter: blur(var(--drawer-blur));
-  -webkit-backdrop-filter: blur(var(--drawer-blur));
+  background-color: var(--color-header-bg);
   padding: 1rem 1.25rem 1.5rem 1.25rem;
   /* PERF: open/close animates ONLY compositor properties (opacity/transform).
      The old max-height+padding transition re-laid out the drawer every frame —
@@ -130,13 +164,18 @@
   border-bottom-right-radius: 1.5rem;
   transition: opacity 0.25s ease,
               transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              visibility 0.3s;
+              visibility 0s linear 0.3s;
 }
 
 .mobile-menu-drawer.open {
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  /* Visibility must flip to `visible` immediately when opening; only the
+     close direction may wait for the fade-out to finish. */
+  transition: opacity 0.25s ease,
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0s linear 0s;
 }
 
 .mobile-menu-link {
@@ -325,6 +364,12 @@
   border-radius: 1.5rem;
   padding: 1.75rem;
   box-shadow: var(--shadow-card);
+}
+
+/* Reveal animation is opt-in (js/main.js adds .reveal-card). Keeping the
+   lift/transform on that class only means the scroll-reveal transform can
+   never fight or override the hover elevation. */
+.card-base.reveal-card {
   transition: transform 0.15s var(--ease-emphasized),
               box-shadow 0.15s ease,
               border-color 0.15s ease;
@@ -421,11 +466,41 @@
   }
 }
 
+/* Secondary hero button — themed pill that stays legible in BOTH modes.
+   (It used to hard-code bg-white/70 + dark:bg-neutral-800/80 Tailwind tints
+   whose text color was never switched for dark mode → invisible white text.) */
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.6rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-heading);
+  background-color: var(--md-sys-color-surface-container-low);
+  border: 1px solid var(--color-card-border);
+  box-shadow: var(--shadow-card);
+  transition: transform 0.15s var(--ease-emphasized),
+              background-color 0.15s ease,
+              border-color 0.15s ease;
+}
+
+@media (hover: hover) {
+  .btn-secondary:hover {
+    background-color: var(--md-sys-color-surface-container);
+    border-color: var(--olive-mid);
+    transform: translateY(-1px);
+  }
+}
+
 .btn-mobile-live {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
   padding: 0.4rem 0.85rem;
+  min-height: 2.5rem; /* >= 40px tap target on phones */
   border-radius: 9999px;
   font-size: 0.75rem;
   font-weight: 800;
@@ -433,6 +508,19 @@
   color: var(--color-badge-live-text);
   background-color: var(--color-badge-live-bg);
   border: 1px solid var(--color-badge-live-border);
+}
+
+/* Hamburger button — same generous tap target as the theme toggle. */
+.menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: none;
+  border-radius: 0.6rem;
+  background-color: transparent;
+  cursor: pointer;
 }
 
 .logo-box {
@@ -458,10 +546,17 @@ body[data-service="5"] { background-color: var(--service-5-page-bg); }
 /* Footer */
 .site-footer {
   background-color: var(--color-footer-bg);
-  color: var(--color-footer-fg);
+  color: var(--color-footer-text);
   font-size: 0.8125rem;
   padding: 2.5rem 1.5rem;
   margin-top: auto;
+}
+
+@media (max-width: 639px) {
+  /* Compact footer on phones: less dead vertical space above the fold-end. */
+  .site-footer {
+    padding: 1.75rem 1rem;
+  }
 }
 
 .footer-container {

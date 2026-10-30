@@ -25,6 +25,9 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  /* dvh tracks the shrinking mobile URL bar so short pages never leave the
+     sticky header stranded above a scrollable gap on phones. */
+  min-height: 100dvh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
@@ -115,6 +118,19 @@ html[data-theme-anim] *::after {
 .text-subtle  { color: var(--color-text-subtle); }
 .text-gov-blue { color: var(--gov-blue); }
 
+/* Screen-reader-only content (skip-link targets, page <h1>s). */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
 .heading-transition {
   transition: color var(--theme-fade), background-color var(--theme-fade);
 }
@@ -179,12 +195,12 @@ html[data-theme-anim] *::after {
    ========================================================================== */
 
 /* Coarse pointers are almost always phones/tablets: smaller blur radius and
-   no hover lift (hover states stick after taps there anyway). */
+   no hover lift (hover states stick after taps there anyway). The sticky
+   header/drawer already use a cheap solid tint (see components.css), so only
+   card blur radii need dialing down here. */
 @media (pointer: coarse) {
   :root {
     --blur: 14px;
-    --header-blur: 16px;
-    --drawer-blur: 18px;
     --lift: 0px;
   }
 }
@@ -193,8 +209,6 @@ html[data-theme-anim] *::after {
 @media (prefers-reduced-transparency: reduce) {
   :root {
     --blur: 0px;
-    --header-blur: 0px;
-    --drawer-blur: 0px;
   }
 }
 
@@ -205,8 +219,6 @@ html[data-theme-anim] *::after {
    feature (Safari) and is testable/settable from the console. */
 html.lo-power {
   --blur: 0px;
-  --header-blur: 0px;
-  --drawer-blur: 0px;
   --lift: 0px;
 }
 

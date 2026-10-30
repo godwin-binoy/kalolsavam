@@ -34,6 +34,7 @@
 .container          { width: 100%; }
 .grid               { display: grid; }
 .hidden             { display: none; }
+.block              { display: block; }
 .inline             { display: inline; }
 .inline-block       { display: inline-block; }
 .flex               { display: flex; }
@@ -45,6 +46,8 @@
 .items-start        { align-items: flex-start; }
 .items-center       { align-items: center; }
 .justify-between    { justify-content: space-between; }
+.min-w-0            { min-width: 0px; }
+.overflow-hidden    { overflow: hidden; }
 .gap-1              { gap: 0.25rem; }
 .gap-2              { gap: 0.5rem; }
 .gap-3              { gap: 0.75rem; }
@@ -79,9 +82,16 @@
 /* ---------- Sizing ---------- */
 .h-4                { height: 1rem; }
 .w-4                { width: 1rem; }
+.h-5                { height: 1.25rem; }
+.w-5                { width: 1.25rem; }
 .h-6                { height: 1.5rem; }
 .w-6                { width: 1.5rem; }
+.h-8                { height: 2rem; }
+.w-8                { width: 2rem; }
 .min-h-screen       { min-height: 100vh; }
+/* dvh tracks the mobile browser URL bar so the sticky header never gets
+   pushed off-screen by the phantom 100vh overflow on phones. */
+.min-h-screen       { min-height: 100dvh; }
 .max-w-2xl          { max-width: 42rem; }
 .max-w-3xl          { max-width: 48rem; }
 
@@ -116,6 +126,9 @@
 .mb-10              { margin-bottom: 2.5rem; }
 
 /* ---------- Borders & radius ---------- */
+.rounded            { border-radius: 0.25rem; }
+.rounded-lg         { border-radius: 0.5rem; }
+.rounded-full       { border-radius: 9999px; }
 .rounded-md         { border-radius: 0.375rem; }
 .rounded-xl         { border-radius: 0.75rem; }
 .rounded-2xl        { border-radius: 1rem; }
@@ -127,7 +140,7 @@
 .text-sm            { font-size: 0.875rem;   line-height: 1.25rem; }
 .text-base          { font-size: 1rem;       line-height: 1.5rem; }
 .text-lg            { font-size: 1.125rem;   line-height: 1.75rem; }
-.text-\[11px\]      { font-size: 11px; }
+.text-\[11px\]      { font-size: 11px; line-height: 1rem; }
 .font-normal        { font-weight: 400; }
 .font-medium        { font-weight: 500; }
 .font-semibold      { font-weight: 600; }
@@ -188,6 +201,7 @@ html.dark .dark\:text-amber-400      { color: #fbbf24; }
   .sm\:flex-row        { flex-direction: row; }
   .sm\:items-center    { align-items: center; }
   .sm\:text-left       { text-align: left; }
+  .sm\:gap-3           { gap: 0.75rem; }
   .sm\:text-base       { font-size: 1rem;     line-height: 1.5rem; }
   .sm\:text-sm         { font-size: 0.875rem; line-height: 1.25rem; }
   .sm\:text-xs         { font-size: 0.75rem;  line-height: 1rem; }
@@ -195,6 +209,7 @@ html.dark .dark\:text-amber-400      { color: #fbbf24; }
 }
 
 @media (min-width: 768px) {
+  .md\:block           { display: block; }
   .md\:flex            { display: flex; }
   .md\:hidden          { display: none; }
   .md\:grid-cols-2     { grid-template-columns: repeat(2, minmax(0, 1fr)); }

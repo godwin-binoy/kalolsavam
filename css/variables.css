@@ -51,6 +51,11 @@
   --color-on-brand: #FFFFFF;
   --color-border: #E2E8F0;
 
+  /* Sticky header / drawer tint — translucent solid instead of a full-width
+     backdrop blur (blur on the sticky bar is the #1 scroll-jank source on
+     low-end phones). */
+  --color-header-bg: rgba(248, 246, 240, 0.92);
+
   /* Frosted Glass Aesthetics */
   --color-card-bg: rgba(255, 255, 255, 0.72);
   --color-card-border: rgba(255, 255, 255, 0.65);
@@ -152,6 +157,8 @@ html.dark {
   --color-text-subtle: #64748B;
   --color-on-brand: #0F1311;
   --color-border: #27342C;
+
+  --color-header-bg: rgba(15, 19, 17, 0.92);
 
   /* Frosted Obsidian Glass */
   --color-card-bg: rgba(22, 28, 24, 0.72);
