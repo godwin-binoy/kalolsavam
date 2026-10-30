@@ -1,7 +1,3 @@
-/* ==========================================================
-   MALA SUB-DISTRICT KALOLSAVAM - BASE, LAYOUT & MOTION
-   ========================================================== */
-
 html {
   scroll-behavior: smooth;
   background-color: var(--boot-bg, var(--color-body-bg));
@@ -11,7 +7,6 @@ body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text-main);
   background-color: var(--color-body-bg);
-  /* The subtle dotted texture visible in the reference design */
   background-image: radial-gradient(var(--color-pattern-dot) 1.25px, transparent 1.25px);
   background-size: 22px 22px;
   background-attachment: fixed;
@@ -47,7 +42,6 @@ img {
   border-radius: 4px;
 }
 
-/* Theme Cross Fade */
 html[data-theme-anim] *,
 html[data-theme-anim] *::before,
 html[data-theme-anim] *::after {
@@ -73,7 +67,6 @@ html[data-theme-anim] *::after {
   transform: scale(0.96);
 }
 
-/* Typography Helpers */
 .page-title {
   font-size: 1.85rem;
   font-weight: 800;

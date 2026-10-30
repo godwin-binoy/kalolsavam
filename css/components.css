@@ -1,8 +1,3 @@
-/* ==========================================================
-   MALA SUB-DISTRICT KALOLSAVAM - REUSABLE COMPONENTS CSS
-   ========================================================== */
-
-/* ---------- Header & Nav (Glassmorphic) ---------- */
 .site-header {
   background-color: transparent;
   backdrop-filter: blur(28px);
@@ -73,7 +68,6 @@
   box-shadow: 0 2px 8px rgba(34, 43, 36, 0.25);
 }
 
-/* Mobile drawer */
 .mobile-menu-drawer {
   background-color: transparent;
   backdrop-filter: blur(36px);
@@ -129,10 +123,7 @@
   border: 1px solid var(--color-badge-emergency-border);
 }
 
-/* ==========================================================
-   THEMED FESTIVAL CARDS (Exact match to the provided reference)
-   ========================================================== */
-
+/* Festive Card Engine */
 .fest-card {
   background-color: var(--color-card-bg);
   backdrop-filter: blur(24px);
@@ -154,7 +145,6 @@
   border-color: rgba(148, 163, 184, 0.4);
 }
 
-/* Vibrant Header Banner */
 .fest-header {
   position: relative;
   padding: 1.5rem 1.5rem 1.35rem 1.5rem;
@@ -201,7 +191,6 @@
   margin-top: 0.35rem;
 }
 
-/* Watermark SVG on top right of the banner */
 .fest-watermark {
   position: absolute;
   right: -0.25rem;
@@ -213,7 +202,6 @@
   transform: rotate(6deg);
 }
 
-/* Card Body & Inner Action Items */
 .fest-body {
   padding: 1.25rem;
   display: flex;
@@ -272,7 +260,6 @@
   flex-shrink: 0;
 }
 
-/* Standard Frosted Container (for info blocks, points tables, etc.) */
 .card-base {
   background-color: var(--color-card-bg);
   backdrop-filter: blur(24px);
@@ -299,7 +286,6 @@
   padding: 1.25rem;
 }
 
-/* Badges & Pills */
 .badge-gov,
 .badge-live,
 .badge-emergency {
@@ -393,7 +379,6 @@
   border-radius: 0.75rem;
 }
 
-/* Service Page Canvas Tints */
 body[data-service="1"] { background-color: var(--service-1-page-bg); }
 body[data-service="2"] { background-color: var(--service-2-page-bg); }
 body[data-service="3"] { background-color: var(--service-3-page-bg); }
@@ -407,7 +392,6 @@ body[data-service="5"] { background-color: var(--service-5-page-bg); }
   display: block;
 }
 
-/* Footer */
 .site-footer {
   background-color: var(--color-footer-bg);
   color: var(--color-footer-fg);

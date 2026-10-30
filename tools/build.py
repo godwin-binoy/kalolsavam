@@ -27,7 +27,6 @@ MODULES = {
 HELP_KEY = "help"
 HOME_LABEL = ("Home", "Home Portal")
 
-# Common SVGs for action icons
 ICON_CHECKLIST = '''<svg class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>'''
 ICON_POINTS = '''<svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>'''
 ICON_SCHOOL = '''<svg class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>'''
@@ -35,7 +34,6 @@ ICON_STAGE = '''<svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none
 ICON_PHONE = '''<svg class="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>'''
 ARROW_RIGHT = '''<svg class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>'''
 
-# Watermarks
 WM_MASKS = '''<svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 13c-.83 0-1.5-.67-1.5-1.5S9.17 12 10 12s1.5.67 1.5 1.5S10.83 15 10 15zm0-5c-.83 0-1.5-.67-1.5-1.5S9.17 7 10 7s1.5.67 1.5 1.5S10.83 10 10 10zm4 5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm0-5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>'''
 WM_PALETTE = '''<svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.49 2 2 6.49 2 12c0 4.14 2.53 7.69 6.13 9.17.48.2.87-.23.87-.71v-.96c0-1.66 1.34-3 3-3h1.5c3.58 0 6.5-2.92 6.5-6.5C20 5.37 16.42 2 12 2zm-5 8c-.83 0-1.5-.67-1.5-1.5S6.17 7 7 7s1.5.67 1.5 1.5S7.83 10 7 10zm3-3c-.83 0-1.5-.67-1.5-1.5S9.17 4 10 4s1.5.67 1.5 1.5S10.83 7 10 7zm4 0c-.83 0-1.5-.67-1.5-1.5S13.17 4 14 4s1.5.67 1.5 1.5S14.83 7 14 7zm3 3c-.83 0-1.5-.67-1.5-1.5S16.17 7 17 7s1.5.67 1.5 1.5S17.83 10 17 10z"/></svg>'''
 WM_LEAF = '''<svg class="fest-watermark" viewBox="0 0 24 24" fill="currentColor"><path d="M17 8C8 10 5.9 16.17 3.82 21.34l1.89.66.95-2.3c.48.17.98.3 1.34.3C19 20 22 3 22 3c-1 2-8 2.25-13 3.75C6.5 7.5 4 10 4 12c0 2 2.5 3.5 5 2 4.5-2.7 7-6 8-6z"/></svg>'''
@@ -46,7 +44,6 @@ PAGES = {
         "title": SITE["title"],
         "service": None,
         "main": """
-  <!-- HERO SECTION -->
   <section>
     <div class="hero-container">
       <div class="max-w-3xl space-y-4">
@@ -57,7 +54,6 @@ PAGES = {
         <p class="text-sm sm:text-base text-muted leading-relaxed max-w-2xl">
           Welcome to the official web desk for participants, parents, and teachers. Track real-time stage events, access verified result declarations, view school points tallies, and download high-resolution stage photographs.
         </p>
-
         <div class="pt-2 flex flex-wrap gap-3">
           <a href="#portal-menu" class="btn-primary">Explore Services</a>
           <a href="{r}pages/venues.html" class="nav-link bg-white/70 dark:bg-neutral-800/80 border border-black/5 dark:border-white/10 px-5 py-3">Live Stages</a>
@@ -66,7 +62,6 @@ PAGES = {
     </div>
   </section>
 
-  <!-- PORTAL NAVIGATION (Festive Colorful Cards) -->
   <main id="portal-menu" class="main-container">
     <div class="divider-bottom pb-4 mb-8">
       <div>
@@ -75,10 +70,8 @@ PAGES = {
       </div>
     </div>
 
-    <!-- Festive Grid Layout -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-      <!-- Module 01: Venues -->
       <div class="fest-card">
         <div class="fest-header banner-blue">
           <h4 class="fest-title">STAGES &amp; VENUES</h4>
@@ -110,7 +103,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Module 02: Competitions -->
       <div class="fest-card">
         <div class="fest-header banner-purple">
           <h4 class="fest-title">COMPETITIONS</h4>
@@ -142,7 +134,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Module 03: Photos -->
       <div class="fest-card">
         <div class="fest-header banner-pink">
           <h4 class="fest-title">STAGE PHOTOS</h4>
@@ -174,7 +165,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Module 04: Facilities -->
       <div class="fest-card">
         <div class="fest-header banner-teal">
           <h4 class="fest-title">CAMPUS MAP</h4>
@@ -206,7 +196,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Module 05: Help & Emergency -->
       <div class="fest-card md:col-span-2 lg:col-span-2">
         <div class="fest-header banner-orange">
           <h4 class="fest-title">HELP DESK &amp; MEDICAL</h4>
@@ -233,7 +222,6 @@ PAGES = {
 
     </div>
 
-    <!-- HOST INSTITUTION SUMMARY BAR -->
     <div class="mt-10 p-5 rounded-2xl card-base flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
       <div class="text-center sm:text-left">
         <span class="font-bold text-main">Festival Host Location:</span>
@@ -241,7 +229,6 @@ PAGES = {
       </div>
       <a href="https://maps.google.com/?q=St+Antonys+Higher+Secondary+School+Mala" target="_blank" rel="noopener" class="btn-primary py-2 px-4 text-xs shrink-0">Open in Google Maps</a>
     </div>
-
   </main>
 """,
     },
@@ -256,10 +243,9 @@ PAGES = {
       <p class="text-xs sm:text-sm text-muted mt-1">Select a category below for declared results, chest numbers, and official school point tallies.</p>
     </div>
 
-    <!-- EXACT 4 CARDS AS GIVEN IN THE REFERENCE IMAGE -->
+    <!-- 4 CATEGORY CARDS FROM THE REFERENCE IMAGE -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10">
 
-      <!-- Card 1: HS GENERAL (Purple) -->
       <div class="fest-card">
         <div class="fest-header banner-purple">
           <h3 class="fest-title">HS GENERAL</h3>
@@ -291,7 +277,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Card 2: HSS GENERAL (Pink) -->
       <div class="fest-card">
         <div class="fest-header banner-pink">
           <h3 class="fest-title">HSS GENERAL</h3>
@@ -323,7 +308,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Card 3: HS ARABIC (Teal) -->
       <div class="fest-card">
         <div class="fest-header banner-teal">
           <h3 class="fest-title">HS ARABIC</h3>
@@ -355,7 +339,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Card 4: HS SANSKRIT (Orange) -->
       <div class="fest-card">
         <div class="fest-header banner-orange">
           <h3 class="fest-title">HS SANSKRIT</h3>
@@ -389,7 +372,6 @@ PAGES = {
 
     </div>
 
-    <!-- TABULATION & RESULTS DETAIL SECTION -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8" id="results-feed">
       <div class="lg:col-span-2 space-y-6">
         <div class="card-base">
@@ -476,7 +458,6 @@ PAGES = {
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-      <!-- Stage 1 -->
       <div class="fest-card">
         <div class="fest-header banner-blue">
           <div class="flex justify-between items-center">
@@ -503,7 +484,7 @@ PAGES = {
           </div>
           <div class="fest-action-item">
             <div>
-              <span class="text-xs text-muted block">Stage In-charge / Convener:</span>
+              <span class="text-xs text-muted block">Stage In-charge:</span>
               <span class="font-semibold text-main">Sri. Rajesh K. (Auditorium Lobby)</span>
             </div>
             """ + ARROW_RIGHT + """
@@ -511,7 +492,6 @@ PAGES = {
         </div>
       </div>
 
-      <!-- Stage 2 -->
       <div class="fest-card">
         <div class="fest-header banner-teal">
           <div class="flex justify-between items-center">
@@ -538,7 +518,7 @@ PAGES = {
           </div>
           <div class="fest-action-item">
             <div>
-              <span class="text-xs text-muted block">Stage In-charge / Convener:</span>
+              <span class="text-xs text-muted block">Stage In-charge:</span>
               <span class="font-semibold text-main">Smt. Deepa V. (Ground Wing)</span>
             </div>
             """ + ARROW_RIGHT + """
@@ -759,7 +739,6 @@ TEMPLATE = """<!DOCTYPE html>
 </html>
 """
 
-
 def nav_html(active_key, r):
     def link(key, href, cls_map, label):
         active = " active" if key == active_key else ""
@@ -777,10 +756,8 @@ def nav_html(active_key, r):
 
     return "\n".join(desktop) + "\n", "\n".join(drawer)
 
-
 def strip_js_comments(src):
     return re.sub(r"/\*.*?\*/", "", src, flags=re.S)
-
 
 def main():
     boot = strip_js_comments((ROOT / "js" / "theme-boot.js").read_text(encoding="utf-8"))
@@ -808,8 +785,7 @@ def main():
         )
         out = ROOT / ("index.html" if key == "home" else f"pages/{key}.html")
         out.write_text(html_out, encoding="utf-8")
-        print(f"wrote {out.relative_to(ROOT)}")
-
+        print(f"compiled: {out.relative_to(ROOT)}")
 
 if __name__ == "__main__":
     main()

@@ -1,14 +1,8 @@
-/* ==========================================================
-   MALA SUB-DISTRICT KALOLSAVAM - COLOR & THEME VARIABLES
-   Material You + Translucent Frosted Glass + Festive Card Themes
-   ========================================================== */
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   color-scheme: light;
 
-  /* Material 3 Base Surface & Brand Tokens */
   --md-sys-color-primary: #38503B;
   --md-sys-color-on-primary: #FFFFFF;
   --md-sys-color-surface: #F8F6F0;
@@ -37,22 +31,21 @@
   --color-border: #E2E8F0;
 
   /* Frosted Glass Aesthetics */
-  --color-card-bg: rgba(255, 255, 255, 0.72);
+  --color-card-bg: rgba(255, 255, 255, 0.75);
   --color-card-border: rgba(255, 255, 255, 0.65);
-  --color-card-hover: rgba(255, 255, 255, 0.88);
+  --color-card-hover: rgba(255, 255, 255, 0.9);
   --shadow-card: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
   --shadow-card-hover: 0 18px 40px -12px rgba(15, 23, 42, 0.16);
   --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.03);
   --shadow-drawer: 0 16px 40px rgba(0, 0, 0, 0.1);
 
-  /* Inner Item Action Pills (Inside Cards) */
+  /* Inner Item Action Pills */
   --action-item-bg: rgba(255, 255, 255, 0.82);
   --action-item-border: rgba(226, 232, 240, 0.85);
   --action-item-hover-bg: #FFFFFF;
   --action-item-hover-border: #CBD5E1;
   --action-item-icon-bg: #F1F5F9;
 
-  /* Badges & Live Status */
   --color-badge-live-text: #047857;
   --color-badge-live-bg: #ECFDF5;
   --color-badge-live-border: #A7F3D0;
@@ -66,7 +59,7 @@
   --color-footer-fg: #E2E8F0;
   --color-footer-text: #CBD5E1;
 
-  /* Colorful Category Banner Tokens (from reference image) */
+  /* Vibrant Category Banners */
   --banner-purple-from: #5835E5;
   --banner-purple-to: #4324D6;
   --banner-pink-from: #E11D48;
@@ -78,30 +71,10 @@
   --banner-blue-from: #2563EB;
   --banner-blue-to: #1D4ED8;
 
-  /* Service aliases */
-  --service-1-accent: #2563EB;
-  --service-1-container: #EFF6FF;
-  --service-1-border: #BFDBFE;
   --service-1-page-bg: #F4F8FC;
-
-  --service-2-accent: #5835E5;
-  --service-2-container: #EEF2FF;
-  --service-2-border: #C7D2FE;
   --service-2-page-bg: #F8F6FF;
-
-  --service-3-accent: #E11D48;
-  --service-3-container: #FFF1F2;
-  --service-3-border: #FECDD3;
   --service-3-page-bg: #FFF5F7;
-
-  --service-4-accent: #0D9488;
-  --service-4-container: #F0FDFA;
-  --service-4-border: #99F6E4;
   --service-4-page-bg: #F0FDF8;
-
-  --service-5-accent: #BE123C;
-  --service-5-container: #FFF1F2;
-  --service-5-border: #FECDD3;
   --service-5-page-bg: #FFF5F5;
 
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
@@ -109,7 +82,6 @@
   --theme-fade: 0.3s ease;
 }
 
-/* Dark Mode Overrides */
 html.dark {
   color-scheme: dark;
 
