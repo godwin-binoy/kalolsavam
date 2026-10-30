@@ -1,0 +1,208 @@
+/* ==========================================================================
+   TAILWIND UTILITY SUBSET — hand-purged, statically compiled replacement
+   for the https://cdn.tailwindcss.com JIT script (≈120 KB gzipped of JS that
+   re-scans and re-parses the whole DOM on every page load).
+   --------------------------------------------------------------------------
+   Only the utilities actually used by the generated pages are included, so
+   browsers spend zero CPU generating CSS at runtime. Values match Tailwind
+   v2/v3 defaults exactly; ordering is preserved from the CDN build so any
+   same-specificity conflicts resolve identically to before.
+
+   MAINTENANCE CONTRACT: if tools/build.py emits a class that is not listed
+   here, add it (copy the rule verbatim from the Tailwind docs/CDN output).
+   `python3 tools/build.py --check` fails the build on unknown utility
+   classes so this file can never silently drift out of sync.
+   ========================================================================== */
+
+/* ---------- Custom-property seeds (transform/space utilities) ---------- */
+*, ::before, ::after {
+  --tw-space-y-reverse: 0;
+}
+
+.transform {
+  --tw-translate-x: 0;
+  --tw-translate-y: 0;
+  --tw-rotate: 0;
+  --tw-skew-x: 0;
+  --tw-skew-y: 0;
+  --tw-scale-x: 1;
+  --tw-scale-y: 1;
+  transform: translateX(var(--tw-translate-x)) translateY(var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+/* ---------- Layout / flex / grid ---------- */
+.container          { width: 100%; }
+.grid               { display: grid; }
+.hidden             { display: none; }
+.inline             { display: inline; }
+.inline-block       { display: inline-block; }
+.flex               { display: flex; }
+.inline-flex        { display: inline-flex; }
+.table              { display: table; }
+.grid-cols-1        { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+.flex-col           { flex-direction: column; }
+.flex-wrap          { flex-wrap: wrap; }
+.items-start        { align-items: flex-start; }
+.items-center       { align-items: center; }
+.justify-between    { justify-content: space-between; }
+.gap-1              { gap: 0.25rem; }
+.gap-2              { gap: 0.5rem; }
+.gap-3              { gap: 0.75rem; }
+.gap-4              { gap: 1rem; }
+.gap-5              { gap: 1.25rem; }
+.gap-6              { gap: 1.5rem; }
+.gap-8              { gap: 2rem; }
+.space-y-1 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+.space-y-1\.5 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.375rem * var(--tw-space-y-reverse));
+}
+.space-y-2 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.space-y-4 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(1rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1rem * var(--tw-space-y-reverse));
+}
+.space-y-6 > :not([hidden]) ~ :not([hidden]) {
+  margin-top: calc(1.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(1.5rem * var(--tw-space-y-reverse));
+}
+.flex-grow          { flex-grow: 1; }
+.shrink-0,
+.flex-shrink-0      { flex-shrink: 0; }
+
+/* ---------- Sizing ---------- */
+.h-4                { height: 1rem; }
+.w-4                { width: 1rem; }
+.h-6                { height: 1.5rem; }
+.w-6                { width: 1.5rem; }
+.min-h-screen       { min-height: 100vh; }
+.max-w-2xl          { max-width: 42rem; }
+.max-w-3xl          { max-width: 48rem; }
+
+/* ---------- Spacing ---------- */
+.p-0                { padding: 0; }
+.p-2                { padding: 0.5rem; }
+.p-3                { padding: 0.75rem; }
+.p-4                { padding: 1rem; }
+.p-5                { padding: 1.25rem; }
+.px-3               { padding-left: 0.75rem;  padding-right: 0.75rem; }
+.px-4               { padding-left: 1rem;     padding-right: 1rem; }
+.px-5               { padding-left: 1.25rem;  padding-right: 1.25rem; }
+.py-1               { padding-top: 0.25rem;   padding-bottom: 0.25rem; }
+.py-1\.5            { padding-top: 0.375rem;  padding-bottom: 0.375rem; }
+.py-2               { padding-top: 0.5rem;    padding-bottom: 0.5rem; }
+.py-3               { padding-top: 0.75rem;   padding-bottom: 0.75rem; }
+.pt-1               { padding-top: 0.25rem; }
+.pt-2               { padding-top: 0.5rem; }
+.pt-3               { padding-top: 0.75rem; }
+.pb-4               { padding-bottom: 1rem; }
+.pl-2               { padding-left: 0.5rem; }
+.ml-1               { margin-left: 0.25rem; }
+.mt-0\.5            { margin-top: 0.125rem; }
+.mt-1               { margin-top: 0.25rem; }
+.mt-2               { margin-top: 0.5rem; }
+.mt-4               { margin-top: 1rem; }
+.mt-10              { margin-top: 2.5rem; }
+.mb-2               { margin-bottom: 0.5rem; }
+.mb-3               { margin-bottom: 0.75rem; }
+.mb-4               { margin-bottom: 1rem; }
+.mb-8               { margin-bottom: 2rem; }
+.mb-10              { margin-bottom: 2.5rem; }
+
+/* ---------- Borders & radius ---------- */
+.rounded-md         { border-radius: 0.375rem; }
+.rounded-xl         { border-radius: 0.75rem; }
+.rounded-2xl        { border-radius: 1rem; }
+.border             { border-width: 1px; }
+
+/* ---------- Typography ---------- */
+.font-sans          { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"; }
+.text-xs            { font-size: 0.75rem;    line-height: 1rem; }
+.text-sm            { font-size: 0.875rem;   line-height: 1.25rem; }
+.text-base          { font-size: 1rem;       line-height: 1.5rem; }
+.text-lg            { font-size: 1.125rem;   line-height: 1.75rem; }
+.text-\[11px\]      { font-size: 11px; }
+.font-normal        { font-weight: 400; }
+.font-medium        { font-weight: 500; }
+.font-semibold      { font-weight: 600; }
+.font-bold          { font-weight: 700; }
+.font-extrabold     { font-weight: 800; }
+.leading-tight      { line-height: 1.25; }
+.leading-relaxed    { line-height: 1.625; }
+.text-center        { text-align: center; }
+.text-left          { text-align: left; }
+.antialiased        { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* ---------- Object fit ---------- */
+.object-contain     { object-fit: contain; }
+
+/* ---------- Colors (violet ≈ indigo, rose ≈ pink in both palettes) ------ */
+.bg-purple-50       { background-color: #f5f3ff; }
+.bg-rose-50         { background-color: #fff1f2; }
+.text-blue-600      { color: #2563eb; }
+.text-indigo-600    { color: #4f46e5; }
+.text-violet-600    { color: #4f46e5; }
+.text-emerald-600   { color: #059669; }
+.text-amber-600     { color: #d97706; }
+.text-rose-600      { color: #e11d48; }
+.text-pink-600      { color: #e11d48; }
+.text-rose-700      { color: #be123c; }
+.text-purple-700    { color: #6d28d9; }
+.text-violet-700    { color: #6d28d9; }
+.text-purple-900    { color: #4c1d95; }
+.border-purple-200  { border-color: #ddd6fe; }
+.border-violet-200  { border-color: #ddd6fe; }
+.border-rose-200    { border-color: #fecdd3; }
+.border-pink-200    { border-color: #fecdd3; }
+
+/* Hero "Live Stages" pill + generic translucent surfaces */
+.bg-white\/70       { background-color: rgba(255, 255, 255, 0.7); }
+.border-black\/5    { border-color: rgba(0, 0, 0, 0.05); }
+
+html.dark .dark\:bg-neutral-800\/80  { background-color: rgba(38, 38, 38, 0.8); }
+html.dark .dark\:border-white\/10    { border-color: rgba(255, 255, 255, 0.1); }
+html.dark .dark\:bg-purple-950\/40   { background-color: rgba(59, 7, 100, 0.4); }
+html.dark .dark\:text-purple-200     { color: #ddd6fe; }
+html.dark .dark\:text-purple-300     { color: #c4b5fd; }
+html.dark .dark\:border-purple-800   { border-color: #5b21b6; }
+html.dark .dark\:bg-rose-950\/40     { background-color: rgba(76, 5, 25, 0.4); }
+html.dark .dark\:text-rose-300       { color: #fda4af; }
+html.dark .dark\:text-rose-400       { color: #fb7185; }
+html.dark .dark\:border-rose-800     { border-color: #9f1239; }
+html.dark .dark\:text-blue-400       { color: #60a5fa; }
+html.dark .dark\:text-indigo-400     { color: #818cf8; }
+html.dark .dark\:text-violet-400     { color: #818cf8; }
+html.dark .dark\:text-emerald-400    { color: #34d399; }
+html.dark .dark\:text-amber-400      { color: #fbbf24; }
+
+/* ---------- Responsive tiers (sm: 640px, md: 768px, lg: 1024px) ---------- */
+@media (min-width: 640px) {
+  .sm\:inline          { display: inline; }
+  .sm\:grid-cols-2     { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:flex-row        { flex-direction: row; }
+  .sm\:items-center    { align-items: center; }
+  .sm\:text-left       { text-align: left; }
+  .sm\:text-base       { font-size: 1rem;     line-height: 1.5rem; }
+  .sm\:text-sm         { font-size: 0.875rem; line-height: 1.25rem; }
+  .sm\:text-xs         { font-size: 0.75rem;  line-height: 1rem; }
+  .sm\:text-lg         { font-size: 1.125rem; line-height: 1.75rem; }
+}
+
+@media (min-width: 768px) {
+  .md\:flex            { display: flex; }
+  .md\:hidden          { display: none; }
+  .md\:grid-cols-2     { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .md\:col-span-2      { grid-column: span 2 / span 2; }
+}
+
+@media (min-width: 1024px) {
+  .lg\:grid-cols-3     { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .lg\:grid-cols-4     { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .lg\:col-span-2      { grid-column: span 2 / span 2; }
+}

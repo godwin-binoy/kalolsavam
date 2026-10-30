@@ -8,13 +8,19 @@ html {
 }
 
 body {
+  /* PERF: the webfont is fetched non-blockingly (preload + media swap in the
+     build template) and applies post-paint. The system stack renders frame #1
+     instantly on every device — including low-end phones with slow CPUs where
+     a blocking font request would stall first paint entirely. */
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text-main);
   background-color: var(--color-body-bg);
   /* The subtle dotted texture visible in the reference design */
+  /* PERF: `background-attachment: fixed` forces the whole page to repaint on
+     every scroll frame on mobile browsers. A plain repeating gradient tiles
+     from one small cached texture instead — visually identical while parked. */
   background-image: radial-gradient(var(--color-pattern-dot) 1.25px, transparent 1.25px);
   background-size: 22px 22px;
-  background-attachment: fixed;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -159,5 +165,63 @@ html[data-theme-anim] *::after {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   DEVICE TIERS — keep scrolling & switching smooth on weak hardware
+   --------------------------------------------------------------------------
+   backdrop-filter blur is the single most expensive effect we ship: it
+   re-blurs everything behind the sticky header/cards on EVERY composited
+   frame. On low-end phones (and data-saver mode, which browsers surface as
+   save-data: reduce) we dial the radius down or off entirely. Flat translucent
+   surfaces keep the design language intact; only the frosted GPU work goes.
+   ========================================================================== */
+
+/* Coarse pointers are almost always phones/tablets: smaller blur radius and
+   no hover lift (hover states stick after taps there anyway). */
+@media (pointer: coarse) {
+  :root {
+    --blur: 14px;
+    --header-blur: 16px;
+    --drawer-blur: 18px;
+    --lift: 0px;
+  }
+}
+
+/* User opted into reduced transparency / data saver: drop blur completely. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --blur: 0px;
+    --header-blur: 0px;
+    --drawer-blur: 0px;
+  }
+}
+
+/* js/theme-boot.js adds .lo-power when the device reports itself as weak:
+   navigator.hardwareConcurrency <= 2 or deviceMemory <= 2 GB, or a
+   Save-Data: on header was observed via PerformanceNavigationTiming.
+   Class-based so it also works on browsers without the save-data media
+   feature (Safari) and is testable/settable from the console. */
+html.lo-power {
+  --blur: 0px;
+  --header-blur: 0px;
+  --drawer-blur: 0px;
+  --lift: 0px;
+}
+
+/* Browsers without @supports for backdrop-filter simply ignore this block
+   and never pay for the effect; inside it we swap the frosted surfaces for
+   solid equivalents so text contrast stays AA-friendly. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --color-card-bg: rgba(255, 255, 255, 0.94);
+    --color-card-border: rgba(221, 228, 219, 0.9);
+    --action-item-bg: #FFFFFF;
+  }
+  html.dark {
+    --color-card-bg: #1A211D;
+    --color-card-border: rgba(255, 255, 255, 0.08);
+    --action-item-bg: #212A25;
   }
 }
