@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
+<title>Admin Console — Sign in</title>
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <h1 class="brand">Kalolsavam <span>Admin Console</span></h1>
+    <p class="muted small">Master data, staff accounts and operations.
+      Restricted to admin accounts on the staff network.</p>
+
+    <form id="login-form" autocomplete="off">
+      <label>User name
+        <input id="username" name="username" required maxlength="64"
+               autocomplete="username" spellcheck="false">
+      </label>
+      <label>Password
+        <input id="password" name="password" type="password" required
+               autocomplete="current-password">
+      </label>
+      <label class="totp-row hidden" id="totp-row">Authenticator code (TOTP)
+        <input id="totp" name="totp" inputmode="numeric" pattern="\d{6}"
+               maxlength="6" autocomplete="one-time-code">
+      </label>
+      <button type="submit" id="login-btn">Sign in</button>
+      <p id="login-msg" class="msg" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <!-- app shell: revealed after login -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <h1 class="brand">Kalolsavam <span>Admin Console</span></h1>
+      <span id="who" class="badge"></span>
+      <span id="conn" class="badge">offline</span>
+      <span class="spacer"></span>
+      <button id="logout-btn">Sign out</button>
+    </header>
+    <main>
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="dashboard">Dashboard</button>
+        <button class="tab" data-tab="venues">Venues</button>
+        <button class="tab" data-tab="events">Events</button>
+        <button class="tab" data-tab="users">Users</button>
+        <button class="tab" data-tab="sessions">Sessions</button>
+        <button class="tab" data-tab="audit">Audit</button>
+        <button class="tab" data-tab="ops">Ops</button>
+      </nav>
+      <section id="view"><!-- rendered per tab --></section>
+    </main>
+  </div>
+
+  <!-- generic single-field step-up prompt for destructive actions -->
+  <dialog id="stepup-dialog">
+    <h3>Confirm with TOTP</h3>
+    <p class="muted small" id="stepup-what"></p>
+    <form method="dialog" id="stepup-form">
+      <label>Authenticator code
+        <input id="stepup-code" inputmode="numeric" pattern="\d{6}"
+               maxlength="6" required autocomplete="one-time-code">
+      </label>
+      <div class="row" style="margin-top:.9rem">
+        <button value="go" class="primary" type="submit">Confirm</button>
+        <button value="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/srp-client.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

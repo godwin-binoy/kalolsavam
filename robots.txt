@@ -1,6 +1,10 @@
 User-agent: *
+# Public festival site only. The staff dashboards (/stagemaster, /admin) are
+# deliberately unlinked from every public page; these rules just keep honest
+# crawlers out of them and off the API. Robots rules are NOT access control —
+# the dashboards are protected solely by the auth'd APIs behind them.
 Disallow: /stagemaster
-Disallow: /manage
+Disallow: /admin
 Disallow: /api
 Noindex: /stagemaster
-Noindex: /manage
+Noindex: /admin

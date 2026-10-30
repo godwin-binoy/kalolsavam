@@ -29,6 +29,11 @@ router = APIRouter()
 SRP_TTL = 60.0  # challenge must be completed within 60s
 
 
+class TotpConfirmIn(BaseModel):
+    confirm_token: str = Field(min_length=8, max_length=64)
+    code: str = Field(pattern=r"^\d{6}$")
+
+
 def _ctx(request: Request):
     return request.app.state.db, request.app.state.tokens, \
         getattr(request.app.state, "field", None), request.app.state.cfg
@@ -272,7 +277,43 @@ async def logout(request: Request, response: Response):
                 ip=_client_ip(request), event="logout", detail="")
     response.delete_cookie(REFRESH_COOKIE, path="/api/auth")
     response.delete_cookie(CSRF_COOKIE, path="/api/auth")
-    return {"ok": True}# ------------------------------------------------- TOTP enrollment --------
+    return {"ok": True}
+
+# ------------------------------------------------- password change (SRP) ----
+class PasswordChangeIn(BaseModel):
+    new_password: str = Field(min_length=10, max_length=256)
+
+
+@router.post("/password")
+async def change_password(body: PasswordChangeIn, request: Request):
+    """Recompute the SRP verifier from a new password. Requires a normal
+    (non-enroll) session; admins additionally supply a live TOTP code."""
+    from .auth import srp_make_verifier
+    claims = request.app.state.get_access(request)
+    db, _, field, _ = _ctx(request)
+    uid = int(claims["sub"])
+    user = db.one("SELECT * FROM users WHERE id=?", (uid,))
+    if not user or user["disabled"]:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_user")
+    if user["role"] == "admin" or user["totp_required"]:
+        from .auth import totp_verify
+        secret = _totp_secret(db, user, field)
+        code = request.headers.get("x-step-up-totp", "")
+        if not secret or not code or not totp_verify(secret, code):
+            db.log_auth(username=claims["usr"], user_id=uid,
+                        ip=_client_ip(request), event="pwd_change_stepup_fail",
+                        detail="")
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "stepup_failed")
+    salt_hex, v_hex = srp_make_verifier(user["username"], body.new_password)
+    db.execute("UPDATE users SET srp_salt_hex=?, srp_verifier_hex=?, "
+               "failed_count=0, locked_until=0, updated_at=? WHERE id=?",
+               (salt_hex, v_hex, db.now(), uid))
+    db.log_auth(username=user["username"], user_id=uid,
+                ip=_client_ip(request), event="password_changed", detail="")
+    return {"ok": True}
+
+
+# ------------------------------------------------- TOTP enrollment --------
 PENDING_TOTP: dict[str, tuple[int, bytes, float]] = {}
 
 
@@ -281,7 +322,7 @@ async def totp_start(request: Request):
     """Authenticated: generate a fresh secret, return its otpauth:// URI so the
     staff member can scan it with their authenticator app. Confirm within 10 min."""
     from .auth import totp_provision, totp_uri
-    claims = request.app.state.get_access(request)
+    claims = request.app.state.get_access(request, allow_enroll=True)
     db, _, field, _ = _ctx(request)
     uid = int(claims["sub"])
     secret = totp_provision()
@@ -297,7 +338,7 @@ async def totp_start(request: Request):
 @router.post("/totp/confirm")
 async def totp_confirm(body: TotpConfirmIn, request: Request):
     from .auth import totp_verify
-    claims = request.app.state.get_access(request)
+    claims = request.app.state.get_access(request, allow_enroll=True)
     db, _, field, _ = _ctx(request)
     ip = _client_ip(request)
     entry = PENDING_TOTP.get(body.confirm_token)

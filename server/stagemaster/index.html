@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,noimageindex,nosnippet">
+<title>Stage Control — Sign in</title>
+<link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="login-body">
+  <main class="login-card">
+    <h1 class="brand">Kalolsavam <span>Stage Control</span></h1>
+    <p class="muted small">Stagemaster dashboard. Access is limited to assigned stages.</p>
+
+    <form id="login-form" autocomplete="off">
+      <label>User name
+        <input id="username" name="username" required maxlength="64"
+               autocomplete="username" spellcheck="false">
+      </label>
+      <label>Password
+        <input id="password" name="password" type="password" required
+               autocomplete="current-password">
+      </label>
+      <label class="totp-row hidden" id="totp-row">Authenticator code (TOTP)
+        <input id="totp" name="totp" inputmode="numeric" pattern="\d{6}"
+               maxlength="6" autocomplete="one-time-code">
+      </label>
+      <button type="submit" id="login-btn">Sign in</button>
+      <p id="login-msg" class="msg" role="status" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <!-- app shell: revealed after login -->
+  <div id="app" class="hidden">
+    <header class="topbar">
+      <h1 class="brand">Kalolsavam <span>Stage Control</span></h1>
+      <span id="who" class="badge"></span>
+      <span id="conn" class="badge">connecting…</span>
+      <span class="spacer"></span>
+      <button id="refresh-btn" title="Re-sync board">⟳ Sync</button>
+      <button id="logout-btn">Sign out</button>
+    </header>
+    <main>
+      <div id="boards" class="grid"><!-- one panel per assigned venue --></div>
+      <p class="muted small">Tip: this page keeps itself updated over the live
+        feed; use ⟳ Sync if anything looks stale.</p>
+    </main>
+  </div>
+
+  <dialog id="score-dialog">
+    <h3>Enter score</h3>
+    <p class="muted small" id="score-who"></p>
+    <form method="dialog" id="score-form">
+      <label>Judge number
+        <select id="score-judge"></select>
+      </label>
+      <label>Score (0–100)
+        <input id="score-value" type="number" min="0" max="100" step="0.01" required>
+      </label>
+      <div class="row" style="margin-top:.9rem">
+        <button value="save" class="primary" type="submit">Save</button>
+        <button value="cancel">Cancel</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="js/srp-client.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/board.js"></script>
+</body>
+</html>

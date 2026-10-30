@@ -35,7 +35,7 @@ def main() -> None:
     print(f"Admin created: {name}")
     print(f"One-time password (print once, deliver securely): {pw}")
     print("Next steps:")
-    print(" 1. Log in at https://<host>:<port>/manage/")
+    print(" 1. Log in at https://<host>:<port>/admin/")
     print(" 2. Enroll TOTP when prompted (mandatory for admins)")
     print(" 3. Rotate this password via the dashboard")
     print("=" * 60)

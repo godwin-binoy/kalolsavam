@@ -86,6 +86,13 @@ class Config:
 
         self.public_origin = _get("PUBLIC_SITE_ORIGIN", "")
 
+        # Optional path suffix for the dashboard mounts, e.g. "7f3a" →
+        # /stagemaster-7f3a and /admin-7f3a. Convenience only (quieter logs);
+        # NEVER a security boundary — all protection lives in the APIs.
+        salt = _get("DASHBOARD_PATH_SALT")
+        salt = re.sub(r"[^A-Za-z0-9_-]", "", salt)[:16]
+        self.dash_suffix = f"-{salt}" if salt else ""
+
     @property
     def field_key(self) -> bytes:
         """Derive a stable 32-byte symmetric key from DB_FIELD_KEY."""

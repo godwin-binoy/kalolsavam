@@ -59,6 +59,40 @@ k = _from_bytes(_h(("%x" % N).zfill(_padlen * 2).encode(),
                    ("%x" % g).zfill(_padlen * 2).encode()))  # k = H(N | PAD(g))
 
 
+def srp_client_derive(username: str, password: str, salt_hex: str) -> tuple[int, int]:
+    """Client-side key derivation: returns (private_a, public_A).
+
+    x = H(salt | H(username:password)); a random; A = g^a mod N.
+    Mirrors the server's srp_make_verifier so both sides agree on x.
+    """
+    x = _from_bytes(_h(bytes.fromhex(salt_hex), _h(f"{username}:{password}".encode())))
+    a = secrets.randbelow(N - 1) + 1
+    return a, pow(g, a, N)
+
+
+def srp_client_session_key(A: int, B: int, a: int, username: str,
+                           salt_hex: str, password: str) -> bytes:
+    """Client-side S computation (rejects B ≡ 0 mod N per SRP spec)."""
+    if B % N == 0:
+        raise ValueError("invalid B")
+    x = _from_bytes(_h(bytes.fromhex(salt_hex), _h(f"{username}:{password}".encode())))
+    u = _from_bytes(_h(_to_bytes(A), _to_bytes(B)))
+    if u == 0:
+        raise ValueError("invalid u")
+    S = pow(B - k * pow(g, x, N), a + u * x, N)
+    return _to_bytes(S % N)
+
+
+def srp_client_M1(username: str, salt_hex: str, A: int, B: int, S: bytes) -> str:
+    return srp_M(username, salt_hex, A, B, S).hex()
+
+
+def srp_client_verify_M2(M2_hex_expected: str, username: str, salt_hex: str,
+                        A: int, B: int, S: bytes) -> bool:
+    return hmac.compare_digest(M2_hex_expected.lower(),
+                               srp_HAMK(username, salt_hex, A, B, S).hex())
+
+
 def srp_make_verifier(username: str, password: str,
                       salt: bytes | None = None) -> tuple[str, str]:
     """Compute (salt_hex, verifier_hex) — used at account creation only.
@@ -144,13 +178,16 @@ class TokenIssuer:
         }
 
     def issue_access(self, *, user_id: int, username: str, role: str,
-                     sid: str, stages: list[int]) -> str:
+                     sid: str, stages: list[int], enroll: bool = False) -> str:
         now = int(time.time())
         payload = {
             "sub": str(user_id), "usr": username, "role": role, "sid": sid,
             "stages": stages, "iat": now, "exp": now + self.access_ttl,
             "jti": secrets.token_hex(12), "iss": "kalolsavam-api",
         }
+        if enroll:  # TOTP-enrollment-scoped token (see routes_auth /verify)
+            payload["scope"] = "enroll"
+            payload["exp"] = now + 300
         header = {"alg": "EdDSA", "typ": "JWT", "kid": self.active_kid}
         seg_h = _b64u(json.dumps(header, separators=(",", ":")).encode())
         seg_p = _b64u(json.dumps(payload, separators=(",", ":")).encode())

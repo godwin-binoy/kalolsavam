@@ -215,3 +215,29 @@ async def publish_results(body: PublishIn, request: Request):
     db.emit_change("result_published", body.event_id,
                    {"event_id": body.event_id, "standings": standings})
     return {"ok": True, "published": len(standings)}
+
+
+# ------------------------------------------------------------ stream ------
+@router.get("/stream")
+async def stream(request: Request):
+    """Staff SSE feed — authenticated, full (unsanitized) entity set.
+
+    EventSource cannot send an Authorization header, so clients consume this
+    with fetch + ReadableStream (see dashboard js/api.js)."""
+    _deps(request)                      # role check: stagemaster or admin
+    from .events import BUS
+
+    q = BUS.subscribe()
+
+    async def gen():
+        try:
+            yield "retry: 3000\n\n"
+            async for chunk in BUS.stream(q):
+                yield chunk
+        finally:
+            BUS.unsubscribe(q)
+
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        gen(), media_type="text/event-stream",
+        headers={"Cache-Control": "no-store", "X-Accel-Buffering": "no"})
