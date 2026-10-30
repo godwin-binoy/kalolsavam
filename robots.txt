@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /stagemaster
+Disallow: /manage
+Disallow: /api
+Noindex: /stagemaster
+Noindex: /manage
