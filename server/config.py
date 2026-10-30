@@ -68,7 +68,8 @@ class Config:
                 active_kid = kid.strip()
         self.active_kid = active_kid
 
-        # Fernet-compatible key (32 url-safe b64 chars) encrypting TOTP secrets
+        # LEGACY (optional): old AES-GCM key for TOTP blobs written before the
+        # no-DB-encryption policy. Only needed to auto-migrate an existing DB.
         self.field_key_raw = _get("DB_FIELD_KEY")
 
         self.access_ttl_min = _get_int("ACCESS_TOKEN_TTL_MIN", 15)
@@ -98,7 +99,10 @@ class Config:
         if not self.signing_seeds:
             problems.append("SESSION_SIGNING_SEEDS is empty/invalid")
         if not self.field_key_raw and self.is_prod:
-            problems.append("DB_FIELD_KEY missing in production")
+            # Not fatal any more (DB is never encrypted); just warn so a stale
+            # empty value doesn't look like a hard requirement.
+            print("note: DB_FIELD_KEY unset — fine unless migrating a legacy "
+                  "database with encrypted TOTP blobs")
         if self.is_prod and self.host in ("0.0.0.0", "::"):
             problems.append("SERVER_HOST wildcard bind without reverse proxy")
         if problems:

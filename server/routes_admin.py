@@ -36,11 +36,12 @@ def _step_up(request: Request, db, claims: dict, action: str) -> None:
     """Destructive ops need a live TOTP from the actor + recent session."""
     code = request.headers.get("x-step-up-totp", "")
     user = db.one("SELECT * FROM users WHERE id=?", (int(claims["sub"]),))
-    if not user or not user["totp_enc"]:
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "totp_not_enrolled")
     from .auth import totp_verify
-    field = request.app.state.field
-    secret = field.decrypt(bytes(user["totp_enc"]), aad=str(user["id"]).encode())
+    from .routes_auth import _totp_secret
+    field = getattr(request.app.state, "field", None)
+    secret = _totp_secret(db, user, field) if user else None
+    if not secret:
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "totp_not_enrolled")
     if not code or not totp_verify(secret, code):
         db.log_auth(username=claims["usr"], user_id=int(claims["sub"]),
                     ip=request.client.host if request.client else "?",

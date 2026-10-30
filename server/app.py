@@ -73,7 +73,9 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     app.state.db = db
     app.state.tokens = TokenIssuer(cfg.signing_seeds, cfg.active_kid,
                                    cfg.access_ttl_min)
-    app.state.field = FieldCrypto(cfg.field_key)
+    if cfg.field_key_raw:  # legacy key present → enables in-place migration of
+        from .auth import FieldCrypto  # old AES-GCM TOTP blobs; not required
+        app.state.field = FieldCrypto(cfg.field_key)
     app.state.auth_bucket = TokenBucket(10, 20)     # per-IP auth attempts
     app.state.api_bucket = TokenBucket(120, 200)    # general API
 
@@ -99,9 +101,14 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
         if path.startswith("/api/") and not app.state.api_bucket.allow(client_ip(request)):
             return JSONResponse({"detail": "rate_limited"}, status_code=429)
 
-        # CSRF double-submit for cookie-driven mutations (refresh/logout)
+        # CSRF double-submit for cookie-driven auth mutations.
+        # Login challenge/verify are exempt: they run BEFORE any session
+        # cookies exist (challenge is additionally protected by rate limits,
+        # lockouts and uniform fake responses; verify requires a valid SRP M1
+        # proof that only the true password holder can compute).
+        _CSRF_EXEMPT = ("/api/auth/challenge", "/api/auth/verify")
         if request.method in ("POST", "PUT", "PATCH", "DELETE") and \
-           path.startswith("/api/auth/"):
+           path.startswith("/api/auth/") and path not in _CSRF_EXEMPT:
             tok_c = request.cookies.get(CSRF_COOKIE, "")
             tok_h = request.headers.get(CSRF_HEADER, "")
             if not tok_c or not hmac.compare_digest(tok_c, tok_h):

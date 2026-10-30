@@ -6,7 +6,9 @@ tokens, and TOTP (RFC 6238). See docs/SECURITY.md for the rationale.
    password, not even a reversible hash of it.
  - Access tokens: short-lived Ed25519 JWTs kept in client memory only.
  - Refresh tokens: single-use, rotated; family reuse detection revokes all.
- - TOTP secrets encrypted at rest with AES-256-GCM (key from DB_FIELD_KEY).
+ - The database is NEVER encrypted (policy: no encryption key may ever gate
+   access to our own data). TOTP secrets are stored as plain bytes in
+   users.totp_secret; the DB file is protected by OS permissions instead.
 """
 from __future__ import annotations
 
@@ -243,9 +245,15 @@ def totp_uri(secret: bytes, username: str, issuer: str = "Kalolsavam") -> str:
             f"&issuer={issuer}&algorithm=SHA1&digits=6&period=30")
 
 
-# ------------------------------------------------- field encryption (AES-GCM)
+# ------------------------------------- TOTP secret storage (plaintext at rest)
+# Policy decision: the database is NEVER encrypted so access can never be lost
+# (a lost/rotated key used to lock everyone out of their own data). TOTP
+# secrets are stored as plain bytes in users.totp_secret. The DB file itself
+# is protected by OS permissions on the Data laptop only.
 class FieldCrypto:
-    """AES-256-GCM using a SHA-256-derived key from DB_FIELD_KEY."""
+    """LEGACY ONLY: AES-256-GCM codec kept so databases created before the
+    no-encryption policy can still read/migrate their old encrypted TOTP
+    blobs. New writes never use this."""
 
     def __init__(self, key32: bytes):
         assert len(key32) == 32
@@ -258,3 +266,26 @@ class FieldCrypto:
     def decrypt(self, blob: bytes, aad: bytes = b"") -> bytes:
         nonce, ct = blob[:12], blob[12:]
         return self._aes.decrypt(nonce, ct, aad)
+
+
+def encode_totp_secret(secret: bytes) -> bytes:
+    """Canonical storage form for a TOTP secret (raw bytes, no cipher)."""
+    return bytes(secret)
+
+
+def decode_totp_secret(blob, field=None, uid=None) -> bytes:
+    """Read a stored TOTP secret. New rows hold raw bytes; legacy rows written
+    before the no-encryption policy hold AES-GCM blobs — if `field` (the old
+    FieldCrypto) is available we transparently decrypt them (legacy writes
+    used the user id as AAD) and callers migrate the row on next use.
+    Nothing is ever lost either way."""
+    data = bytes(blob) if isinstance(blob, (bytes, bytearray)) else bytes(blob)
+    # Legacy AES-GCM blob = 12-byte nonce + secret (20B per RFC 4226) + 16-byte
+    # tag = exactly 48 bytes; plaintext secrets are 20 bytes, so no ambiguity.
+    if field is not None and len(data) == 48:
+        for aad in ([str(uid).encode()] if uid is not None else []) + [b""]:
+            try:
+                return field.decrypt(data, aad=aad)
+            except Exception:
+                continue
+    return data

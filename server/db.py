@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS users (
   role TEXT NOT NULL CHECK(role IN ('stagemaster','admin')),
   srp_salt_hex TEXT,                  -- per-user SRP salt
   srp_verifier_hex TEXT,              -- v = g^x mod N  (never the password)
-  totp_enc BLOB,                      -- encrypted TOTP secret (NULL until enrolled)
+  totp_secret BLOB,                   -- TOTP shared secret, stored PLAINTEXT
+                                      -- (no-DB-encryption policy; NULL until enrolled)
+  totp_enc BLOB,                      -- legacy: AES-GCM encrypted secret (migrated on read)
   totp_required INTEGER NOT NULL DEFAULT 0,
   stages TEXT NOT NULL DEFAULT '[]',  -- JSON list of stage ids (stagemaster scope)
   disabled INTEGER NOT NULL DEFAULT 0,
@@ -150,6 +152,9 @@ class Database:
         # create tables FIRST — reading meta before the schema exists fails on a
         # brand-new database file.
         self.conn.executescript(SCHEMA)
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(users)")}
+        if "totp_secret" not in cols:      # pre-no-encryption-policy database
+            self.conn.execute("ALTER TABLE users ADD COLUMN totp_secret BLOB")
         cur_ver = int(self.scalar("SELECT v FROM meta WHERE k='schema_version'") or 0)
         if cur_ver < SCHEMA_VERSION:
             self.conn.execute(

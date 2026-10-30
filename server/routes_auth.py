@@ -31,7 +31,27 @@ SRP_TTL = 60.0  # challenge must be completed within 60s
 
 def _ctx(request: Request):
     return request.app.state.db, request.app.state.tokens, \
-        request.app.state.field, request.app.state.cfg
+        getattr(request.app.state, "field", None), request.app.state.cfg
+
+
+def _totp_secret(db, user, field=None) -> bytes | None:
+    """Return the user's TOTP secret. Prefers the plaintext totp_secret column;
+    transparently falls back to legacy AES-GCM blobs (migrating the row in
+    place when the old key is still around). Never fails closed on a missing
+    encryption key — that is exactly what the no-DB-encryption policy prevents.
+    """
+    from .auth import decode_totp_secret
+    blob = user["totp_secret"] if "totp_secret" in user.keys() else None
+    if blob:
+        return bytes(blob)
+    if user["totp_enc"]:
+        uid = user["id"]
+        secret = decode_totp_secret(bytes(user["totp_enc"]), field=field, uid=uid)
+        if len(secret) == 20:  # successfully recovered legacy secret
+            db.execute("UPDATE users SET totp_secret=?, totp_enc=NULL WHERE id=?",
+                       (secret, uid))
+        return secret
+    return None
 
 
 def _client_ip(request: Request) -> str:
@@ -104,10 +124,14 @@ async def verify(body: VerifyIn, request: Request, response: Response):
 
     if not row["A_hex"]:
         raise bad
-    A_int = _from_bytes(bytes.fromhex(row["A_hex"]))
+    # stored via hex(int) — may carry a leading "0x"; parse as int-hex either way
+    try:
+        A_int = int(row["A_hex"], 16)
+        B_int = int(row["B_hex"], 16)
+    except ValueError:
+        raise bad
     if A_int % N == 0 or A_int >= N:
         raise bad
-    B_int = _from_bytes(bytes.fromhex(row["B_hex"]))
 
     try:
         S = srp_server_secret(A_int, B_int,
@@ -128,14 +152,38 @@ async def verify(body: VerifyIn, request: Request, response: Response):
 
     # ---- TOTP second factor (mandatory for admin, optional otherwise) ----
     if user["totp_required"] or user["role"] == "admin":
-        if not user["totp_enc"]:
+        secret = _totp_secret(db, user, field)
+        if not secret:
+            # First-run enrollment path: the SRP proof above already passed,
+            # so we know the password holder is genuine. Issue a short-lived
+            # ENROLL-scoped access token (no DB session row -> cannot be used
+            # against any other endpoint; /totp/start|confirm accept it only
+            # when totp is still absent) plus rotating cookies so the standard
+            # CSRF/refresh machinery works during enrollment.
             db.log_auth(username=user["username"], user_id=user["id"], ip=ip,
                         event="totp_missing", detail="enrollment required")
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "totp_enrollment_required")
+            import json as _json
+            sess_id = _secrets.token_hex(16)
+            rt_jti, exp = new_refresh(db, user["id"], None, None, sess_id,
+                                      cfg.refresh_ttl_hours)
+            access = tokens.issue_access(user_id=user["id"], username=user["username"],
+                                         role=user["role"], sid=sess_id,
+                                         stages=_json.loads(user["stages"]),
+                                         enroll=True)
+            csrf = _secrets.token_urlsafe(32)
+            secure = cfg.is_prod
+            response.set_cookie(REFRESH_COOKIE, rt_jti, httponly=True, secure=secure,
+                                samesite="strict", path="/api/auth",
+                                max_age=int(exp - db.now()))
+            response.set_cookie(CSRF_COOKIE, csrf, httponly=False, secure=secure,
+                                samesite="strict", path="/api/auth",
+                                max_age=int(exp - db.now()))
+            raise HTTPException(
+                status.HTTP_401_UNAUTHORIZED,
+                {"detail": "totp_enrollment_required", "access": access,
+                 "csrf": csrf, "expires_in": 300})
         if not body.totp:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "totp_required")
-        secret = field.decrypt(bytes(user["totp_enc"]),
-                               aad=str(user["id"]).encode())
         if not totp_verify(secret, body.totp):
             db.log_auth(username=user["username"], user_id=user["id"], ip=ip,
                         event="totp_fail", detail="")
@@ -238,8 +286,7 @@ async def totp_start(request: Request):
     uid = int(claims["sub"])
     secret = totp_provision()
     token = _secrets.token_hex(16)
-    PENDING_TOTP[token] = (uid, field.encrypt(secret, aad=str(uid).encode()),
-                           time.time())
+    PENDING_TOTP[token] = (uid, secret, time.time())
     # single-use cleanup of stale pendings
     stale = [k for k, (_, _, ts) in PENDING_TOTP.items() if time.time() - ts > 600]
     for k in stale:
@@ -256,15 +303,17 @@ async def totp_confirm(body: TotpConfirmIn, request: Request):
     entry = PENDING_TOTP.get(body.confirm_token)
     if not entry or entry[0] != int(claims["sub"]) or time.time() - entry[2] > 600:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "confirm_expired")
-    uid, enc_secret, _ = entry
-    secret = field.decrypt(enc_secret, aad=str(uid).encode())
+    uid, secret, _ = entry
     if not totp_verify(secret, body.code):
         db.log_auth(username=claims["usr"], user_id=uid, ip=ip,
                     event="totp_enroll_fail", detail="")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "bad_code")
     PENDING_TOTP.pop(body.confirm_token, None)
-    db.execute("UPDATE users SET totp_enc=?, totp_required=1, updated_at=? WHERE id=?",
-               (enc_secret, db.now(), uid))
+    # Stored PLAINTEXT by policy: the database is never encrypted so access can
+    # never be lost to a missing/rotated key. DB file protection = OS perms.
+    db.execute("UPDATE users SET totp_secret=?, totp_enc=NULL, totp_required=1, "
+               "updated_at=? WHERE id=?",
+               (secret, db.now(), uid))
     db.log_auth(username=claims["usr"], user_id=uid, ip=ip,
                 event="totp_enrolled", detail="")
     return {"ok": True}
