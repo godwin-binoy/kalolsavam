@@ -705,16 +705,18 @@ TEMPLATE = """<!DOCTYPE html>
   <script>{boot}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap"></noscript>
   <link rel="stylesheet" href="{r}css/style.css">
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen"{body_attrs}>
 
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
-      <a href="{r}index.html" class="flex items-center gap-3 group">
+      <a href="{r}index.html" class="flex items-center gap-2 sm:gap-3 group min-w-0">
         <img src="{r}res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
-        <span class="pl-2">
+        <span class="header-brand-text pl-2 min-w-0 overflow-hidden">
           <span class="block text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">{school}</span>
           <span class="block text-[11px] sm:text-xs text-muted font-medium">{tagline}</span>
         </span>
