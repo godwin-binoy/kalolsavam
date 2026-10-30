@@ -6,11 +6,13 @@ On-premise backend for the Mala Kalolsavam festival. Hosts:
    consumed by the public website. No auth required (cacheable).
 2. **Stagemaster API** (`/api/live/*`) — run-of-show control, score entry.
    Requires `role=stagemaster` session.
-3. **Manage API** (`/api/admin/*`) — master data CRUD, users, backups, deploy.
-   Requires `role=admin` session (+ TOTP).
-4. **Dashboard static hosting** — serves `stagemaster/` and `manage/` HTML
-   over HTTPS on the venue LAN only. These routes are *not* linked from the
-   public site and always demand authentication at the application layer.
+3. **Admin ("manage") API** (`/api/admin/*`) — master data CRUD, users, backups, deploy.
+   Requires `role=admin` session (+ TOTP) and a staff-VLAN source IP.
+4. **Dashboard static hosting** — serves `server/stagemaster/` and
+   `server/admin/` (inside this package, never part of the public site build)
+   as plain static folders over HTTPS on the venue LAN. Nothing links to them
+   from the public site; staff type the URL directly. Their security comes
+   entirely from the auth'd APIs behind them.
 
 ## Security model (summary — full spec in `docs/SECURITY.md`)
 - SRP challenge–response login (password never crosses the wire) → Argon2id

@@ -117,15 +117,18 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
         resp = await call_next(request)
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)
-        dash = path.startswith(("/stagemaster", "/manage"))
-        if dash:
+        dash = ("/stagemaster", "/admin")
+        sfx = cfg.dash_suffix
+        if sfx:
+            dash += (f"/stagemaster{sfx}", f"/admin{sfx}")
+        if path.startswith(dash):
             resp.headers["Content-Security-Policy"] = DASH_CSP
             resp.headers["Cache-Control"] = "no-store"
             resp.headers["Strict-Transport-Security"] = "max-age=31536000"
         return resp
 
     # ------------------------------------------------------------ guards --
-    def get_access(request: Request) -> dict:
+    def get_access(request: Request, *, allow_enroll: bool = False) -> dict:
         authz = request.headers.get("authorization", "")
         if not authz.startswith("Bearer "):
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "missing_token")
@@ -133,6 +136,11 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
             claims = app.state.tokens.verify_access(authz[7:])
         except Exception:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_token")
+        if claims.get("scope") == "enroll":
+            # TOTP-enrollment token: only /api/auth/totp/* may accept it.
+            if not allow_enroll:
+                raise HTTPException(status.HTTP_403_FORBIDDEN, "enroll_only")
+            return claims
         sid_row = db.one("SELECT * FROM sessions WHERE sid=?", (claims["sid"],))
         if not sid_row or sid_row["revoked"]:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session_revoked")
@@ -162,17 +170,24 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     app.state.require_role = require_role
 
     # ------------------------------------------- dashboard static files ---
-    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    for folder in ("stagemaster", "manage"):
-        d = os.path.join(root, folder)
+    # Dashboards live INSIDE server/ (server/stagemaster, server/admin) so they
+    # are never part of the public site build. They are still served as plain
+    # static files to anyone on the network — security comes exclusively from
+    # the protected APIs (auth: SRP + JWT + TOTP; /api/admin: IP allowlist).
+    # Nothing links to them from the public pages; staff type the URL directly.
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root
+    srv_root = os.path.dirname(os.path.abspath(__file__))               # server/
+    for folder in ("stagemaster", "admin"):
+        d = os.path.join(srv_root, folder)
         if os.path.isdir(d):
-            app.mount(f"/{folder}", StaticFiles(directory=d, html=True),
-                      name=folder)
+            app.mount(f"/{folder}{cfg.dash_suffix}",
+                      StaticFiles(directory=d, html=True),
+                      name=f"dash_{folder}")
 
     @app.get("/")
     async def index():
         # Server root serves ONLY a neutral gate page — no links to dashboards.
-        gate = os.path.join(root, "server", "static", "gate.html")
+        gate = os.path.join(srv_root, "static", "gate.html")
         if os.path.exists(gate):
             return FileResponse(gate, headers={"Cache-Control": "no-store"})
         return JSONResponse({"status": "ok"})
