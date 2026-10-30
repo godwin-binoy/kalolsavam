@@ -43,8 +43,9 @@ def _step_up(request: Request, db, claims: dict, action: str) -> None:
     if not secret:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "totp_not_enrolled")
     if not code or not totp_verify(secret, code):
+        from .app import client_ip
         db.log_auth(username=claims["usr"], user_id=int(claims["sub"]),
-                    ip=request.client.host if request.client else "?",
+                    ip=client_ip(request, request.app.state.cfg),
                     event="stepup_fail", detail=action)
         raise HTTPException(status.HTTP_403_FORBIDDEN, "stepup_failed")
 

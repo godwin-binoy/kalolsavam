@@ -61,7 +61,7 @@ def _totp_secret(db, user, field=None) -> bytes | None:
 
 def _client_ip(request: Request) -> str:
     from .app import client_ip
-    return client_ip(request)
+    return client_ip(request, request.app.state.cfg)
 
 
 class ChallengeIn(BaseModel):
@@ -176,6 +176,9 @@ async def verify(body: VerifyIn, request: Request, response: Response):
                                          stages=_json.loads(user["stages"]),
                                          enroll=True)
             csrf = _secrets.token_urlsafe(32)
+            # Visitors reach us over HTTPS via the Cloudflare tunnel, so the
+            # Secure cookie flag stays on in production even though we listen
+            # on plain HTTP locally.
             secure = cfg.is_prod
             response.set_cookie(REFRESH_COOKIE, rt_jti, httponly=True, secure=secure,
                                 samesite="strict", path="/api/auth",

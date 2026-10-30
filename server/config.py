@@ -51,9 +51,21 @@ class Config:
         self.is_prod = self.env_name == "production"
 
         self.host = _get("SERVER_HOST", "127.0.0.1")
-        self.port = _get_int("SERVER_PORT", 8443)
-        self.tls_cert = Path(_get("TLS_CERT_PATH", "server/certs/server.pem"))
-        self.tls_key = Path(_get("TLS_KEY_PATH", "server/certs/server.key"))
+        self.port = _get_int("SERVER_PORT", 8000)
+
+        # TLS: NOT handled here any more. The venue's internet is unreliable,
+        # so the site is published through a Cloudflare Tunnel (cloudflared),
+        # which terminates HTTPS at Cloudflare's edge and reaches this server
+        # over plain HTTP on localhost. No local CA / certificates to manage.
+        # Set FORCE_TLS=1 only if you run your own HTTPS reverse proxy instead.
+        self.force_tls = _get("FORCE_TLS", "0") in ("1", "true", "yes", "on")
+        self.tls_cert = Path(_get("TLS_CERT_PATH", "")) if self.force_tls else None
+        self.tls_key = Path(_get("TLS_KEY_PATH", "")) if self.force_tls else None
+
+        # Behind a tunnel/proxy the socket peer is always 127.0.0.1, so real
+        # client IPs must come from CF-Connecting-IP / X-Forwarded-For. Enable
+        # ONLY when a tunnel or reverse proxy fronts us (spoofable otherwise).
+        self.trust_proxy = _get("TRUST_PROXY", "1") in ("1", "true", "yes", "on")
 
         self.db_path = Path(_get("DB_PATH", "server/data/kalolsavam.db"))
 
@@ -76,11 +88,25 @@ class Config:
         self.refresh_ttl_hours = _get_int("REFRESH_TOKEN_TTL_HOURS", 8)
         self.idle_lock_min = _get_int("IDLE_LOCK_MIN", 30)
 
+        # Source-IP allowlist for /api/admin/*. Two modes:
+        #  - LAN mode (TRUST_PROXY=0): plain CIDR list, e.g. "192.168.4.0/24".
+        #  - Tunnel mode (TRUST_PROXY=1, our normal setup): Cloudflare carries
+        #    the real visitor IP in CF-Connecting-IP, so a bare CIDR would let
+        #    anyone on the internet who guessed the path straight into admin.
+        #    Prefix an entry with "lan:" to pin it to the TUNNEL HOST's own
+        #    socket address (127.0.0.1 / the staff machine running cloudflared)
+        #    — i.e. admin API reachable only from this box / the staff VLAN.
+        self.admin_nets = []            # always-applied CIDRs
+        self.admin_lan_only = False     # at least one "lan:" entry present
         allow = _get("ADMIN_IP_ALLOWLIST", "")
-        self.admin_nets = []
         for cidr in [c.strip() for c in allow.split(",") if c.strip()]:
+            lan_only = False
+            low = cidr.lower()
+            if low.startswith("lan:"):
+                lan_only, cidr = True, low[4:].strip()
             try:
                 self.admin_nets.append(ipaddress.ip_network(cidr, strict=False))
+                self.admin_lan_only = self.admin_lan_only or lan_only
             except ValueError:
                 pass
 
@@ -92,6 +118,12 @@ class Config:
         salt = _get("DASHBOARD_PATH_SALT")
         salt = re.sub(r"[^A-Za-z0-9_-]", "", salt)[:16]
         self.dash_suffix = f"-{salt}" if salt else ""
+
+        # Where the official results live. We do NOT host or publish results —
+        # the public site's "Results" links redirect to this government URL.
+        self.results_url = _get(
+            "RESULTS_REDIRECT_URL",
+            "https://kalolsavam.kerala.gov.in/")
 
     @property
     def field_key(self) -> bytes:
@@ -110,8 +142,15 @@ class Config:
             # empty value doesn't look like a hard requirement.
             print("note: DB_FIELD_KEY unset — fine unless migrating a legacy "
                   "database with encrypted TOTP blobs")
-        if self.is_prod and self.host in ("0.0.0.0", "::"):
-            problems.append("SERVER_HOST wildcard bind without reverse proxy")
+        if self.is_prod and not self.force_tls \
+                and self.host not in ("127.0.0.1", "::1", "localhost"):
+            problems.append(
+                "SERVER_HOST is not loopback while TLS is off — with the "
+                "Cloudflare tunnel the server must bind 127.0.0.1 (the tunnel "
+                "connects locally). Set SERVER_HOST=127.0.0.1, or FORCE_TLS=1 "
+                "if you front it with your own HTTPS reverse proxy.")
+        if self.force_tls and (not self.tls_cert or not self.tls_key):
+            problems.append("FORCE_TLS=1 but TLS_CERT_PATH/TLS_KEY_PATH unset")
         if problems:
             raise SystemExit("Config error(s):\n - " + "\n - ".join(problems))
 
