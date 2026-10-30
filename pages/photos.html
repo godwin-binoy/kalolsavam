@@ -5,19 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Stage Photos | Mala Sub-District Kalolsavam</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
-  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#111412' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); })();</script>
+  <script>(function () { var h = document.documentElement, d, bg, lp; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#111412' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); try { lp = localStorage.getItem('kalolsavam_lp'); } catch (e) { lp = null; } if (lp !== '0' && lp !== '1') { var c = navigator.connection || navigator.mozConnection || navigator.webkitConnection; lp = ((navigator.hardwareConcurrency || 8) <= 2) || ((navigator.deviceMemory || 8) <= 2) || (c && c.saveData === true) ? '1' : '0'; try { localStorage.setItem('kalolsavam_lp', lp); } catch (e) {} } if (lp === '1') h.classList.add('lo-power'); })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap"></noscript>
   <link rel="stylesheet" href="../css/style.css">
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen" data-service="3">
 
   <header class="site-header">
     <div class="header-container flex items-center justify-between">
-      <a href="../index.html" class="flex items-center gap-3 group">
+      <a href="../index.html" class="flex items-center gap-2 sm:gap-3 group min-w-0">
         <img src="../res/logo.webp" alt="St. Antony's Logo" class="logo-box object-contain shrink-0" width="38" height="38" decoding="async" />
-        <span class="pl-2">
+        <span class="header-brand-text pl-2 min-w-0 overflow-hidden">
           <span class="block text-sm sm:text-lg font-bold leading-tight text-heading heading-transition">St. Antony's HSS Mala</span>
           <span class="block text-[11px] sm:text-xs text-muted font-medium">Sub-District School Kalolsavam</span>
         </span>
