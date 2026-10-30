@@ -1,0 +1,37 @@
+/* ==========================================================================
+   SITE MICRO-UTILITIES + SCROLL REVEAL
+   --------------------------------------------------------------------------
+   Tiny hand-written helpers that used to rely on the Tailwind CDN script.
+   Loaded LAST in css/style.css so they win over component defaults — which
+   mirrors the old cascade (CDN utilities were injected after all stylesheets).
+   ========================================================================== */
+
+.text-main    { color: var(--color-text-main); }
+.text-heading { color: var(--color-text-heading); }
+.text-muted   { color: var(--color-text-muted); }
+.text-subtle  { color: var(--color-text-subtle); }
+.text-gov-blue { color: var(--gov-blue); }
+
+/* Scroll reveal (js/main.js adds .reveal-card, then .revealed on intersect).
+   Only transform/opacity animate — both are compositor-driven, so this stays
+   smooth even on low-end mobile GPUs. Cards without JS stay visible because
+   .reveal-card is added by JS itself, never shipped in the HTML. */
+.reveal-card {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.35s ease var(--reveal-delay, 0s),
+              transform 0.35s var(--ease-emphasized) var(--reveal-delay, 0s);
+}
+
+.reveal-card.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-card {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

@@ -1,11 +1,26 @@
 /* ==========================================================
    MALA SUB-DISTRICT KALOLSAVAM - COLOR & THEME VARIABLES
    Material You + Translucent Frosted Glass + Festive Card Themes
+   ------------------------------------------------------------
+   PERF NOTE: no @import lives here anymore. A CSS @import starts a NEW
+   blocking render pass — the browser must fetch, parse and style-recalculate
+   before it can even start on the rest of this stylesheet. Web fonts are now
+   loaded with <link rel="preload"> + media-swap from the build template
+   (see tools/build.py TEMPLATE), which fetches them in PARALLEL with this
+   file and never blocks first paint.
+   Device tier knobs (--blur / --lift) are defined once here so every
+   expensive visual effect in components.css references a single token.
    ========================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600;700&display=swap');
-
 :root {
+  /* GPU cost dials (overridden per device tier in base.css):
+     --blur : backdrop blur radius for the frosted-glass surfaces
+     --lift : hover translate distance (kept off touch devices)          */
+  --blur: 24px;
+  --header-blur: 28px;
+  --drawer-blur: 36px;
+  --lift: -4px;
+
   color-scheme: light;
 
   /* Material 3 Base Surface & Brand Tokens */
