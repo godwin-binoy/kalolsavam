@@ -1,8 +1,12 @@
-"""Manage API — master data CRUD, users/sessions, health, ops.
+"""Admin API — master data CRUD, users/sessions, health, ops.
 
-Requires role=admin (middleware additionally enforces the staff-VLAN IP
-allowlist). Destructive actions require step-up: a fresh TOTP code in the
+Requires role=admin. There is no LAN/IP gating any more: everything arrives
+over the internet via the Cloudflare tunnel, so protection is purely
+application-layer (SRP login + short-lived JWT + mandatory TOTP). Destructive
+actions additionally require step-up: a fresh TOTP code in the
 `x-step-up-totp` header, verified against the actor's enrolled secret.
+An optional WAN-IP allowlist (ADMIN_IP_ALLOWLIST, matched against the real
+visitor IP) can pin this API to known static IPs.
 Every action is written to the hash-chained audit log.
 """
 from __future__ import annotations
