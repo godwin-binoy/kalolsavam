@@ -47,12 +47,13 @@
   }
 
   async function refresh() {
-    // /api/auth/refresh is a POST but is cookie-driven only (not under CSRF check?
-    // it IS under /api/auth/ — exempt list covers challenge/verify only), so we
-    // must send the CSRF header with it as soon as we have one.
+    // /api/auth/refresh is cookie-driven and CSRF-guarded (double submit),
+    // so we send the current X-CSRF-Token header with it. The server rotates
+    // both cookies and returns the fresh csrf value, which we must adopt.
     var r = await raw('/api/auth/refresh', { method: 'POST', headers: {} });
     if (r.ok && r.data && r.data.access) {
       S.access = r.data.access;
+      if (r.data.csrf) { S.csrf = r.data.csrf; }
       return true;
     }
     return false;

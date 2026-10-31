@@ -1,9 +1,11 @@
 """Public, unauthenticated read-only endpoints consumed by the festival website.
 
 Hard rules (docs/SECURITY.md):
- - Only PUBLISHED data leaves this router (results.published=1, sanitized queue).
- - No user/session data, no error internals, aggressive short caching.
- - SSE stream carries only display-safe deltas (stage state, order, published results).
+ - Only display-safe, sanitized data leaves this router. RESULTS ARE NOT
+   HOSTED HERE at all — we redirect to the government site instead, so this
+   API exposes live progress but never rankings or scores.
+ - No user/session data, no error internals, short public caching only.
+ - SSE stream carries only display-safe deltas (stage state, running order).
 """
 from __future__ import annotations
 
@@ -62,22 +64,20 @@ async def status(request: Request):
         headers={"Cache-Control": "public, max-age=5, must-revalidate"})
 
 
-@router.get("/results")
-async def results(request: Request, event_id: int | None = None):
-    db = _db(request)
-    q = ("SELECT r.event_id, r.payload, e.title, c.name AS category "
-         "FROM results r JOIN events e ON e.id=r.event_id "
-         "LEFT JOIN categories c ON c.id=e.category_id WHERE r.published=1")
-    params: tuple = ()
-    if event_id is not None:
-        q += " AND r.event_id=?"
-        params = (event_id,)
-    rows = db.query(q + " ORDER BY r.updated_at DESC LIMIT 200", params)
-    data = [{"event_id": r["event_id"], "title": r["title"],
-             "category": r["category"], "payload": json.loads(r["payload"])}
-            for r in rows]
-    return JSONResponse({"results": data},
-                        headers={"Cache-Control": "public, max-age=15"})
+@router.get("/meta")
+async def meta(request: Request):
+    """Small config bundle for the public site (no secrets, cacheable).
+
+    `results_url` is where ALL "Results" links on the website point — the
+    official government portal. We deliberately do not host results.
+    Admins may override the .env default at runtime via the flags endpoint
+    (HTTPS + kerala.gov.in domain check enforced there)."""
+    cfg = request.app.state.cfg
+    url = _db(request).scalar(
+        "SELECT value FROM feature_flags WHERE key='results_redirect_url'") \
+        or cfg.results_url
+    return JSONResponse({"results_url": url},
+                        headers={"Cache-Control": "public, max-age=300"})
 
 
 @router.get("/schedule")
@@ -101,7 +101,7 @@ async def stream(request: Request):
     """SSE fan-out of display-safe changes. Anonymous; contains no secrets."""
     from .events import BUS
 
-    safe_entities = {"live_state", "queue", "result_published"}
+    safe_entities = {"live_state", "queue"}
     q = BUS.subscribe()
 
     async def gen():

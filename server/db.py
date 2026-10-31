@@ -1,14 +1,21 @@
-"""SQLite (WAL) data layer — schema, migrations, helpers."""
+"""SQLite (WAL) data layer — schema, migrations, helpers.
+
+Reliability notes:
+ - WAL mode + busy_timeout: readers never block the single writer; safe for
+   one server process on one laptop.
+ - Foreign keys ON: bad references are rejected by the database itself.
+ - Every helper takes (sql, params) and uses bound '?' placeholders ONLY —
+   no string interpolation anywhere → SQL injection is structurally impossible.
+"""
 from __future__ import annotations
 
 import json
-import secrets
 import sqlite3
 import time
 from pathlib import Path
 from typing import Any
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v TEXT NOT NULL);
@@ -17,11 +24,10 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY,
   username TEXT UNIQUE NOT NULL,
   role TEXT NOT NULL CHECK(role IN ('stagemaster','admin')),
-  srp_salt_hex TEXT,                  -- per-user SRP salt
-  srp_verifier_hex TEXT,              -- v = g^x mod N  (never the password)
+  pwd_salt_hex TEXT,                  -- per-user random salt
+  pwd_hash_hex TEXT,                  -- PBKDF2-HMAC-SHA256(salt, password)
   totp_secret BLOB,                   -- TOTP shared secret, stored PLAINTEXT
                                       -- (no-DB-encryption policy; NULL until enrolled)
-  totp_enc BLOB,                      -- legacy: AES-GCM encrypted secret (migrated on read)
   totp_required INTEGER NOT NULL DEFAULT 0,
   stages TEXT NOT NULL DEFAULT '[]',  -- JSON list of stage ids (stagemaster scope)
   disabled INTEGER NOT NULL DEFAULT 0,
@@ -50,17 +56,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at REAL NOT NULL,
   last_seen REAL NOT NULL,
   revoked INTEGER NOT NULL DEFAULT 0
-);
-
-CREATE TABLE IF NOT EXISTS srp_sessions (
-  sid TEXT PRIMARY KEY,
-  user_id INTEGER NOT NULL,
-  private_b_hex TEXT NOT NULL,   -- ephemeral SRP private b
-  B_hex TEXT NOT NULL,           -- public ephemeral B
-  A_hex TEXT,                    -- client public ephemeral (bound at challenge)
-  salt_hex TEXT NOT NULL,
-  issued_at REAL NOT NULL,
-  consumed INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS auth_audit (
@@ -117,12 +112,6 @@ CREATE TABLE IF NOT EXISTS scores (
   entered_by INTEGER REFERENCES users(id), entered_at REAL NOT NULL,
   UNIQUE(queue_item_id, judge_no)
 );
-CREATE TABLE IF NOT EXISTS results (
-  id INTEGER PRIMARY KEY, event_id INTEGER REFERENCES events(id),
-  published INTEGER NOT NULL DEFAULT 0, payload TEXT NOT NULL DEFAULT '{}',
-  updated_at REAL NOT NULL
-);
-CREATE UNIQUE INDEX IF NOT EXISTS ux_results_event ON results(event_id);
 CREATE TABLE IF NOT EXISTS live_state (
   venue_id INTEGER PRIMARY KEY REFERENCES venues(id),
   state TEXT NOT NULL DEFAULT 'IDLE',       -- IDLE|RUNNING|PAUSED|BREAK|FINISHED
@@ -239,7 +228,3 @@ class Database:
         return self.query(
             "SELECT * FROM changelog WHERE id>? ORDER BY id LIMIT ?", (since_id, limit)
         )
-
-
-def new_nonce(nbytes: int = 32) -> str:
-    return secrets.token_hex(nbytes)

@@ -1,7 +1,12 @@
+# Kalolsavam backend — Python dependencies.
+
+# Web framework + server (the whole HTTP layer)
 fastapi>=0.111,<1
 uvicorn[standard]>=0.30,<1
 pydantic>=2.7,<3
-PyJWT>=2.9,<3
-cryptography>=42,<46
-PyNaCl>=1.5,<2
-argon2-cffi>=23,<24
+
+# Everything else (password hashing, JWT signing, TOTP, TLS) comes from
+# Python's standard library: hashlib/hmac/secrets/struct/sqlite3.
+# Fewer third-party packages = smaller attack surface and easier installs
+# for students on the venue laptops. HTTPS itself is terminated at
+# Cloudflare's edge by the tunnel, so no cert tooling is needed here.
