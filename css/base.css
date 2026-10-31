@@ -46,6 +46,16 @@ html[data-theme-anim] *::after {
   transform: scale(0.96);
 }
 
+/* Touch targets: every tap affordance meets the ~40px minimum so taps never
+   miss or trigger accidental double-taps on phones */
+.theme-toggle,
+#mobile-menu-btn,
+.fest-action-item,
+.mobile-menu-link,
+.nav-link-help {
+  min-height: 2.5rem;
+}
+
 .page-title {
   font-size: 1.85rem;
   font-weight: 800;

@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&family=Inter:wght@400;500;600;700&display=swap');
+/* Fonts are loaded via <link rel="preload"> + stylesheet in the page head
+   (see tools/build.py). @import here would block rendering one RTT longer. */
 
 :root {
   color-scheme: light;
@@ -57,17 +58,17 @@
   --color-footer-fg: #E2E8F0;
   --color-footer-text: #CBD5E1;
 
-  /* Category Banners */
-  --banner-purple-from: #5835E5;
-  --banner-purple-to: #4324D6;
-  --banner-pink-from: #E11D48;
-  --banner-pink-to: #BE123C;
-  --banner-teal-from: #0D9488;
-  --banner-teal-to: #0F766E;
-  --banner-orange-from: #EA580C;
-  --banner-orange-to: #C2410C;
-  --banner-blue-from: #2563EB;
-  --banner-blue-to: #1D4ED8;
+  /* Category Banners — white text on top (AA contrast in both themes) */
+  --banner-purple-from: #5B2DB3;
+  --banner-purple-to: #49229C;
+  --banner-pink-from: #C81E4A;
+  --banner-pink-to: #A31238;
+  --banner-teal-from: #0C7E74;
+  --banner-teal-to: #0A655D;
+  --banner-orange-from: #C24C07;
+  --banner-orange-to: #9F3E05;
+  --banner-blue-from: #1F5AE0;
+  --banner-blue-to: #1846BC;
 
   --service-1-page-bg: #F4F8FC;
   --service-2-page-bg: #F8F6FF;
@@ -75,9 +76,23 @@
   --service-4-page-bg: #F0FDF8;
   --service-5-page-bg: #FFF5F5;
 
+  /* Accent tints (call-to-action pills, info boxes) */
+  --tint-purple-bg: #FAF5FF;   --tint-purple-border: #E9D5FF;
+  --tint-purple-strong: #6B21A8; --tint-purple-soft: #5B21B6;
+  --tint-rose-bg: #FFF1F2;     --tint-rose-border: #FECDD3;
+  --tint-rose-strong: #9F1239;   --tint-rose-soft: #BE123C;
+  --tint-glass: rgba(255, 255, 255, 0.7);
+  --tint-glass-border: rgba(0, 0, 0, 0.05);
+
   --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-emphasized-out: cubic-bezier(0.2, 0, 0, 1);
   --theme-fade: 0.3s ease;
+
+  /* Theme-aware icon tints (SVG helper classes below) */
+  --icon-blue: #2563EB;
+  --icon-indigo: #4F46E5;
+  --icon-emerald: #059669;
+  --icon-amber: #D97706;
 }
 
 html.dark {
@@ -138,4 +153,16 @@ html.dark {
   --service-3-page-bg: #1C0A10;
   --service-4-page-bg: #091713;
   --service-5-page-bg: #1A0909;
+
+  --tint-purple-bg: rgba(59, 7, 100, 0.4);    --tint-purple-border: rgba(107, 33, 168, 0.55);
+  --tint-purple-strong: #E9D5FF;              --tint-purple-soft: #D8B4FE;
+  --tint-rose-bg: rgba(76, 5, 25, 0.4);       --tint-rose-border: rgba(159, 18, 57, 0.55);
+  --tint-rose-strong: #FFE4E6;                --tint-rose-soft: #FECDD3;
+  --tint-glass: rgba(38, 48, 40, 0.8);
+  --tint-glass-border: rgba(255, 255, 255, 0.1);
+
+  --icon-blue: #60A5FA;
+  --icon-indigo: #818CF8;
+  --icon-emerald: #34D399;
+  --icon-amber: #FBBF24;
 }

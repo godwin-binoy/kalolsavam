@@ -5,4 +5,12 @@
   bg = d ? '#0F1311' : '#F8F6F0';
   h.style.backgroundColor = bg;
   h.style.setProperty('--boot-bg', bg);
+  /* Keep the browser chrome (status bar) matched to the page theme */
+  function setTC(c) {
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
+    m.content = c;
+  }
+  setTC(bg);
+  window.__setThemeColor = setTC;
 })();

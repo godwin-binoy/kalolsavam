@@ -69,7 +69,7 @@ PAGES = {
         </p>
         <div class="pt-2 flex flex-wrap gap-3">
           <a href="#portal-menu" class="btn-primary">Explore Services</a>
-          <a href="{{r}}pages/venues.html" class="nav-link bg-white/70 dark:bg-neutral-800/80 border border-black/5 dark:border-white/10 px-5 py-3">Live Stages</a>
+          <a href="{{r}}pages/venues.html" class="btn-secondary">Live Stages</a>
         </div>
       </div>
     </div>
@@ -700,16 +700,18 @@ TEMPLATE = """<!DOCTYPE html>
   <title>{title}</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
   <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala \u2014 live stage tracker, schedule, facilities and emergency contacts." />
-  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F8F6F0" />
   <link rel="icon" type="image/webp" href="{r}res/logo.webp" />
   {api_meta}
   <script>{boot}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="{r}css/style.css">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap"></noscript>
+  <!-- Tailwind runtime only when served by our backend (KAL_TW_CDN injected);
+       static hosting relies on the CSS fallback utilities instead. -->{tw_cdn}
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen"{body_attrs}>
 
@@ -802,6 +804,8 @@ def main():
             main=page["main"].format(r=r, RESULTS_HREF=RESULTS_HREF),
             api_meta=(f'<meta name="api-base" content="{__import__("os").environ["KAL_API_BASE"].rstrip("/")}/">'
                       if __import__("os").environ.get("KAL_API_BASE") else ""),
+            tw_cdn=('\n  <script src="https://cdn.tailwindcss.com"></script>'
+                    if __import__("os").environ.get("KAL_TW_CDN") else ''),
             school_tag=f"Sub-District School Kalolsavam &bull; {SITE['school']}",
             footer_note=SITE["footer_note"],
             footer_ops=SITE["footer_ops"],

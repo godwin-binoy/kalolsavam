@@ -63,6 +63,158 @@
   box-shadow: 0 2px 8px rgba(34, 43, 36, 0.25);
 }
 
+/* ── Static-utility fallbacks ────────────────────────────────────────────
+   The pages are authored with Tailwind-style utility classes. When served
+   through the FastAPI server a runtime CDN compiles them; on plain static
+   hosting (GitHub Pages) the CDN script is skipped, so these hand-written
+   rules cover every utility actually used in the markup. They load BEFORE
+   the CDN runs and use no !important, so the CDN output always wins —
+   identical look either way, zero FOUC, no external JS dependency needed. */
+
+/* Layout primitives */
+.flex { display: flex; }
+.grid { display: grid; }
+.block { display: block; }
+.hidden { display: none; }
+.inline-block { display: inline-block; }
+.flex-col { flex-direction: column; }
+.flex-wrap { flex-wrap: wrap; }
+.flex-grow { flex-grow: 1; }
+.shrink-0 { flex-shrink: 0; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.text-center { text-align: center; }
+.relative { position: relative; }
+.w-4 { width: 1rem; height: auto; }
+.h-4 { height: 1rem; width: auto; }
+.w-6 { width: 1.5rem; height: auto; }
+.h-6 { height: 1.5rem; width: auto; }
+.w-full { width: 100%; }
+.min-h-screen { min-height: 100vh; min-height: 100svh; }
+.max-w-2xl { max-width: 42rem; }
+.max-w-3xl { max-width: 48rem; }
+.object-contain { object-fit: contain; }
+.overflow-hidden { overflow: hidden; }
+.rounded-md { border-radius: 0.375rem; }
+.rounded-xl { border-radius: 0.75rem; }
+.rounded-2xl { border-radius: 1rem; }
+.font-sans { font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.leading-tight { line-height: 1.25; }
+.leading-relaxed { line-height: 1.625; }
+.hover\:underline:hover { text-decoration: underline; }
+
+/* Spacing scale (0.25rem per step) */
+.gap-1 { gap: 0.25rem; } .gap-2 { gap: 0.5rem; } .gap-3 { gap: 0.75rem; }
+.gap-4 { gap: 1rem; } .gap-5 { gap: 1.25rem; } .gap-6 { gap: 1.5rem; } .gap-8 { gap: 2rem; }
+.p-0 { padding: 0; } .p-2 { padding: 0.5rem; } .p-3 { padding: 0.75rem; }
+.p-4 { padding: 1rem; } .p-5 { padding: 1.25rem; }
+.px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+.px-4 { padding-left: 1rem; padding-right: 1rem; }
+.px-5 { padding-left: 1.25rem; padding-right: 1.25rem; }
+.py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+.py-1\.5 { padding-top: 0.375rem; padding-bottom: 0.375rem; }
+.py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+.py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+.pt-1 { padding-top: 0.25rem; } .pt-2 { padding-top: 0.5rem; } .pt-3 { padding-top: 0.75rem; }
+.pb-4 { padding-bottom: 1rem; }
+.pl-2 { padding-left: 0.5rem; }
+.mt-0\.5 { margin-top: 0.125rem; } .mt-1 { margin-top: 0.25rem; } .mt-2 { margin-top: 0.5rem; }
+.mt-4 { margin-top: 1rem; } .mt-10 { margin-top: 2.5rem; }
+.mb-2 { margin-bottom: 0.5rem; } .mb-3 { margin-bottom: 0.75rem; } .mb-4 { margin-bottom: 1rem; }
+.mb-8 { margin-bottom: 2rem; } .mb-10 { margin-bottom: 2.5rem; }
+.ml-1 { margin-left: 0.25rem; }
+.space-y-1 > * + * { margin-top: 0.25rem; }
+.space-y-1\.5 > * + * { margin-top: 0.375rem; }
+.space-y-2 > * + * { margin-top: 0.5rem; }
+.space-y-4 > * + * { margin-top: 1rem; }
+.space-y-6 > * + * { margin-top: 1.5rem; }
+
+/* Type scale */
+.text-xs { font-size: 0.75rem; line-height: 1rem; }
+.text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+.text-base { font-size: 1rem; line-height: 1.5rem; }
+.text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+.text-\[11px\] { font-size: 11px; line-height: 1.1rem; }
+
+/* Grid templates (unprefixed = mobile-first) */
+.grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+
+/* Accent tints & one-off surfaces (theme-aware via CSS variables) */
+.bg-purple-50 { background-color: var(--tint-purple-bg); }
+.border-purple-200 { border-color: var(--tint-purple-border); }
+.text-purple-700 { color: var(--tint-purple-strong); }
+.text-purple-900 { color: var(--tint-purple-soft); }
+.bg-rose-50 { background-color: var(--tint-rose-bg); }
+.border-rose-200 { border-color: var(--tint-rose-border); }
+.text-rose-600 { color: var(--tint-rose-strong); }
+.text-rose-700 { color: var(--tint-rose-soft); }
+.bg-white\/70 { background-color: var(--tint-glass); }
+.border-black\/5 { border-color: var(--tint-glass-border); }
+
+/* Dark-mode variants (html.dark set by the boot script / toggle) */
+html.dark .dark\:bg-purple-950\/40 { background-color: var(--tint-purple-bg); }
+html.dark .dark\:border-purple-800 { border-color: var(--tint-purple-border); }
+html.dark .dark\:text-purple-200 { color: var(--tint-purple-strong); }
+html.dark .dark\:text-purple-300 { color: var(--tint-purple-strong); }
+html.dark .dark\:bg-rose-950\/40 { background-color: var(--tint-rose-bg); }
+html.dark .dark\:border-rose-800 { border-color: var(--tint-rose-border); }
+html.dark .dark\:text-rose-300 { color: var(--tint-rose-strong); }
+html.dark .dark\:text-rose-400 { color: var(--tint-rose-soft); }
+html.dark .dark\:bg-neutral-800\/80 { background-color: var(--tint-glass); }
+html.dark .dark\:border-white\/10 { border-color: var(--tint-glass-border); }
+html.dark .dark\:text-blue-400 { color: #93C5FD; }
+html.dark .dark\:text-indigo-400 { color: #A5B4FC; }
+html.dark .dark\:text-emerald-400 { color: #6EE7B7; }
+html.dark .dark\:text-amber-400 { color: #FCD34D; }
+
+/* Breakpoint utilities (md = 768px, sm = 640px, lg = 1024px — Tailwind defaults).
+   md:/lg: grid templates are scoped to .grid containers so they can never
+   override the "display:none" of responsive helpers like .md:hidden. */
+@media (min-width: 640px) {
+  .sm\:inline { display: inline; }
+  .sm\:flex-row { flex-direction: row; }
+  .sm\:items-center { align-items: center; }
+  .sm\:text-left { text-align: left; }
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+  .sm\:text-base { font-size: 1rem; line-height: 1.5rem; }
+  .sm\:text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+  .sm\:text-xs { font-size: 0.75rem; line-height: 1rem; }
+}
+@media (min-width: 768px) {
+  .md\:flex { display: flex; }
+  .md\:hidden { display: none; }
+  .grid.md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.md\:col-span-2 { grid-column: span 2 / span 2; }
+}
+@media (min-width: 1024px) {
+  .grid.lg\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .grid.lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .grid.lg\:col-span-2 { grid-column: span 2 / span 2; }
+}
+
+/* Footer text helper */
+.footer-text { color: var(--color-footer-text); }
+
+/* Icon tints used inside .fest-item-icon (theme-aware; !important lets them
+   win over the Tailwind CDN's own palette classes, which are NOT theme-aware) */
+.icon-blue    { color: var(--icon-blue)    !important; }
+.icon-indigo  { color: var(--icon-indigo)  !important; }
+.icon-emerald { color: var(--icon-emerald) !important; }
+.icon-amber   { color: var(--icon-amber)   !important; }
+.icon-rose    { color: var(--tint-rose-soft) !important; }
+
+.btn-primary:focus-visible,
+.nav-link:focus-visible,
+.mobile-menu-link:focus-visible {
+  outline: 2px solid var(--olive-mid);
+  outline-offset: 2px;
+}
+
 /* Overlay drawer: floats above the page (never pushes it down) and
    scrolls internally if the viewport is short. */
 .mobile-menu-drawer {
@@ -87,13 +239,15 @@
 }
 
 .mobile-menu-drawer.open {
+  max-height: calc(100vh - 5rem); /* fallback for older browsers */
   max-height: min(420px, calc(100dvh - 5rem));
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
-  padding: 1rem 1.25rem 1.5rem 1.25rem;
+  padding: 1rem 1.25rem calc(1.5rem + env(safe-area-inset-bottom)) 1.25rem;
 }
 
 /* Freeze background scrolling while the drawer is open */
@@ -359,6 +513,28 @@ body.menu-open {
 .btn-primary:hover {
   background-color: var(--olive-mid);
   box-shadow: 0 6px 20px rgba(34, 43, 36, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--olive-dark);
+  background-color: var(--tint-glass);
+  border: 1px solid var(--tint-glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform 0.15s var(--ease-emphasized), background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-card-hover);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.08);
   transform: translateY(-1px);
 }
 
