@@ -1,10 +1,11 @@
 /* Shared login/session logic for both dashboards (stagemaster + admin).
- * Implements the SRP-6a flow against /api/auth, plus TOTP prompt and the
- * first-run TOTP enrollment wizard. Session token lives in memory only. */
+ * Simple flow: POST /api/auth/login with username+password(+TOTP). HTTPS at
+ * Cloudflare's edge protects the wire; rate limits, lockouts and TOTP protect
+ * the accounts. The access token lives in memory only — never localStorage. */
 (function () {
   'use strict';
 
-  var K = window.KalSRP, A = window.KalAPI;
+  var A = window.KalAPI;
   var msgEl, formEl, totpRow, btnEl;
 
   function msg(text, cls) {
@@ -13,48 +14,36 @@
     msgEl.className = 'msg' + (cls ? ' ' + cls : '');
   }
 
-  /* ---- full SRP login: challenge -> verify (+ optional TOTP) ---- */
+  /* ---- one-step login (+ optional first-run TOTP enrollment) ---- */
   async function login(username, password, totp) {
     btnEl.disabled = true;
     msg('Signing in…');
     try {
-      var st = await K.clientStart(username, password);
-      var r1 = await fetch('/api/auth/challenge', {
+      var r = await fetch('/api/auth/login', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username, A: st.A_hex })
+        body: JSON.stringify({ username: username, password: password,
+                               totp: totp || null })
       });
-      var c = await r1.json();
-      if (!r1.ok) {
-        var d = c.detail || {};
-        if (d.retry_after) msg('Too many attempts — locked for ' + d.retry_after + 's.', 'err');
-        else msg('Sign-in failed.', 'err');
+      var v = await r.json();
+      var d = (v && typeof v.detail === 'object' && v.detail) ? v.detail
+              : { detail: v && v.detail };
+      if (r.status === 429 && d.retry_after) {
+        msg('Too many attempts — locked for ' + d.retry_after + 's.', 'err');
         return false;
       }
-      var fin = await K.clientFinish(st, c.salt, c.B);
-      var r2 = await fetch('/api/auth/verify', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid: c.sid, M1: fin.M1_hex, totp: totp || null })
-      });
-      var v = await r2.json();
-      if (r2.status === 401 && v.detail && v.detail.detail === 'totp_enrollment_required') {
-        // SRP passed but no authenticator yet → run enrollment wizard
-        A.setTokens(v.detail.access, v.detail.csrf);
+      if (r.status === 401 && d.detail === 'totp_enrollment_required') {
+        // Password OK but no authenticator yet → run enrollment wizard,
+        // then sign in again normally.
+        A.setTokens(d.access, d.csrf);
         await enrollTotp();
-        return login(username, password, null);   // now sign in normally
+        return login(username, password, null);
       }
-      if (r2.status === 401 && v.detail === 'totp_required') {
+      if (r.status === 401 && d.detail === 'totp_required') {
         showTotpRow('Enter the 6-digit code from your authenticator app.');
         return false;
       }
-      if (!r2.ok) { msg('Sign-in failed (bad credentials or expired challenge).', 'err'); return false; }
-      // mutual auth: verify the server's M2 matches our computed session key
-      if (v.M2 && v.M2.toLowerCase() !== fin.M2_expected_hex) {
-        msg('Server proof mismatch — possible impostor. Aborting.', 'err');
-        A.clear();
-        return false;
-      }
+      if (!r.ok || !v.access) { msg('Sign-in failed.', 'err'); return false; }
       A.setTokens(v.access, v.csrf);
       sessionStorage.setItem('kal_user', JSON.stringify(
         { username: v.username, role: v.role, stages: v.stages }));

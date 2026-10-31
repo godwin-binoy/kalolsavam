@@ -1,6 +1,7 @@
-/* Admin console ("manage") UI: master data CRUD, users, sessions, audit and
- * ops. Every action hits /api/admin/* which is role+IP gated server-side;
- * destructive actions additionally require a live TOTP (step-up dialog). */
+/* Admin console UI: master data CRUD, users, sessions, audit and ops.
+ * Every action hits /api/admin/*, which is guarded server-side by role +
+ * JWT (+ mandatory TOTP); destructive actions additionally require a live
+ * step-up TOTP code in the x-step-up-totp header. */
 (function () {
   'use strict';
   var A = window.KalAPI;
@@ -295,10 +296,18 @@
   VIEWS.ops = async function () {
     var r = await adminCall('/flags');
     var flags = r.ok ? r.data.flags : {};
+    var resultsUrl = (r.ok && r.data.results_url) || '';
     var frows = Object.keys(flags).map(function (k) {
       return '<tr><td><code>' + esc(k) + '</code></td><td>' + esc(flags[k]) + '</td></tr>';
     }).join('');
-    return '<div class="panel"><h2>Operations</h2><div class="row">' +
+    return '<div class="panel"><h2>Results redirect (government site)</h2>' +
+      '<p class="small muted">We do not host results — every "Results" link on ' +
+      'the public site redirects here. Must be an https://*.kerala.gov.in URL.</p>' +
+      '<form id="results-form" class="row">' +
+      '<input id="results-url" type="url" maxlength="256" style="flex:1" value="' +
+      esc(resultsUrl) + '" required>' +
+      '<button class="primary" type="submit">Save 🔒</button></form></div>' +
+      '<div class="panel"><h2>Operations</h2><div class="row">' +
       '<button id="op-backup">Run DB backup 🔒</button>' +
       '<button id="op-deploy">Rebuild public site 🔒</button>' +
       '</div><p class="small muted">🔒 actions require a fresh TOTP (step-up).</p></div>' +
@@ -352,8 +361,20 @@
       var t = ev.target.closest('.tab');
       if (t) show(t.dataset.tab);
     });
-    // flag form submit (delegated since view re-renders)
+    // flag + results-redirect forms (delegated since views re-render)
     document.addEventListener('submit', function (ev) {
+      if (ev.target.id === 'results-form') {
+        ev.preventDefault();
+        adminCall('/flags', { method: 'POST', body: {
+          key: 'results_redirect_url',
+          value: document.getElementById('results-url').value.trim() } },
+          'Changing the government results redirect URL. Enter your TOTP:')
+          .then(function (r) {
+            if (r.ok) { A.toast('Results redirect saved.'); show('ops'); }
+            else A.toast('Rejected: needs https + kerala.gov.in domain', true);
+          });
+        return;
+      }
       if (ev.target.id !== 'flag-form') return;
       ev.preventDefault();
       adminCall('/flags', { method: 'POST', body: {

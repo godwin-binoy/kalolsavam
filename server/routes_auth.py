@@ -46,11 +46,16 @@ def _set_session_cookies(response: Response, cfg, rt_jti: str, exp: float,
     # Visitors reach us over HTTPS via the Cloudflare tunnel, so Secure stays
     # on in production even though we listen on plain HTTP locally.
     secure = cfg.is_prod
-    max_age = int(exp - time.time())
+    # Path=/ isolates these cookies from any other app on the same hostname,
+    # SameSite=Strict blocks cross-site sends; the CSRF double-submit check
+    # (cookie value must match the X-CSRF-Token header) is what actually
+    # proves same-origin. Do NOT scope to /api/auth: then a login at a
+    # non-canonical URL (e.g. /admin without trailing slash) would set
+    # cookies the browser never sends back to /api/auth/refresh.
     response.set_cookie(REFRESH_COOKIE, rt_jti, httponly=True, secure=secure,
-                        samesite="strict", path="/api/auth", max_age=max_age)
+                        samesite="strict", path="/", max_age=max_age)
     response.set_cookie(CSRF_COOKIE, csrf, httponly=False, secure=secure,
-                        samesite="strict", path="/api/auth", max_age=max_age)
+                        samesite="strict", path="/", max_age=max_age)
 
 
 class LoginIn(BaseModel):
@@ -169,7 +174,7 @@ async def refresh(request: Request, response: Response):
                                  role=user["role"], sid=sess["sid"], stages=stages)
     secure = cfg.is_prod
     response.set_cookie(REFRESH_COOKIE, new_jti, httponly=True, secure=secure,
-                        samesite="strict", path="/api/auth",
+                        samesite="strict", path="/",
                         max_age=int(exp - time.time()))
     return {"access": access, "expires_in": cfg.access_ttl_min * 60}
 
@@ -190,8 +195,8 @@ async def logout(request: Request, response: Response):
     db.execute("UPDATE sessions SET revoked=1 WHERE sid=?", (sid,))
     db.log_auth(username=claims["usr"], user_id=int(claims["sub"]),
                 ip=_client_ip(request), event="logout", detail="")
-    response.delete_cookie(REFRESH_COOKIE, path="/api/auth")
-    response.delete_cookie(CSRF_COOKIE, path="/api/auth")
+    response.delete_cookie(REFRESH_COOKIE, path="/")
+    response.delete_cookie(CSRF_COOKIE, path="/")
     return {"ok": True}
 
 

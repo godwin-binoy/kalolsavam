@@ -22,8 +22,8 @@ from pydantic import BaseModel, Field
 
 router = APIRouter()
 
-STEP_UP_ACTIONS = {"user_delete", "session_revoke_all", "deploy", "key_rotate",
-                   "backup_run", "flag_write", "csv_import_commit"}
+STEP_UP_ACTIONS = {"user_delete", "session_revoke_all", "deploy",
+                   "backup_run", "flag_write"}
 
 
 def _admin(request: Request):
@@ -328,15 +328,36 @@ class FlagIn(BaseModel):
     value: str = Field(max_length=256)
 
 
+# Government results URL — editable at runtime (still HTTPS + domain-checked).
+RESULTS_DOMAINS = ("kalolsavam.kerala.gov.in", "kerala.gov.in")
+RESULTS_FLAG_KEY = "results_redirect_url"
+
+
+def _valid_results_url(value: str) -> bool:
+    from urllib.parse import urlparse
+    try:
+        u = urlparse(value)
+    except ValueError:
+        return False
+    return (u.scheme == "https" and u.hostname is not None
+            and any(u.hostname == d or u.hostname.endswith("." + d)
+                    for d in RESULTS_DOMAINS))
+
+
 @router.get("/flags")
 async def get_flags(request: Request):
     db, _ = _admin(request)
-    return {"flags": {r["key"]: r["value"] for r in db.query("SELECT * FROM feature_flags")}}
+    return {"flags": {r["key"]: r["value"] for r in db.query("SELECT * FROM feature_flags")},
+            "results_url": db.scalar(
+                "SELECT value FROM feature_flags WHERE key=?",
+                (RESULTS_FLAG_KEY,)) or request.app.state.cfg.results_url}
 
 
 @router.post("/flags")
 async def set_flag(body: FlagIn, request: Request):
     db, claims = _admin(request)
+    if body.key == RESULTS_FLAG_KEY and not _valid_results_url(body.value):
+        raise HTTPException(400, "results_url_must_be_https_gov_in")
     _step_up(request, db, claims, "flag_write")
     before = db.one("SELECT * FROM feature_flags WHERE key=?", (body.key,))
     db.execute("INSERT INTO feature_flags(key,value,updated_at) VALUES(?,?,?) "

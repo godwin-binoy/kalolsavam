@@ -69,9 +69,14 @@ async def meta(request: Request):
     """Small config bundle for the public site (no secrets, cacheable).
 
     `results_url` is where ALL "Results" links on the website point — the
-    official government portal. We deliberately do not host results."""
+    official government portal. We deliberately do not host results.
+    Admins may override the .env default at runtime via the flags endpoint
+    (HTTPS + kerala.gov.in domain check enforced there)."""
     cfg = request.app.state.cfg
-    return JSONResponse({"results_url": cfg.results_url},
+    url = _db(request).scalar(
+        "SELECT value FROM feature_flags WHERE key='results_redirect_url'") \
+        or cfg.results_url
+    return JSONResponse({"results_url": url},
                         headers={"Cache-Control": "public, max-age=300"})
 
 

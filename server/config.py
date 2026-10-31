@@ -68,6 +68,12 @@ class Config:
 
         self.db_path = Path(_get("DB_PATH", "server/data/kalolsavam.db"))
 
+        # Optional URL suffix for the staff dashboards, e.g. /admin-2k26.
+        # Purely cosmetic obscurity (the real protection is the API auth);
+        # leave empty unless you want a slightly less guessable path.
+        sfx = _get("DASHBOARD_SUFFIX", "")
+        self.dash_suffix = sfx if re.match(r"^[0-9a-zA-Z_-]{0,24}$", sfx) else ""
+
         # JWT signing secret(s): "kid:hex64,kid2:hex64". One pair is enough;
         # rotation = add a new kid in front, old tokens die out in 15 min.
         self.signing_seeds: dict[str, bytes] = {}
