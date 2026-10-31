@@ -17,8 +17,7 @@
       b.setAttribute('aria-pressed', String(dark));
       b.setAttribute('aria-label', dark ? 'Switch to Light Mode' : 'Switch to Dark Mode');
     });
-    var tc = document.querySelector('meta[name="theme-color"]');
-    if (tc) tc.content = dark ? '#0F1311' : '#F8F6F0';
+    if (window.__setThemeColor) window.__setThemeColor(dark ? '#0F1311' : '#F8F6F0');
   }
 
   // Theme — boot script already applied the saved class; here we only wire UI.

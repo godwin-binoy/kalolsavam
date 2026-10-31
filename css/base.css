@@ -90,6 +90,27 @@ html[data-theme-anim] *::after {
 .text-muted   { color: var(--color-text-muted); }
 .text-subtle  { color: var(--color-text-subtle); }
 .text-gov-blue { color: var(--gov-blue); }
+/* call-row text colours (help page) — static-hosting fallback, Tailwind wins when loaded */
+.text-rose-700     { color: #BE123C; }
+.text-purple-700   { color: #6D28D9; }
+html.dark .text-rose-300    { color: #FDA4AF; }
+html.dark .text-purple-300  { color: #D8B4FE; }
+
+/* Minimal fallbacks for the handful of Tailwind utilities used inside
+   component overrides (static hosting without the Tailwind runtime). */
+.rounded-xl { border-radius: 0.75rem; }
+.p-3 { padding: 0.75rem; }
+.font-medium { font-weight: 500; }
+.font-bold { font-weight: 700; }
+.border { border-width: 1px; border-style: solid; }
+.mt-0\.5 { margin-top: 0.125rem; }
+.text-\[11px\] { font-size: 11px; line-height: 16px; }
+.hover\:underline:hover { text-decoration-line: underline; }
+.text-purple-900 { color: #581C87; }
+.border-purple-200 { border-color: #E9D5FF; }
+.bg-purple-50, .inner-box.bg-purple-50 { background-color: #FAF5FF; }
+html.dark .text-purple-200 { color: #EDE3FF; }
+html.dark .bg-purple-50, html.dark .inner-box.bg-purple-50 { background-color: rgba(59, 7, 100, 0.4); }
 
 .heading-transition {
   transition: color var(--theme-fade), background-color var(--theme-fade);

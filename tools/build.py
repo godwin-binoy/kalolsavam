@@ -69,7 +69,7 @@ PAGES = {
         </p>
         <div class="pt-2 flex flex-wrap gap-3">
           <a href="#portal-menu" class="btn-primary">Explore Services</a>
-          <a href="{{r}}pages/venues.html" class="btn-secondary">Live Stages</a>
+          <a href="{{r}}pages/venues.html" class="btn-live"><span class="live-dot"></span>Live Stages</a>
         </div>
       </div>
     </div>
@@ -148,7 +148,7 @@ PAGES = {
       </div>
 
       <div class="fest-card">
-        <div class="fest-header banner-pink">
+        <div class="fest-header banner-rose">
           <h4 class="fest-title">STAGE PHOTOS</h4>
           <span class="fest-subtitle">MODULE 03 &bull; OFFICIAL MEDIA</span>
           {WM_LEAF}
@@ -293,7 +293,7 @@ PAGES = {
 
       <!-- Card 2: HSS GENERAL -->
       <div class="fest-card">
-        <div class="fest-header banner-pink">
+        <div class="fest-header banner-rose">
           <h3 class="fest-title">HSS GENERAL</h3>
           <span class="fest-subtitle">FESTIVAL CATEGORY</span>
           {WM_PALETTE}
@@ -654,7 +654,7 @@ PAGES = {
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="fest-card">
-        <div class="fest-header banner-pink">
+        <div class="fest-header banner-rose">
           <h3 class="fest-title">MEDICAL UNIT</h3>
           <span class="fest-subtitle">FIRST AID &bull; 24/7 STANDBY</span>
           {WM_LEAF}
@@ -663,7 +663,7 @@ PAGES = {
           <p class="text-xs text-main leading-relaxed mb-3">
             Physicians, nursing staff, and emergency medical ambulance available on campus during festival hours.
           </p>
-          <a href="tel:04802890100" class="fest-action-item bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800">
+          <a href="tel:04802890100" class="fest-action-item">
             <span class="font-bold text-rose-700 dark:text-rose-300">Call Medical Unit: 0480 2890100</span>
             {ARROW_RIGHT}
           </a>
@@ -680,7 +680,7 @@ PAGES = {
           <p class="text-xs text-main leading-relaxed mb-3">
             For urgent inquiries regarding chest number reporting, schedule rescheduling, and official committee sanctions.
           </p>
-          <a href="tel:04802890000" class="fest-action-item bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800">
+          <a href="tel:04802890000" class="fest-action-item">
             <span class="font-bold text-purple-700 dark:text-purple-300">Call Convener: 0480 2890000</span>
             {ARROW_RIGHT}
           </a>
@@ -700,7 +700,8 @@ TEMPLATE = """<!DOCTYPE html>
   <title>{title}</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
   <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala \u2014 live stage tracker, schedule, facilities and emergency contacts." />
-  <meta name="theme-color" content="#F8F6F0" />
+  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
   <link rel="icon" type="image/webp" href="{r}res/logo.webp" />
   {api_meta}
   <script>{boot}</script>

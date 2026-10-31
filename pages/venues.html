@@ -6,10 +6,11 @@
   <title>Stage &amp; Venues | Mala Sub-District Kalolsavam</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
   <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala — live stage tracker, schedule, facilities and emergency contacts." />
-  <meta name="theme-color" content="#F8F6F0" />
+  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
   <link rel="icon" type="image/webp" href="../res/logo.webp" />
   
-  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; } function setTC(c) { var m = document.querySelector('meta[name="theme-color"]'); if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); } m.content = c; } setTC(bg); window.__setThemeColor = setTC; })();</script>
+  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; } function setTC(c) { // update BOTH media-scoped theme-color metas so the manual toggle wins document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = c; }); } setTC(bg); window.__setThemeColor = setTC; })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap">

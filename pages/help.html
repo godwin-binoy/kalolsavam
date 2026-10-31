@@ -6,10 +6,11 @@
   <title>Help Desk &amp; Emergency | Mala Sub-District Kalolsavam</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
   <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala — live stage tracker, schedule, facilities and emergency contacts." />
-  <meta name="theme-color" content="#F8F6F0" />
+  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
   <link rel="icon" type="image/webp" href="../res/logo.webp" />
   
-  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; } function setTC(c) { var m = document.querySelector('meta[name="theme-color"]'); if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); } m.content = c; } setTC(bg); window.__setThemeColor = setTC; })();</script>
+  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; } function setTC(c) { // update BOTH media-scoped theme-color metas so the manual toggle wins document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = c; }); } setTC(bg); window.__setThemeColor = setTC; })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap">
@@ -74,7 +75,7 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div class="fest-card">
-        <div class="fest-header banner-pink">
+        <div class="fest-header banner-rose">
           <h3 class="fest-title">MEDICAL UNIT</h3>
           <span class="fest-subtitle">FIRST AID &bull; 24/7 STANDBY</span>
           <svg class="fest-watermark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
@@ -85,7 +86,7 @@
           <p class="text-xs text-main leading-relaxed mb-3">
             Physicians, nursing staff, and emergency medical ambulance available on campus during festival hours.
           </p>
-          <a href="tel:04802890100" class="fest-action-item bg-rose-50 dark:bg-rose-950/40 border-rose-200 dark:border-rose-800">
+          <a href="tel:04802890100" class="fest-action-item">
             <span class="font-bold text-rose-700 dark:text-rose-300">Call Medical Unit: 0480 2890100</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>
@@ -106,7 +107,7 @@
           <p class="text-xs text-main leading-relaxed mb-3">
             For urgent inquiries regarding chest number reporting, schedule rescheduling, and official committee sanctions.
           </p>
-          <a href="tel:04802890000" class="fest-action-item bg-purple-50 dark:bg-purple-950/40 border-purple-200 dark:border-purple-800">
+          <a href="tel:04802890000" class="fest-action-item">
             <span class="font-bold text-purple-700 dark:text-purple-300">Call Convener: 0480 2890000</span>
             <svg xmlns="http://www.w3.org/2000/svg" class="fest-arrow" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/>

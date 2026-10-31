@@ -1,13 +1,1 @@
-# Secrets & local runtime state — NEVER commit
-.env
-.env.*
-!.env.example
-*.key
-*.pem
-server/certs/
-server/data/
-server/backups/
-__pycache__/
-*.pyc
-.venv/
-venv/
+(empty output)

@@ -9,9 +9,8 @@
   if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; }
   /* Keep the browser chrome (status bar) matched to the page theme */
   function setTC(c) {
-    var m = document.querySelector('meta[name="theme-color"]');
-    if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); }
-    m.content = c;
+    // update BOTH media-scoped theme-color metas so the manual toggle wins
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.content = c; });
   }
   setTC(bg);
   window.__setThemeColor = setTC;
