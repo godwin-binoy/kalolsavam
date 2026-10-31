@@ -1,6 +1,7 @@
 """FastAPI application factory: security headers, CSRF double-submit,
-rate limiting, IP allowlisting, dashboard static hosting (LAN-only),
-and dependency-based auth guards."""
+rate limiting (keyed on the real visitor IP from CF-Connecting-IP), optional
+WAN admin allowlist, public dashboard static hosting (inert shells — all
+protection lives in the auth'd APIs), and dependency-based auth guards."""
 from __future__ import annotations
 
 import hmac
@@ -75,11 +76,6 @@ def client_ip(request: Request, cfg: Config) -> str:
     return request.client.host if request.client else "unknown"
 
 
-def socket_ip(request: Request) -> str:
-    """The direct peer address — with a tunnel this is 127.0.0.1 (the host box)."""
-    return request.client.host if request.client else "unknown"
-
-
 def create_app(cfg: Config, db: Database) -> FastAPI:
     app = FastAPI(title="Kalolsavam backend", docs_url=None, redoc_url=None,
                   openapi_url=None)  # no API discovery surface in prod
@@ -98,22 +94,18 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     async def security_middleware(request: Request, call_next):
         path = request.url.path
 
-        # Source-IP allowlist for the admin API (defense-in-depth, before auth).
-        # In tunnel mode a "lan:" entry means: only accept requests whose DIRECT
-        # peer is the tunnel host itself (i.e. staff on that box / LAN-side
-        # proxy), never visitors arriving over the internet via Cloudflare.
-        if path.startswith("/api/admin"):
-            ip_s = client_ip(request, cfg)
-            sock_s = socket_ip(request)
+        # Optional WAN source-IP allowlist for the admin API (applied to the
+        # real visitor IP, never the localhost tunnel peer). Empty by default:
+        # all traffic — public and private APIs alike — arrives over the
+        # internet via Cloudflare; /api/admin/* is guarded purely by auth
+        # (SRP login + short-lived JWT + mandatory TOTP step-up) and the
+        # per-IP rate limiter below.
+        if path.startswith("/api/admin") and cfg.admin_nets:
             try:
-                ip = ipaddress.ip_address(ip_s)
-                sip = ipaddress.ip_address(sock_s)
+                ip = ipaddress.ip_address(client_ip(request, cfg))
             except ValueError:
-                ip = sip = None
-            net_ok = ip is not None and any(ip in net for net in cfg.admin_nets)
-            sock_ok = sip is not None and any(sip in net for net in cfg.admin_nets)
-            allowed = sock_ok if cfg.admin_lan_only else net_ok
-            if not allowed:
+                ip = None
+            if ip is None or not any(ip in net for net in cfg.admin_nets):
                 return JSONResponse({"detail": "forbidden_network"},
                                     status_code=403)
 

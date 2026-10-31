@@ -15,8 +15,9 @@
 </style>
 </head>
 <body>
-  <!-- Server root is a neutral gate: it must never link to /stagemaster or /manage.
-       Staff navigate by typing the known URL directly (docs/SECURITY.md §4). -->
+  <!-- Server root is a neutral gate: it must never link to the staff
+       dashboards. Staff navigate by typing the known URL directly; the
+       dashboard HTML is an inert shell guarded entirely by the auth'd APIs. -->
   <div class="card">
     <h1>Kalolsavam</h1>
     <p>Systems nominal.</p>

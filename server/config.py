@@ -88,25 +88,17 @@ class Config:
         self.refresh_ttl_hours = _get_int("REFRESH_TOKEN_TTL_HOURS", 8)
         self.idle_lock_min = _get_int("IDLE_LOCK_MIN", 30)
 
-        # Source-IP allowlist for /api/admin/*. Two modes:
-        #  - LAN mode (TRUST_PROXY=0): plain CIDR list, e.g. "192.168.4.0/24".
-        #  - Tunnel mode (TRUST_PROXY=1, our normal setup): Cloudflare carries
-        #    the real visitor IP in CF-Connecting-IP, so a bare CIDR would let
-        #    anyone on the internet who guessed the path straight into admin.
-        #    Prefix an entry with "lan:" to pin it to the TUNNEL HOST's own
-        #    socket address (127.0.0.1 / the staff machine running cloudflared)
-        #    — i.e. admin API reachable only from this box / the staff VLAN.
-        self.admin_nets = []            # always-applied CIDRs
-        self.admin_lan_only = False     # at least one "lan:" entry present
+        # Optional WAN source-IP allowlist for /api/admin/* (CIDRs applied to
+        # the REAL visitor IP from CF-Connecting-IP). There is no LAN access:
+        # everything arrives over the internet through the Cloudflare tunnel,
+        # so this is empty by default and protection comes entirely from
+        # auth (SRP + JWT + mandatory TOTP step-up) plus rate limits/lockouts.
+        # Only set this if you want to pin admin to known static IPs.
+        self.admin_nets = []
         allow = _get("ADMIN_IP_ALLOWLIST", "")
         for cidr in [c.strip() for c in allow.split(",") if c.strip()]:
-            lan_only = False
-            low = cidr.lower()
-            if low.startswith("lan:"):
-                lan_only, cidr = True, low[4:].strip()
             try:
                 self.admin_nets.append(ipaddress.ip_network(cidr, strict=False))
-                self.admin_lan_only = self.admin_lan_only or lan_only
             except ValueError:
                 pass
 
@@ -149,6 +141,16 @@ class Config:
                 "Cloudflare tunnel the server must bind 127.0.0.1 (the tunnel "
                 "connects locally). Set SERVER_HOST=127.0.0.1, or FORCE_TLS=1 "
                 "if you front it with your own HTTPS reverse proxy.")
+        # No LAN access any more: every visitor (public + staff) reaches us
+        # over the internet through Cloudflare. If someone left TRUST_PROXY=0
+        # in .env, CF-Connecting-IP would be ignored and all rate-limiting /
+        # auditing would key on 127.0.0.1 — refuse to boot instead.
+        if self.is_prod and not self.trust_proxy:
+            problems.append(
+                "TRUST_PROXY=0 in production — behind the Cloudflare tunnel "
+                "every request arrives from localhost, so real client IPs "
+                "(CF-Connecting-IP) must be trusted for rate limits and the "
+                "admin allowlist to work. Set TRUST_PROXY=1.")
         if self.force_tls and (not self.tls_cert or not self.tls_key):
             problems.append("FORCE_TLS=1 but TLS_CERT_PATH/TLS_KEY_PATH unset")
         if problems:
