@@ -55,21 +55,70 @@
     var btn = document.querySelector(CONFIG.menuButton);
     var menu = document.querySelector(CONFIG.menuDrawer);
     if (!btn || !menu) return;
+
+    // Scrim element (tap-to-dismiss overlay behind the drawer)
+    var scrim = document.createElement('div');
+    scrim.className = 'drawer-scrim';
+    scrim.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(scrim);
+
+    function isOpen() { return menu.classList.contains('open'); }
     function setOpen(open) {
       menu.classList.toggle('open', open);
+      scrim.classList.toggle('visible', open);
+      document.body.classList.toggle('menu-open', open);
       btn.setAttribute('aria-expanded', String(open));
     }
-    btn.addEventListener('click', function () { setOpen(!menu.classList.contains('open')); });
+    btn.addEventListener('click', function () { setOpen(!isOpen()); });
+    scrim.addEventListener('click', function () { setOpen(false); });
     menu.addEventListener('click', function (e) { if (e.target.closest('a')) setOpen(false); });
-    window.addEventListener('resize', function () { if (window.innerWidth >= 768) setOpen(false); }, { passive: true });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && isOpen()) setOpen(false); });
+    // Close when a desktop-width nav becomes visible
+    var mq = window.matchMedia('(min-width: 768px)');
+    (mq.addEventListener ? mq.addEventListener('change', onBreak) : mq.addListener(onBreak));
+    function onBreak(e) { if ((e.matches !== undefined ? e.matches : mq.matches) && isOpen()) setOpen(false); }
+    // Safety: never leave body scroll-locked after navigating away mid-animation
+    window.addEventListener('pageshow', function () { if (!isOpen()) setOpen(false); });
+  }
+
+  function initResultsLink() {
+    // All "Results" links point at the official government portal. The static
+    // build already embeds the correct URL (works with JS disabled too), and
+    // target/rel are set in the HTML. When the live API is reachable we pick
+    // up any admin-changed override from /api/public/meta — same-host only,
+    // silently skipped on static hosting where the API isn't present.
+    var links = document.querySelectorAll('[data-results-link]');
+    if (!links.length) return;
+    function apply(url) {
+      var u;
+      try { u = new URL(url); } catch (e) { return; }
+      if (u.protocol !== 'https:' || !/(^|\.)kerala\.gov\.in$/.test(u.hostname)) return;
+      links.forEach(function (a) {
+        a.href = url;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+      });
+    }
+    if (window.location.hostname === '' || window.location.hostname.endsWith('.github.io')) return;
+    var meta = document.querySelector('meta[name="api-base"]');
+    var base = meta ? meta.content.replace(/\/+$/, '') : '';
+    var controller = ('AbortController' in window) ? new AbortController() : null;
+    if (controller) setTimeout(function () { controller.abort(); }, 2500);
+    fetch(base + '/api/public/meta', { credentials: 'same-origin', signal: controller ? controller.signal : undefined })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { if (j && j.results_url) apply(j.results_url); })
+      .catch(function () {});
   }
 
   function initPrefetch() {
     var root = window.location.pathname.indexOf('/pages/') !== -1 ? '../' : './';
-    var idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 300); };
+    var idle = window.requestIdleCallback || function (cb) { setTimeout(cb, 200); };
     idle(function () {
       CONFIG.pages.forEach(function (p) {
-        fetch(new URL(root + p, window.location.href).href, { credentials: 'same-origin' }).catch(function () {});
+        var link = document.createElement('link');
+        link.rel = 'prefetch';
+        link.href = new URL(root + p, window.location.href).href;
+        document.head.appendChild(link);
       });
     });
   }
@@ -77,6 +126,7 @@
   function init() {
     initTheme();
     initMobileMenu();
+    initResultsLink();
     initPrefetch();
   }
 

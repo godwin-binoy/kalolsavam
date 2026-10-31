@@ -63,8 +63,15 @@
   box-shadow: 0 2px 8px rgba(34, 43, 36, 0.25);
 }
 
+/* Overlay drawer: floats above the page (never pushes it down) and
+   scrolls internally if the viewport is short. */
 .mobile-menu-drawer {
-  background-color: transparent;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background-color: var(--color-card-bg);
   backdrop-filter: blur(36px);
   -webkit-backdrop-filter: blur(36px);
   padding: 0 1.25rem;
@@ -80,11 +87,35 @@
 }
 
 .mobile-menu-drawer.open {
-  max-height: 420px;
+  max-height: min(420px, calc(100dvh - 5rem));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
   padding: 1rem 1.25rem 1.5rem 1.25rem;
+}
+
+/* Freeze background scrolling while the drawer is open */
+body.menu-open {
+  overflow: hidden;
+}
+
+/* Soft scrim behind the drawer; tap to dismiss */
+.drawer-scrim {
+  position: fixed;
+  inset: 0;
+  top: 3.75rem;
+  z-index: 55;
+  background: rgba(15, 19, 17, 0.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.drawer-scrim.visible {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .mobile-menu-link {
@@ -345,7 +376,7 @@
   border: 1px solid var(--color-badge-live-border);
 }
 
-.logo-box { width: 2.45rem; height: 2.45rem; border-radius: 0.75rem; }
+.logo-box { border-radius: 0.75rem; } /* size lives in base.css */
 
 body[data-service="1"] { background-color: var(--service-1-page-bg); }
 body[data-service="2"] { background-color: var(--service-2-page-bg); }

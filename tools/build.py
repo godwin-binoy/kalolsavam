@@ -47,6 +47,11 @@ ICON_STAGE = get_svg("icon-stage.svg")
 ICON_PHONE = get_svg("icon-phone.svg")
 ARROW_RIGHT = get_svg("icon-arrow.svg")
 
+# Official government results portal. The site never hosts results itself;
+# main.js upgrades these links with the live URL from /api/public/meta.
+GOV_RESULTS_URL = "https://kalolsavam.kerala.gov.in/"
+RESULTS_HREF = GOV_RESULTS_URL
+
 PAGES = {
     "home": {
         "title": SITE["title"],
@@ -118,7 +123,7 @@ PAGES = {
           {WM_PALETTE}
         </div>
         <div class="fest-body">
-          <a href="{{r}}pages/competitions.html" class="fest-action-item">
+          <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
               <span class="fest-item-icon">{ICON_RESULTS}</span>
               <span>Results Declared</span>
@@ -262,7 +267,7 @@ PAGES = {
           {WM_MASKS}
         </div>
         <div class="fest-body">
-          <a href="#results-feed" class="fest-action-item">
+          <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
               <span class="fest-item-icon">{ICON_RESULTS}</span>
               <span>Results Declared</span>
@@ -294,7 +299,7 @@ PAGES = {
           {WM_PALETTE}
         </div>
         <div class="fest-body">
-          <a href="#results-feed" class="fest-action-item">
+          <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
               <span class="fest-item-icon">{ICON_RESULTS}</span>
               <span>Results Declared</span>
@@ -326,7 +331,7 @@ PAGES = {
           {WM_LEAF}
         </div>
         <div class="fest-body">
-          <a href="#results-feed" class="fest-action-item">
+          <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
               <span class="fest-item-icon">{ICON_RESULTS}</span>
               <span>Results Declared</span>
@@ -358,7 +363,7 @@ PAGES = {
           {WM_QUILL}
         </div>
         <div class="fest-body">
-          <a href="#results-feed" class="fest-action-item">
+          <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
               <span class="fest-item-icon">{ICON_RESULTS}</span>
               <span>Results Declared</span>
@@ -389,7 +394,7 @@ PAGES = {
         <div class="card-base">
           <h3 class="card-title mb-4 flex items-center justify-between">
             <span>Latest Declared Results</span>
-            <span class="text-xs font-normal text-muted">Updated 10 mins ago</span>
+            <a href="{RESULTS_HREF}" data-results-link target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-gov-blue hover:underline">Official portal &nearr;</a>
           </h3>
 
           <div class="space-y-4">
@@ -694,9 +699,15 @@ TEMPLATE = """<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
+  <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala \u2014 live stage tracker, schedule, facilities and emergency contacts." />
+  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
+  <link rel="icon" type="image/webp" href="{r}res/logo.webp" />
+  {api_meta}
   <script>{boot}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="{r}css/style.css">
 </head>
@@ -730,7 +741,7 @@ TEMPLATE = """<!DOCTYPE html>
     </div>
 
     <!-- Mobile Drawer -->
-    <div id="mobile-menu" class="md:hidden mobile-menu-drawer space-y-1">
+    <div id="mobile-menu" class="md:hidden mobile-menu-drawer space-y-1" role="navigation" aria-label="Mobile menu">
 {drawer_links}
     </div>
   </header>
@@ -788,7 +799,9 @@ def main():
             tagline=SITE["tagline"],
             desktop_nav=desktop_nav,
             drawer_links=drawer_links,
-            main=page["main"].format(r=r),
+            main=page["main"].format(r=r, RESULTS_HREF=RESULTS_HREF),
+            api_meta=(f'<meta name="api-base" content="{__import__("os").environ["KAL_API_BASE"].rstrip("/")}/">'
+                      if __import__("os").environ.get("KAL_API_BASE") else ""),
             school_tag=f"Sub-District School Kalolsavam &bull; {SITE['school']}",
             footer_note=SITE["footer_note"],
             footer_ops=SITE["footer_ops"],
