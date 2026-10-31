@@ -53,6 +53,10 @@ def _set_session_cookies(response: Response, cfg, rt_jti: str, exp: float,
     # proves same-origin. Do NOT scope to /api/auth: then a login at a
     # non-canonical URL (e.g. /admin without trailing slash) would set
     # cookies the browser never sends back to /api/auth/refresh.
+    # NOTE: the kal_csrf cookie is deliberately readable by scripts — that is
+    # exactly what makes the double-submit proof work while every dashboard
+    # secret (JWT in memory, refresh cookie HttpOnly) stays out of reach of
+    # injected JS.
     response.set_cookie(REFRESH_COOKIE, rt_jti, httponly=True, secure=secure,
                         samesite="strict", path="/", max_age=max_age)
     response.set_cookie(CSRF_COOKIE, csrf, httponly=False, secure=secure,
@@ -275,7 +279,9 @@ async def totp_confirm(body: TotpConfirmIn, request: Request):
     claims = request.app.state.get_access(request, allow_enroll=True)
     db, _, _ = _ctx(request)
     ip = _client_ip(request)
-    entry = PENDING_TOTP.get(body.confirm_token)
+    # pop-first = atomic consume: two concurrent confirms can never both pass
+    # the code check for the same pending enrollment.
+    entry = PENDING_TOTP.pop(body.confirm_token, None)
     if not entry or entry[0] != int(claims["sub"]) or time.time() - entry[2] > 600:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "confirm_expired")
     uid, secret, _ = entry
@@ -283,7 +289,6 @@ async def totp_confirm(body: TotpConfirmIn, request: Request):
         db.log_auth(username=claims["usr"], user_id=uid, ip=ip,
                     event="totp_enroll_fail", detail="")
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "bad_code")
-    PENDING_TOTP.pop(body.confirm_token, None)
     # Stored PLAINTEXT by policy: the database is never encrypted so access
     # can never be lost to a missing/rotated key. DB file protection = OS perms.
     db.execute("UPDATE users SET totp_secret=?, totp_required=1, updated_at=? "

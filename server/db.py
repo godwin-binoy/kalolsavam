@@ -151,6 +151,9 @@ class Database:
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.execute("PRAGMA busy_timeout=5000")
         self.conn.execute("PRAGMA synchronous=NORMAL")   # WAL-safe, much faster commits
+        # Keep ~8 MB of page cache in RAM — board/status reads are hot paths
+        # during the festival and this cuts repeated disk round-trips.
+        self.conn.execute("PRAGMA cache_size=-8000")
         self._migrate()
 
     def _migrate(self) -> None:
@@ -169,6 +172,14 @@ class Database:
                     (str(SCHEMA_VERSION),),
                 )
             self.conn.commit()
+        # one-time per-release maintenance: refresh the query planner's index
+        # statistics so boards/queues keep using optimal plans as data grows.
+        try:
+            with self._lock:
+                self.conn.execute("ANALYZE")
+                self.conn.commit()
+        except sqlite3.Error:
+            pass
 
     # ---- helpers ----
     def query(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
@@ -275,6 +286,26 @@ class Database:
             "DELETE FROM refresh_tokens WHERE (revoked=1 OR used=1) AND expires_at < ?",
             (self.now() - purge_sessions_days * 86400,))
         counts["refresh_tokens"] = cur.rowcount
+        # ---- VACUUM only when it actually pays off --------------------------
+        # A festival day of inserts/commits leaves dead pages in the file;
+        # re-claiming them keeps the DB small and reads fast. VACUUM rewrites
+        # the whole file, so we skip it unless freeable space is meaningful
+        # (>64 MB AND >25% of the file). It runs on the 6-hourly cycle, after
+        # the deletes above, while traffic is at its quietest.
+        reclaimed = 0
+        try:
+            freelist = self.scalar("PRAGMA freelist_count") or 0
+            page_size = self.scalar("PRAGMA page_size") or 0
+            db_pages = self.scalar("PRAGMA page_count") or 0
+            free_bytes = freelist * page_size
+            if free_bytes > 64 * 1024 * 1024 and \
+                    (db_pages == 0 or free_bytes > db_pages * page_size // 4):
+                with self._lock:
+                    self.conn.execute("VACUUM")           # needs no active txn
+                reclaimed = free_bytes
+        except sqlite3.Error:
+            pass  # never let maintenance break serving
+        counts["vacuum_reclaimed_bytes"] = reclaimed
         return counts
 
     def recent_changes(self, since_id: int = 0, limit: int = 200) -> list[sqlite3.Row]:

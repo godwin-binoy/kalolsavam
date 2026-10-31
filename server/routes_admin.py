@@ -14,10 +14,9 @@ import os
 import secrets as _secrets
 import subprocess
 import sys
-import time
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 router = APIRouter()

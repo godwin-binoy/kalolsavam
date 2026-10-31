@@ -53,6 +53,8 @@ class TokenBucket:
                 b = [float(self.burst), now]
             tokens = min(self.burst, b[0] + (now - b[1]) * self.rate)
             if tokens < 1:
+                # store the recomputed value so a long idle gap cannot hand
+                # this key back its full burst on the very next hit
                 b[0], b[1] = tokens, now
                 self._buckets[key] = b
                 return False
@@ -118,13 +120,21 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     @app.on_event("startup")
     async def _start_housekeeping():
         """Periodically bound the housekeeping tables (changelog/audit/expired
-        sessions) so a multi-day festival can never fill the disk."""
+        sessions) so a multi-day festival can never fill the disk. Also trims
+        consumed idempotency keys, which would otherwise grow forever."""
         import asyncio
 
         async def _loop():
             while True:
                 try:
                     await asyncio.to_thread(db.prune_history)
+                    # idem:<key> rows are single-use replay guards; anything
+                    # older than 24h can never be legitimately replayed
+                    # (client retries stop far sooner), so drop them.
+                    await asyncio.to_thread(
+                        db.execute,
+                        "DELETE FROM meta WHERE k LIKE 'idem:%' "
+                        "AND CAST(v AS REAL) < ?", (db.now() - 86400,))
                 except Exception:
                     pass  # never let a prune error kill the server
                 await asyncio.sleep(6 * 3600)

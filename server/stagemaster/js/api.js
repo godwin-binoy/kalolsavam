@@ -74,7 +74,9 @@
    * ReadableStream and parse "event: change\ndata: {...}\n\n" frames.
    * Handlers are keyed by entity name plus '*' for all events.
    * Auto-reconnects; on (re)connect the caller should re-fetch its snapshot. */
-  async function sseLoop(path, handlers) {
+  var streamSeq = 0;   // per-page unique id, survives any close/reopen
+
+  async function sseLoop(tag, path, handlers) {
     while (!sseLoop._stop) {
       var alive = false;
       try {
@@ -103,15 +105,19 @@
           }
         }
       } catch (e) { /* fall through to retry */ }
-      if (handlers.onmissed) handlers.onmissed();
-      if (sseLoop._stop) break;
+      // Only report the drop if this loop is still the current one — a stale
+      // loop woken by stream.close() must never overwrite the new stream's
+      // "live" badge or double-reconnect.
+      if (streamSeq === tag && handlers.onmissed) handlers.onmissed();
+      if (sseLoop._stop || streamSeq !== tag) break;
       await new Promise(function (r) { setTimeout(r, alive ? 2500 : 6000); });
     }
   }
 
   function stream(path, handlers) {
     sseLoop._stop = false;
-    sseLoop(path, handlers || {});
+    var tag = ++streamSeq;
+    sseLoop(tag, path, handlers || {});
     return { close: function () { sseLoop._stop = true; } };
   }
 

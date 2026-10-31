@@ -10,7 +10,6 @@ Hard rules (docs/SECURITY.md):
 from __future__ import annotations
 
 import json
-import time
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse

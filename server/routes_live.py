@@ -13,8 +13,7 @@ this board are only for the staff's own running totals.
 """
 from __future__ import annotations
 
-import json
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import BaseModel, Field
 
 router = APIRouter()
@@ -104,6 +103,8 @@ async def advance(body: AdvanceIn, request: Request):
     _check_stage(claims, body.venue_id)
 
     # Idempotent replay: same key → same result, no double-apply.
+    # The stored marker carries the server timestamp of the original action;
+    # the housekeeping task prunes these markers after 24h.
     idem = request.headers.get("idempotency-key", "")[:64]
     if idem:
         hit = db.one("SELECT v FROM meta WHERE k=?", (f"idem:{idem}",))
@@ -143,7 +144,7 @@ async def advance(body: AdvanceIn, request: Request):
     if idem:
         db.execute("INSERT INTO meta(k,v) VALUES(?,?) "
                    "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
-                   (f"idem:{idem}", "1"))
+                   (f"idem:{idem}", str(db.now())))
     return {"ok": True, "item_id": row["id"], "new_version": row["version"] + 1,
             "status": to}
 

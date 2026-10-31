@@ -49,9 +49,7 @@
       opts.headers['x-step-up-totp'] = code;
     }
     var r = await A.api('/api/admin' + path, opts);
-    if (r.status === 403 && r.detail === 'forbidden_network') {
-      A.toast('Your IP is not in the admin allowlist (ADMIN_IP_ALLOWLIST).', true);
-    } else if (r.status === 403 && r.detail === 'stepup_failed') {
+    if (r.status === 403 && r.detail === 'stepup_failed') {
       A.toast('Step-up code rejected.', true);
     } else if (!r.ok && r.detail !== 'cancelled') {
       A.toast('Request failed: ' + (r.detail || r.status), true);

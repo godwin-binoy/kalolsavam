@@ -49,6 +49,8 @@ class EventBus:
         subs = list(self._subs)
         if not subs:
             return  # nobody listening — skip serialization entirely
+        # seq advances ONLY on real deliveries and never resets: SSE clients
+        # can rely on strictly increasing ids across restarts of subscribers.
         self._seq += 1
         payload = json.dumps({"id": self._seq, "entity": entity, **change},
                              default=str)
