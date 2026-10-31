@@ -57,12 +57,26 @@ DASH_CSP = (
 )
 
 
-def client_ip(request: Request) -> str:
-    # Only trust X-Forwarded-For when explicitly behind our reverse proxy.
-    if os.environ.get("TRUST_PROXY") == "1":
+def client_ip(request: Request, cfg: Config) -> str:
+    """Real visitor IP.
+
+    With the Cloudflare tunnel (the normal setup) every request arrives from
+    cloudflared on localhost, so the socket address is useless — the visitor's
+    true IP is in CF-Connecting-IP (single value, set by Cloudflare). Trusted
+    only when TRUST_PROXY is on; otherwise these headers are spoofable.
+    """
+    if cfg.trust_proxy:
+        cf = request.headers.get("cf-connecting-ip", "")
+        if cf:
+            return cf.split(",")[0].strip()
         fwd = request.headers.get("x-forwarded-for", "")
         if fwd:
             return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "unknown"
+
+
+def socket_ip(request: Request) -> str:
+    """The direct peer address — with a tunnel this is 127.0.0.1 (the host box)."""
     return request.client.host if request.client else "unknown"
 
 
@@ -84,21 +98,31 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     async def security_middleware(request: Request, call_next):
         path = request.url.path
 
-        # IP allowlist for admin surface (defense-in-depth, before auth)
+        # Source-IP allowlist for the admin API (defense-in-depth, before auth).
+        # In tunnel mode a "lan:" entry means: only accept requests whose DIRECT
+        # peer is the tunnel host itself (i.e. staff on that box / LAN-side
+        # proxy), never visitors arriving over the internet via Cloudflare.
         if path.startswith("/api/admin"):
-            ip_s = client_ip(request)
+            ip_s = client_ip(request, cfg)
+            sock_s = socket_ip(request)
             try:
                 ip = ipaddress.ip_address(ip_s)
+                sip = ipaddress.ip_address(sock_s)
             except ValueError:
-                ip = None
-            if ip is None or not any(ip in net for net in cfg.admin_nets):
+                ip = sip = None
+            net_ok = ip is not None and any(ip in net for net in cfg.admin_nets)
+            sock_ok = sip is not None and any(sip in net for net in cfg.admin_nets)
+            allowed = sock_ok if cfg.admin_lan_only else net_ok
+            if not allowed:
                 return JSONResponse({"detail": "forbidden_network"},
                                     status_code=403)
 
         # rate limits
-        if path.startswith("/api/auth") and not app.state.auth_bucket.allow(client_ip(request)):
+        if path.startswith("/api/auth") and \
+                not app.state.auth_bucket.allow(client_ip(request, cfg)):
             return JSONResponse({"detail": "rate_limited"}, status_code=429)
-        if path.startswith("/api/") and not app.state.api_bucket.allow(client_ip(request)):
+        if path.startswith("/api/") and \
+                not app.state.api_bucket.allow(client_ip(request, cfg)):
             return JSONResponse({"detail": "rate_limited"}, status_code=429)
 
         # CSRF double-submit for cookie-driven auth mutations.
@@ -124,7 +148,11 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
         if path.startswith(dash):
             resp.headers["Content-Security-Policy"] = DASH_CSP
             resp.headers["Cache-Control"] = "no-store"
-            resp.headers["Strict-Transport-Security"] = "max-age=31536000"
+            # HSTS only makes sense when we actually serve HTTPS ourselves;
+            # with the Cloudflare tunnel, TLS is terminated at CF's edge and
+            # Strict-Transport-Security is configured in the CF dashboard.
+            if cfg.force_tls:
+                resp.headers["Strict-Transport-Security"] = "max-age=31536000"
         return resp
 
     # ------------------------------------------------------------ guards --
