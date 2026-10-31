@@ -6,16 +6,18 @@
   <title>Competitions &amp; Results | Mala Sub-District Kalolsavam</title>
   <!-- GENERATED FILE: edit tools/build.py, then run `python3 tools/build.py`. Do not hand-edit. -->
   <meta name="description" content="Official information desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala — live stage tracker, schedule, facilities and emergency contacts." />
-  <meta name="theme-color" content="#F8F6F0" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#0F1311" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#F8F6F0" />
   <link rel="icon" type="image/webp" href="../res/logo.webp" />
   
-  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); })();</script>
+  <script>(function () { var h = document.documentElement, d, bg; try { d = localStorage.getItem('kalolsavam_dark') === 'true'; } catch (e) { d = false; } if (d) h.classList.add('dark'); bg = d ? '#0F1311' : '#F8F6F0'; h.style.backgroundColor = bg; h.style.setProperty('--boot-bg', bg); if (d) { var m = document.querySelector('meta[name="theme-color"][media*="light"]'); if (m) m.media = '(prefers-color-scheme: dark)'; } function setTC(c) { var m = document.querySelector('meta[name="theme-color"]'); if (!m) { m = document.createElement('meta'); m.name = 'theme-color'; document.head.appendChild(m); } m.content = c; } setTC(bg); window.__setThemeColor = setTC; })();</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;0,900;1,700&display=swap">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="../css/style.css">
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800;900&display=swap"></noscript>
+  <!-- Tailwind runtime only when served by our backend (KAL_TW_CDN injected);
+       static hosting relies on the CSS fallback utilities instead. -->
 </head>
 <body class="font-sans antialiased flex flex-col min-h-screen" data-service="2">
 
@@ -85,7 +87,7 @@
         <div class="fest-body">
           <a href="https://kalolsavam.kerala.gov.in/" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 icon-indigo" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
 </svg></span>
               <span>Results Declared</span>
@@ -96,7 +98,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 icon-emerald" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
 </svg></span>
@@ -108,7 +110,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 icon-amber" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
 </svg></span>
               <span>School Points</span>
@@ -132,7 +134,7 @@
         <div class="fest-body">
           <a href="https://kalolsavam.kerala.gov.in/" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 icon-indigo" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
 </svg></span>
               <span>Results Declared</span>
@@ -143,7 +145,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 icon-emerald" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
 </svg></span>
@@ -155,7 +157,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 icon-amber" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
 </svg></span>
               <span>School Points</span>
@@ -179,7 +181,7 @@
         <div class="fest-body">
           <a href="https://kalolsavam.kerala.gov.in/" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 icon-indigo" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
 </svg></span>
               <span>Results Declared</span>
@@ -190,7 +192,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 icon-emerald" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
 </svg></span>
@@ -202,7 +204,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 icon-amber" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
 </svg></span>
               <span>School Points</span>
@@ -226,7 +228,7 @@
         <div class="fest-body">
           <a href="https://kalolsavam.kerala.gov.in/" data-results-link target="_blank" rel="noopener noreferrer" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-indigo-600 icon-indigo" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
 </svg></span>
               <span>Results Declared</span>
@@ -237,7 +239,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 icon-emerald" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
   <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
 </svg></span>
@@ -249,7 +251,7 @@
           </a>
           <a href="#points-table" class="fest-action-item">
             <div class="flex items-center">
-              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <span class="fest-item-icon"><svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-600 icon-amber" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
   <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
 </svg></span>
               <span>School Points</span>

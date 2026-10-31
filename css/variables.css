@@ -38,9 +38,12 @@
   --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.03);
   --shadow-drawer: 0 16px 40px rgba(0, 0, 0, 0.1);
 
+  /* Header / drawer surfaces (opaque enough to read, translucent enough to blur) */
+  --header-bg: rgba(248, 246, 240, 0.85);
+  --drawer-bg: rgba(248, 246, 240, 0.94);
+  --header-h: 4.25rem;
+
   /* Card Action Pills */
-  --action-item-bg: rgba(255, 255, 255, 0.82);
-  --action-item-border: rgba(226, 232, 240, 0.85);
   --action-item-hover-bg: #FFFFFF;
   --action-item-hover-border: #CBD5E1;
   --action-item-icon-bg: #F1F5F9;
@@ -61,8 +64,8 @@
   /* Category Banners — white text on top (AA contrast in both themes) */
   --banner-purple-from: #5B2DB3;
   --banner-purple-to: #49229C;
-  --banner-pink-from: #C81E4A;
-  --banner-pink-to: #A31238;
+  --banner-rose-from: #C81E4A;
+  --banner-rose-to: #A31238;
   --banner-teal-from: #0C7E74;
   --banner-teal-to: #0A655D;
   --banner-orange-from: #C24C07;
@@ -130,8 +133,9 @@ html.dark {
   --shadow-header: 0 4px 30px rgba(0, 0, 0, 0.3);
   --shadow-drawer: 0 16px 40px rgba(0, 0, 0, 0.5);
 
-  --action-item-bg: rgba(255, 255, 255, 0.04);
-  --action-item-border: rgba(255, 255, 255, 0.07);
+  --header-bg: rgba(17, 21, 19, 0.85);
+  --drawer-bg: rgba(17, 21, 19, 0.94);
+
   --action-item-hover-bg: rgba(255, 255, 255, 0.09);
   --action-item-hover-border: rgba(255, 255, 255, 0.15);
   --action-item-icon-bg: rgba(255, 255, 255, 0.08);
