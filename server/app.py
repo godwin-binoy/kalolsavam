@@ -106,6 +106,31 @@ def client_ip(request: Request, cfg: Config) -> str:
 def create_app(cfg: Config, db: Database) -> FastAPI:
     app = FastAPI(title="Kalolsavam backend", docs_url=None, redoc_url=None,
                   openapi_url=None)  # no API discovery surface in prod
+
+    @app.on_event("startup")
+    async def _wire_event_bus():
+        """Give the bus the live event loop so worker-thread mutations can
+        fan out to SSE subscribers via call_soon_threadsafe."""
+        from .events import BUS
+        import asyncio
+        BUS.attach_loop(asyncio.get_running_loop())
+
+    @app.on_event("startup")
+    async def _start_housekeeping():
+        """Periodically bound the housekeeping tables (changelog/audit/expired
+        sessions) so a multi-day festival can never fill the disk."""
+        import asyncio
+
+        async def _loop():
+            while True:
+                try:
+                    await asyncio.to_thread(db.prune_history)
+                except Exception:
+                    pass  # never let a prune error kill the server
+                await asyncio.sleep(6 * 3600)
+
+        app.state.housekeeping = asyncio.create_task(_loop())
+
     app.state.cfg = cfg
     app.state.db = db
     app.state.tokens = TokenIssuer(cfg.signing_seeds, cfg.active_kid,

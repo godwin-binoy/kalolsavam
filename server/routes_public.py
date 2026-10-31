@@ -103,6 +103,9 @@ async def stream(request: Request):
 
     safe_entities = {"live_state", "queue"}
     q = BUS.subscribe()
+    if q is None:
+        return JSONResponse({"detail": "too_many_connections"},
+                            status_code=503)
 
     async def gen():
         try:

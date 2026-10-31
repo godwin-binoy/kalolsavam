@@ -257,9 +257,10 @@ class Database:
         can never fill the venue laptop's disk. Safe to run repeatedly."""
         counts = {}
         cutoff = self.now() - keep_auth_audit_days * 86400
+        # delete old auth-audit rows, but always keep the newest N as a floor
         cur = self.execute(
-            "DELETE FROM auth_audit WHERE ts<? "
-            "AND id > (SELECT COALESCE(MAX(id),0)-? FROM auth_audit)",
+            "DELETE FROM auth_audit WHERE ts<? AND id NOT IN "
+            "(SELECT id FROM auth_audit ORDER BY id DESC LIMIT ?)",
             (cutoff, keep_changelog))
         counts["auth_audit"] = cur.rowcount
         cur = self.execute(

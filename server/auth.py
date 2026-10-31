@@ -105,9 +105,13 @@ class TokenIssuer:
             raise ValueError("malformed token")
         if not isinstance(header, dict) or not isinstance(payload, dict):
             raise ValueError("malformed token")
+        # alg must be EXACTLY HS256 — rejects "none" and any confusion attack
         if header.get("alg") != "HS256":
             raise ValueError("bad algorithm")
-        key = self.seeds.get(header.get("kid"))
+        if header.get("typ", "JWT") != "JWT":
+            raise ValueError("bad type")
+        kid = header.get("kid")
+        key = self.seeds.get(kid)
         if key is None:
             raise ValueError("unknown kid")
         expected = hmac.new(key, f"{parts[0]}.{parts[1]}".encode(),
@@ -117,6 +121,8 @@ class TokenIssuer:
         now = time.time()
         if payload.get("exp", 0) < now - 5:
             raise ValueError("token expired")
+        if payload.get("iss") != "kalolsavam-api":
+            raise ValueError("bad issuer")
         if not payload.get("sub") or not payload.get("sid"):
             raise ValueError("token missing claims")
         return payload
@@ -173,9 +179,7 @@ def totp_provision() -> bytes:
     return os.urandom(20)  # 160-bit secret, RFC 4226 recommendation
 
 
-def totp_now(secret: bytes, t: float | None = None, step: int = 30,
-             digits: int = 6) -> str:
-    counter = int((t if t is not None else time.time()) // step)
+def _totp_code(secret: bytes, counter: int, digits: int = 6) -> str:
     msg = struct.pack(">Q", counter)
     digest = hmac.new(secret, msg, hashlib.sha1).digest()
     off = digest[-1] & 0x0F
@@ -183,19 +187,50 @@ def totp_now(secret: bytes, t: float | None = None, step: int = 30,
     return str(code).zfill(digits)
 
 
+def totp_now(secret: bytes, t: float | None = None, step: int = 30,
+             digits: int = 6) -> str:
+    return _totp_code(secret, int((t if t is not None else time.time()) // step),
+                      digits)
+
+
 def totp_verify(secret: bytes, code: str, window: int = 1) -> bool:
+    """Constant-time compare across the ±window skew.
+
+    Each code may be consumed only ONCE per time-step per secret: a replayed
+    code inside its validity window is rejected (guards against an attacker
+    sniffing/reshowing one live code)."""
     try:
         c = int(code)
     except ValueError:
         return False
     if not (0 <= c < 1_000_000):
         return False
-    now = time.time()
     target = str(c).zfill(6)
+    now = time.time()
+    matched_step = None
     for skew in range(-window, window + 1):
-        if hmac.compare_digest(totp_now(secret, now + skew * 30), target):
-            return True
-    return False
+        step_no = int((now + skew * 30) // 30)
+        if hmac.compare_digest(_totp_code(secret, step_no), target):
+            matched_step = step_no
+            break
+    if matched_step is None:
+        return False
+    # Single-use enforcement keyed by the SECRET VALUE (not id(): rows are
+    # re-read from SQLite every call, so id() would differ and let replays
+    # through). Server runs as ONE process, so this in-memory map is enough.
+    used = getattr(totp_verify, "_used", None)
+    if used is None:
+        used = {}
+        totp_verify._used = used
+    key = (secret[:], matched_step)
+    if used.get(key) == target:
+        return False
+    used[key] = target
+    if len(used) > 512:                    # keep the map bounded
+        cutoff = int(now // 30) - 2 * (window + 1)
+        for k in [k for k in used if k[1] < cutoff]:
+            used.pop(k, None)
+    return True
 
 
 def totp_uri(secret: bytes, username: str, issuer: str = "Kalolsavam") -> str:

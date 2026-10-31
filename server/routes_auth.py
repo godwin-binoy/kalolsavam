@@ -106,6 +106,9 @@ async def login(body: LoginIn, request: Request, response: Response):
             db.log_auth(username=user["username"], user_id=user["id"], ip=ip,
                         event="totp_missing", detail="enrollment required")
             sess_id = _secrets.token_hex(16)
+            now = db.now()
+            db.execute("INSERT INTO sessions(sid,user_id,created_at,last_seen)"
+                       " VALUES(?,?,?,?)", (sess_id, user["id"], now, now))
             rt_jti, exp = new_refresh(db, user["id"], None, None, sess_id,
                                       cfg.refresh_ttl_hours)
             access = tokens.issue_access(user_id=user["id"], username=user["username"],
@@ -133,14 +136,17 @@ async def login(body: LoginIn, request: Request, response: Response):
     # ---- issue session ----
     stages = json.loads(user["stages"])
     sess_id = _secrets.token_hex(16)
+    now = db.now()
+    # created_at doubles as the "last login" marker shown in the sessions view
     db.execute("INSERT INTO sessions(sid,user_id,created_at,last_seen) VALUES(?,?,?,?)",
-               (sess_id, user["id"], db.now(), db.now()))
+               (sess_id, user["id"], now, now))
     rt_jti, exp = new_refresh(db, user["id"], None, None, sess_id,
                               cfg.refresh_ttl_hours)
     access = tokens.issue_access(user_id=user["id"], username=user["username"],
                                  role=user["role"], sid=sess_id, stages=stages)
     csrf = _secrets.token_urlsafe(32)
     _set_session_cookies(response, cfg, rt_jti, exp, csrf)
+
     return {"access": access, "csrf": csrf, "role": user["role"],
             "username": user["username"], "stages": stages,
             "expires_in": cfg.access_ttl_min * 60}

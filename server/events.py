@@ -12,10 +12,11 @@ from typing import AsyncIterator
 
 
 class EventBus:
-    def __init__(self, max_queue: int = 256):
+    def __init__(self, max_queue: int = 256, max_connections: int = 400):
         self._subs: set[asyncio.Queue] = set()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._max = max_queue
+        self._max_conn = max_connections   # hard cap → stream-connection DoS guard
         self._seq = 0
 
     def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
@@ -23,7 +24,12 @@ class EventBus:
         threads) can hand payloads to the loop safely via call_soon_threadsafe."""
         self._loop = loop
 
-    def subscribe(self) -> asyncio.Queue:
+    def subscribe(self) -> asyncio.Queue | None:
+        """Register a subscriber; returns None when the connection cap is hit
+        (callers must answer 503 — unbounded open streams would exhaust file
+        descriptors and memory)."""
+        if len(self._subs) >= self._max_conn:
+            return None
         q: asyncio.Queue = asyncio.Queue(maxsize=self._max)
         self._subs.add(q)
         return q
@@ -40,12 +46,13 @@ class EventBus:
         loop = self._loop
         if loop is None or loop.is_closed():
             return  # no loop yet (e.g., during seeding) — changelog table is truth
+        subs = list(self._subs)
+        if not subs:
+            return  # nobody listening — skip serialization entirely
         self._seq += 1
         payload = json.dumps({"id": self._seq, "entity": entity, **change},
                              default=str)
-        subs = list(self._subs)
-        if subs:
-            loop.call_soon_threadsafe(self._deliver, payload, subs)
+        loop.call_soon_threadsafe(self._deliver, payload, subs)
 
     def _deliver(self, payload: str, subs: list) -> None:
         for q in subs:

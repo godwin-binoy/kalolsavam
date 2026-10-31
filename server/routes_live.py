@@ -181,17 +181,26 @@ async def enter_score(body: ScoreIn, request: Request):
     return agg
 
 
-# ------------------------------------------------------------ stream ------
+# ------------------------------------------------------------- stream ------
+MAX_STREAM_LEN = 2048          # reject absurdly long paths (cheap DoS guard)
+
+
 @router.get("/stream")
 async def stream(request: Request):
     """Staff SSE feed — authenticated, full (unsanitized) entity set.
 
     EventSource cannot send an Authorization header, so clients consume this
     with fetch + ReadableStream (see dashboard js/api.js)."""
+    if len(request.url.path) > MAX_STREAM_LEN:
+        raise HTTPException(status.HTTP_414_REQUEST_ENTITY_TOO_LARGE,
+                            "path_too_long")
     _deps(request)                      # role check: stagemaster or admin
     from .events import BUS
 
     q = BUS.subscribe()
+    if q is None:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE,
+                            "too_many_connections")
 
     async def gen():
         try:
