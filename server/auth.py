@@ -97,7 +97,14 @@ class TokenIssuer:
         parts = token.split(".")
         if len(parts) != 3:
             raise ValueError("malformed token")
-        header = json.loads(_b64u_decode(parts[0]))
+        try:
+            header = json.loads(_b64u_decode(parts[0]))
+            payload = json.loads(_b64u_decode(parts[1]))
+            sig = _b64u_decode(parts[2])
+        except Exception:
+            raise ValueError("malformed token")
+        if not isinstance(header, dict) or not isinstance(payload, dict):
+            raise ValueError("malformed token")
         if header.get("alg") != "HS256":
             raise ValueError("bad algorithm")
         key = self.seeds.get(header.get("kid"))
@@ -105,9 +112,8 @@ class TokenIssuer:
             raise ValueError("unknown kid")
         expected = hmac.new(key, f"{parts[0]}.{parts[1]}".encode(),
                             hashlib.sha256).digest()
-        if not hmac.compare_digest(expected, _b64u_decode(parts[2])):
+        if not hmac.compare_digest(expected, sig):
             raise ValueError("bad signature")
-        payload = json.loads(_b64u_decode(parts[1]))
         now = time.time()
         if payload.get("exp", 0) < now - 5:
             raise ValueError("token expired")
@@ -139,14 +145,20 @@ def consume_refresh(db, jti: str) -> dict | None:
     if not row or row["revoked"] or row["expires_at"] < db.now():
         return None
     if row["used"]:
+        # Reuse detected: revoke the whole family AND every session still
+        # pointing at one of its tokens.
         db.execute("UPDATE refresh_tokens SET revoked=1 WHERE family=?",
                    (row["family"],))
-        db.execute("UPDATE sessions SET revoked=1 WHERE sid IN "
-                   "(SELECT sid FROM sessions WHERE current_jti IN "
-                   "(SELECT jti FROM refresh_tokens WHERE family=?))",
+        db.execute("UPDATE sessions SET revoked=1 WHERE current_jti IN "
+                   "(SELECT jti FROM refresh_tokens WHERE family=?)",
                    (row["family"],))
         return {"reuse": True, "user_id": row["user_id"], "family": row["family"]}
-    db.execute("UPDATE refresh_tokens SET used=1 WHERE jti=?", (jti,))
+    # Conditional UPDATE = compare-and-swap: two concurrent refreshes of the
+    # same token can never both succeed (prevents a double-issued session).
+    cur = db.execute("UPDATE refresh_tokens SET used=1 WHERE jti=? AND used=0",
+                     (jti,))
+    if cur.rowcount == 0:
+        return None
     return {"reuse": False, "user_id": row["user_id"], "family": row["family"],
             "parent_jti": jti}
 

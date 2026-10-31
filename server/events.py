@@ -8,22 +8,20 @@ from __future__ import annotations
 
 import asyncio
 import json
-from collections import deque
 from typing import AsyncIterator
-
-
-class Subscriber:
-    def __init__(self, queue: "asyncio.Queue[str]", name: str):
-        self.queue = queue
-        self.name = name
 
 
 class EventBus:
     def __init__(self, max_queue: int = 256):
         self._subs: set[asyncio.Queue] = set()
+        self._loop: asyncio.AbstractEventLoop | None = None
         self._max = max_queue
-        self.history: deque[tuple[int, str, dict]] = deque(maxlen=512)
         self._seq = 0
+
+    def attach_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        """Called once at app startup so publish() (which runs in worker
+        threads) can hand payloads to the loop safely via call_soon_threadsafe."""
+        self._loop = loop
 
     def subscribe(self) -> asyncio.Queue:
         q: asyncio.Queue = asyncio.Queue(maxsize=self._max)
@@ -38,16 +36,19 @@ class EventBus:
         return len(self._subs)
 
     def publish(self, entity: str, change: dict) -> None:
-        """Thread-safe-ish publish from sync code via the running loop."""
+        """Thread-safe publish from sync code into the running event loop."""
+        loop = self._loop
+        if loop is None or loop.is_closed():
+            return  # no loop yet (e.g., during seeding) — changelog table is truth
         self._seq += 1
         payload = json.dumps({"id": self._seq, "entity": entity, **change},
                              default=str)
-        self.history.append((self._seq, entity, change))
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            return  # no loop yet (e.g., during seeding) — changelog table is truth
-        for q in list(self._subs):
+        subs = list(self._subs)
+        if subs:
+            loop.call_soon_threadsafe(self._deliver, payload, subs)
+
+    def _deliver(self, payload: str, subs: list) -> None:
+        for q in subs:
             try:
                 q.put_nowait(payload)
             except asyncio.QueueFull:

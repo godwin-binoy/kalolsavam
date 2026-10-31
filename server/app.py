@@ -1,22 +1,21 @@
 """FastAPI application factory: security headers, CSRF double-submit,
 rate limiting (keyed on the real visitor IP from CF-Connecting-IP), public
-dashboard static hosting (inert shells — all
-protection lives in the auth'd APIs), and dependency-based auth guards."""
+dashboard static hosting (inert shells — all protection lives in the auth'd
+APIs), and dependency-based auth guards."""
 from __future__ import annotations
 
 import hmac
 import os
-import secrets
+import threading
 import time
 
-from fastapi import Depends, FastAPI, Request, HTTPException, status
+from fastapi import FastAPI, Request, HTTPException, status
 from fastapi.responses import JSONResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from .config import Config
 from .db import Database
 from .auth import TokenIssuer
-from .events import BUS
 
 REFRESH_COOKIE = "kal_rt"
 CSRF_COOKIE = "kal_csrf"
@@ -24,20 +23,50 @@ CSRF_HEADER = "x-csrf-token"
 
 # ---------------------------------------------------------------- rate limit
 class TokenBucket:
+    """Fixed-window-free token bucket, per key (real visitor IP).
+
+    A background sweeper drops idle buckets so a flood of unique spoofed IPs
+    can never grow this dict into a memory-exhaustion DoS.
+    """
+
+    _IDLE_SEC = 600          # forget buckets untouched for 10 minutes
+    _MAX_KEYS = 50_000       # hard ceiling; oldest evicted beyond it
+
     def __init__(self, rate_per_min: int, burst: int):
         self.rate = rate_per_min / 60.0
         self.burst = burst
-        self._buckets: dict[str, tuple[float, float]] = {}
+        self._buckets: dict[str, list[float]] = {}
+        self._lock = threading.Lock()
+        cleaner = threading.Thread(target=self._sweep, daemon=True)
+        cleaner.start()
 
     def allow(self, key: str) -> bool:
         now = time.time()
-        tokens, last = self._buckets.get(key, (self.burst, now))
-        tokens = min(self.burst, tokens + (now - last) * self.rate)
-        if tokens < 1:
-            self._buckets[key] = (tokens, now)
-            return False
-        self._buckets[key] = (tokens - 1, now)
-        return True
+        with self._lock:
+            b = self._buckets.get(key)
+            if b is None:
+                if len(self._buckets) >= self._MAX_KEYS:
+                    # evict ~quarter of the stalest entries instead of growing
+                    for k, _ in sorted(self._buckets.items(),
+                                       key=lambda kv: kv[1][1])[:self._MAX_KEYS // 4]:
+                        self._buckets.pop(k, None)
+                b = [float(self.burst), now]
+            tokens = min(self.burst, b[0] + (now - b[1]) * self.rate)
+            if tokens < 1:
+                b[0], b[1] = tokens, now
+                self._buckets[key] = b
+                return False
+            b[0], b[1] = tokens - 1, now
+            self._buckets[key] = b
+            return True
+
+    def _sweep(self) -> None:
+        while True:
+            time.sleep(60)
+            cutoff = time.time() - self._IDLE_SEC
+            with self._lock:
+                for k in [k for k, v in self._buckets.items() if v[1] < cutoff]:
+                    self._buckets.pop(k, None)
 
 
 SEC_HEADERS = {
@@ -123,6 +152,11 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
             # Strict-Transport-Security is configured in the CF dashboard.
             if cfg.force_tls:
                 resp.headers["Strict-Transport-Security"] = "max-age=31536000"
+        elif path.startswith("/api/"):
+            # APIs are per-user/per-IP dynamic — never cacheable by shared
+            # caches (prevents cross-visitor leakage of rate state/tokens).
+            resp.headers["Cache-Control"] = "no-store"
+            resp.headers["Content-Security-Policy"] = DASH_CSP
         return resp
 
     # ------------------------------------------------------------ guards --
@@ -139,33 +173,32 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
             if not allow_enroll:
                 raise HTTPException(status.HTTP_403_FORBIDDEN, "enroll_only")
             return claims
-        sid_row = db.one("SELECT * FROM sessions WHERE sid=?", (claims["sid"],))
-        if not sid_row or sid_row["revoked"]:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session_revoked")
+        # Defense-in-depth: an enrollment-scoped or password-changed user must
+        # never pass — re-check the live DB row on every authenticated call.
         user = db.one("SELECT * FROM users WHERE id=?", (int(claims["sub"]),))
         if not user or user["disabled"]:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "user_disabled")
+        sid_row = db.one("SELECT * FROM sessions WHERE sid=?", (claims["sid"],))
+        if not sid_row or sid_row["revoked"]:
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "session_revoked")
         # idle lock enforcement
         idle = cfg.idle_lock_min * 60
-        if db.now() - sid_row["last_seen"] > idle:
+        now = db.now()
+        if now - sid_row["last_seen"] > idle:
             db.execute("UPDATE sessions SET revoked=1 WHERE sid=?", (claims["sid"],))
             db.execute("UPDATE refresh_tokens SET revoked=1 WHERE jti=?",
                        (sid_row["current_jti"],))
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "idle_locked")
-        db.execute("UPDATE sessions SET last_seen=? WHERE sid=?",
-                   (db.now(), claims["sid"]))
+        # Throttle the last_seen write to once per minute — every authenticated
+        # API call used to cost a disk commit (SQLite WAL fsync), which is both
+        # a performance drag and a needless wear on venue laptops.
+        if now - sid_row["last_seen"] > 60:
+            db.execute("UPDATE sessions SET last_seen=? WHERE sid=?", (now,
+                                                                       claims["sid"]))
         claims["user_row"] = dict(user)
         return claims
 
-    def require_role(role: str):
-        def dep(claims: dict = Depends(get_access)) -> dict:
-            if claims["role"] != role and claims["role"] != "admin":
-                raise HTTPException(status.HTTP_403_FORBIDDEN, "insufficient_role")
-            return claims
-        return dep
-
     app.state.get_access = get_access
-    app.state.require_role = require_role
 
     # ------------------------------------------- dashboard static files ---
     # Dashboards live INSIDE server/ (server/stagemaster, server/admin) so they
@@ -187,7 +220,9 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
         # Server root serves ONLY a neutral gate page — no links to dashboards.
         gate = os.path.join(srv_root, "static", "gate.html")
         if os.path.exists(gate):
-            return FileResponse(gate, headers={"Cache-Control": "no-store"})
+            return FileResponse(gate, headers={
+                "Cache-Control": "no-store",
+                "Content-Security-Policy": DASH_CSP})
         return JSONResponse({"status": "ok"})
 
     # ------------------------------------------------------- routers ------
@@ -200,6 +235,17 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     app.include_router(public_router, prefix="/api/public")
     app.include_router(live_router, prefix="/api/live")
     app.include_router(admin_router, prefix="/api/admin")
+
+    # Any 404 (typos, scanner probes for /wp-admin, /.env, old /manage URLs…)
+    # lands on the same neutral gate page: zero information leakage.
+    @app.exception_handler(404)
+    async def not_found_gate(request: Request, exc):
+        gate = os.path.join(srv_root, "static", "gate.html")
+        if os.path.exists(gate):
+            return FileResponse(gate, status_code=404, headers={
+                "Cache-Control": "no-store",
+                "Content-Security-Policy": DASH_CSP})
+        return JSONResponse({"detail": "not_found"}, status_code=404)
 
     @app.exception_handler(HTTPException)
     async def hide_errors(request: Request, exc: HTTPException):

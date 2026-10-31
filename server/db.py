@@ -1,9 +1,12 @@
 """SQLite (WAL) data layer — schema, migrations, helpers.
 
 Reliability notes:
- - WAL mode + busy_timeout: readers never block the single writer; safe for
+ - WAL mode + busy_timeout: readers never block the writer; safe for
    one server process on one laptop.
  - Foreign keys ON: bad references are rejected by the database itself.
+ - One connection guarded by a re-entrant lock: FastAPI runs sync route
+   handlers in a threadpool, so without this two threads could interleave
+   commits/rollbacks on the shared connection.
  - Every helper takes (sql, params) and uses bound '?' placeholders ONLY —
    no string interpolation anywhere → SQL injection is structurally impossible.
 """
@@ -11,6 +14,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -124,6 +128,14 @@ CREATE TABLE IF NOT EXISTS changelog (
   id INTEGER PRIMARY KEY, ts REAL NOT NULL, entity TEXT NOT NULL, entity_id INTEGER,
   change TEXT NOT NULL                       -- JSON diff for SSE/public snapshot rebuild
 );
+
+-- hot-path indexes (board/status queries filter on these)
+CREATE INDEX IF NOT EXISTS idx_qi_venue_status ON queue_items(venue_id, status, position);
+CREATE INDEX IF NOT EXISTS idx_qi_event ON queue_items(event_id);
+CREATE INDEX IF NOT EXISTS idx_part_event ON participants(event_id);
+CREATE INDEX IF NOT EXISTS idx_rt_jti_user ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_auth_audit_ts ON auth_audit(ts);
 """
 
 
@@ -131,43 +143,51 @@ class Database:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(path), check_same_thread=False)
+        # FastAPI dispatches sync route handlers to a threadpool; this lock is
+        # what makes the shared connection safe (RLock so helpers can nest).
+        self._lock = threading.RLock()
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA journal_mode=WAL")
         self.conn.execute("PRAGMA foreign_keys=ON")
         self.conn.execute("PRAGMA busy_timeout=5000")
+        self.conn.execute("PRAGMA synchronous=NORMAL")   # WAL-safe, much faster commits
         self._migrate()
 
     def _migrate(self) -> None:
         # create tables FIRST — reading meta before the schema exists fails on a
         # brand-new database file.
-        self.conn.executescript(SCHEMA)
-        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(users)")}
-        if "totp_secret" not in cols:      # pre-no-encryption-policy database
-            self.conn.execute("ALTER TABLE users ADD COLUMN totp_secret BLOB")
-        cur_ver = int(self.scalar("SELECT v FROM meta WHERE k='schema_version'") or 0)
-        if cur_ver < SCHEMA_VERSION:
-            self.conn.execute(
-                "INSERT INTO meta(k,v) VALUES('schema_version',?) "
-                "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
-                (str(SCHEMA_VERSION),),
-            )
-        self.conn.commit()
+        with self._lock:
+            self.conn.executescript(SCHEMA)
+            cols = {r[1] for r in self.conn.execute("PRAGMA table_info(users)")}
+            if "totp_secret" not in cols:      # pre-no-encryption-policy database
+                self.conn.execute("ALTER TABLE users ADD COLUMN totp_secret BLOB")
+            cur_ver = int(self.scalar("SELECT v FROM meta WHERE k='schema_version'") or 0)
+            if cur_ver < SCHEMA_VERSION:
+                self.conn.execute(
+                    "INSERT INTO meta(k,v) VALUES('schema_version',?) "
+                    "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
+                    (str(SCHEMA_VERSION),),
+                )
+            self.conn.commit()
 
     # ---- helpers ----
     def query(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
-        return self.conn.execute(sql, params).fetchall()
+        with self._lock:
+            return self.conn.execute(sql, params).fetchall()
 
     def one(self, sql: str, params: tuple = ()) -> sqlite3.Row | None:
-        return self.conn.execute(sql, params).fetchone()
+        with self._lock:
+            return self.conn.execute(sql, params).fetchone()
 
     def scalar(self, sql: str, params: tuple = ()) -> Any:
         row = self.one(sql, params)
         return row[0] if row else None
 
     def execute(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
-        cur = self.conn.execute(sql, params)
-        self.conn.commit()
-        return cur
+        with self._lock:
+            cur = self.conn.execute(sql, params)
+            self.conn.commit()
+            return cur
 
     def now(self) -> float:
         return time.time()
@@ -181,34 +201,40 @@ class Database:
             (self.now(), username, user_id, ip, event, detail),
         )
 
+    @staticmethod
+    def _jhash(obj: Any) -> str:
+        import hashlib
+        return hashlib.sha256(json.dumps(obj, sort_keys=True,
+                                         default=str).encode()).hexdigest()
+
     def log_admin(self, actor_id: int | None, actor: str, action: str,
                   target: str, before: Any = None, after: Any = None) -> str:
-        import hashlib
-
-        prev = self.scalar("SELECT hash FROM audit_chain ORDER BY id DESC LIMIT 1") \
-            or "GENESIS"
-        bh = hashlib.sha256(json.dumps(before, sort_keys=True, default=str).encode()).hexdigest() \
-            if before is not None else ""
-        ah = hashlib.sha256(json.dumps(after, sort_keys=True, default=str).encode()).hexdigest() \
-            if after is not None else ""
         ts = self.now()
-        payload = f"{prev}|{ts}|{actor_id}|{action}|{target}|{bh}|{ah}"
-        h = hashlib.sha256(payload.encode()).hexdigest()
-        self.execute(
-            "INSERT INTO audit_chain(ts,actor_id,actor,action,target,before_hash,"
-            "after_hash,prev_hash,hash) VALUES(?,?,?,?,?,?,?,?,?)",
-            (ts, actor_id, actor, action, target, bh, ah, prev, h),
-        )
+        bh = self._jhash(before) if before is not None else ""
+        ah = self._jhash(after) if after is not None else ""
+        with self._lock:   # read-prev + insert must be one atomic step
+            prev = self.conn.execute(
+                "SELECT hash FROM audit_chain ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            prev = prev["hash"] if prev else "GENESIS"
+            import hashlib
+            payload = f"{prev}|{ts}|{actor_id}|{action}|{target}|{bh}|{ah}"
+            h = hashlib.sha256(payload.encode()).hexdigest()
+            self.conn.execute(
+                "INSERT INTO audit_chain(ts,actor_id,actor,action,target,before_hash,"
+                "after_hash,prev_hash,hash) VALUES(?,?,?,?,?,?,?,?,?)",
+                (ts, actor_id, actor, action, target, bh, ah, prev, h),
+            )
+            self.conn.commit()
         return h
 
     def verify_chain(self) -> tuple[bool, int]:
-        import hashlib
-
         prev = "GENESIS"
         rows = self.query("SELECT * FROM audit_chain ORDER BY id")
         for r in rows:
             payload = f"{prev}|{r['ts']}|{r['actor_id']}|{r['action']}|{r['target']}|" \
                       f"{r['before_hash']}|{r['after_hash']}"
+            import hashlib
             if hashlib.sha256(payload.encode()).hexdigest() != r["hash"] or r["prev_hash"] != prev:
                 return False, r["id"]
             prev = r["hash"]
@@ -223,6 +249,32 @@ class Database:
         from .events import BUS  # notify after commit
 
         BUS.publish(entity, change)
+
+    def prune_history(self, *, keep_changelog: int = 5000,
+                      keep_auth_audit_days: float = 90.0,
+                      purge_sessions_days: float = 30.0) -> dict:
+        """Bound the ever-growing housekeeping tables so a multi-day festival
+        can never fill the venue laptop's disk. Safe to run repeatedly."""
+        counts = {}
+        cutoff = self.now() - keep_auth_audit_days * 86400
+        cur = self.execute(
+            "DELETE FROM auth_audit WHERE ts<? "
+            "AND id > (SELECT COALESCE(MAX(id),0)-? FROM auth_audit)",
+            (cutoff, keep_changelog))
+        counts["auth_audit"] = cur.rowcount
+        cur = self.execute(
+            "DELETE FROM changelog WHERE id <= "
+            "(SELECT COALESCE(MAX(id),0) - ? FROM changelog)", (keep_changelog,))
+        counts["changelog"] = cur.rowcount
+        cur = self.execute(
+            "DELETE FROM sessions WHERE revoked=1 AND last_seen < ?",
+            (self.now() - purge_sessions_days * 86400,))
+        counts["sessions"] = cur.rowcount
+        cur = self.execute(
+            "DELETE FROM refresh_tokens WHERE (revoked=1 OR used=1) AND expires_at < ?",
+            (self.now() - purge_sessions_days * 86400,))
+        counts["refresh_tokens"] = cur.rowcount
+        return counts
 
     def recent_changes(self, since_id: int = 0, limit: int = 200) -> list[sqlite3.Row]:
         return self.query(
