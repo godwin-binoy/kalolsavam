@@ -46,6 +46,7 @@ def _set_session_cookies(response: Response, cfg, rt_jti: str, exp: float,
     # Visitors reach us over HTTPS via the Cloudflare tunnel, so Secure stays
     # on in production even though we listen on plain HTTP locally.
     secure = cfg.is_prod
+    max_age = int(exp - time.time())
     # Path=/ isolates these cookies from any other app on the same hostname,
     # SameSite=Strict blocks cross-site sends; the CSRF double-submit check
     # (cookie value must match the X-CSRF-Token header) is what actually
@@ -176,7 +177,14 @@ async def refresh(request: Request, response: Response):
     response.set_cookie(REFRESH_COOKIE, new_jti, httponly=True, secure=secure,
                         samesite="strict", path="/",
                         max_age=int(exp - time.time()))
-    return {"access": access, "expires_in": cfg.access_ttl_min * 60}
+    # Keep the CSRF double-submit cookie in lockstep with the session so it
+    # never expires before the refresh cookie does.
+    csrf = _secrets.token_urlsafe(32)
+    response.set_cookie(CSRF_COOKIE, csrf, httponly=False, secure=secure,
+                        samesite="strict", path="/",
+                        max_age=int(exp - time.time()))
+    return {"access": access, "csrf": csrf,
+            "expires_in": cfg.access_ttl_min * 60}
 
 
 # ----------------------------------------------------------- logout -------
