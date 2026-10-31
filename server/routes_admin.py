@@ -1,13 +1,11 @@
 """Admin API — master data CRUD, users/sessions, health, ops.
 
-Requires role=admin. There is no LAN/IP gating any more: everything arrives
-over the internet via the Cloudflare tunnel, so protection is purely
-application-layer (SRP login + short-lived JWT + mandatory TOTP). Destructive
-actions additionally require step-up: a fresh TOTP code in the
-`x-step-up-totp` header, verified against the actor's enrolled secret.
-An optional WAN-IP allowlist (ADMIN_IP_ALLOWLIST, matched against the real
-visitor IP) can pin this API to known static IPs.
-Every action is written to the hash-chained audit log.
+Requires role=admin. Everything arrives over the internet via the Cloudflare
+tunnel, so protection is purely application-layer: password login (PBKDF2) +
+short-lived JWT + mandatory TOTP. Destructive actions additionally require
+step-up: a fresh TOTP code in the `x-step-up-totp` header, verified against
+the actor's enrolled secret. Every action is written to the hash-chained
+audit log.
 """
 from __future__ import annotations
 
@@ -37,13 +35,11 @@ def _admin(request: Request):
 
 
 def _step_up(request: Request, db, claims: dict, action: str) -> None:
-    """Destructive ops need a live TOTP from the actor + recent session."""
+    """Destructive ops need a live TOTP from the actor."""
     code = request.headers.get("x-step-up-totp", "")
     user = db.one("SELECT * FROM users WHERE id=?", (int(claims["sub"]),))
     from .auth import totp_verify
-    from .routes_auth import _totp_secret
-    field = getattr(request.app.state, "field", None)
-    secret = _totp_secret(db, user, field) if user else None
+    secret = bytes(user["totp_secret"]) if user and user["totp_secret"] else None
     if not secret:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "totp_not_enrolled")
     if not code or not totp_verify(secret, code):
@@ -199,17 +195,16 @@ async def list_users(request: Request):
 @router.post("/users")
 async def create_user(body: UserIn, request: Request):
     """Create account; returns a one-time password shown exactly once.
-    The user must complete SRP enrollment on first login (client derives
-    verifier) — here we seed with random password and mark force-change."""
-    from .auth import srp_make_verifier
+    Deliver it out-of-band; the staff member changes it after first login."""
+    from .auth import make_password_hash
     db, claims = _admin(request)
     onetime = "Kal-" + _secrets.token_urlsafe(12)
-    salt_hex, v_hex = srp_make_verifier(body.username, onetime)
+    salt_hex, hash_hex = make_password_hash(onetime)
     try:
         cur = db.execute(
-            "INSERT INTO users(username,role,srp_salt_hex,srp_verifier_hex,stages,"
+            "INSERT INTO users(username,role,pwd_salt_hex,pwd_hash_hex,stages,"
             "totp_required,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)",
-            (body.username, body.role, salt_hex, v_hex,
+            (body.username, body.role, salt_hex, hash_hex,
              json.dumps(body.stages), 1 if body.role == "admin" else 0,
              db.now(), db.now()))
     except Exception:

@@ -1,12 +1,10 @@
 """FastAPI application factory: security headers, CSRF double-submit,
-rate limiting (keyed on the real visitor IP from CF-Connecting-IP), optional
-WAN admin allowlist, public dashboard static hosting (inert shells — all
+rate limiting (keyed on the real visitor IP from CF-Connecting-IP), public
+dashboard static hosting (inert shells — all
 protection lives in the auth'd APIs), and dependency-based auth guards."""
 from __future__ import annotations
 
 import hmac
-import ipaddress
-import json
 import os
 import secrets
 import time
@@ -17,7 +15,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .config import Config
 from .db import Database
-from .auth import TokenIssuer, FieldCrypto
+from .auth import TokenIssuer
 from .events import BUS
 
 REFRESH_COOKIE = "kal_rt"
@@ -83,9 +81,6 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     app.state.db = db
     app.state.tokens = TokenIssuer(cfg.signing_seeds, cfg.active_kid,
                                    cfg.access_ttl_min)
-    if cfg.field_key_raw:  # legacy key present → enables in-place migration of
-        from .auth import FieldCrypto  # old AES-GCM TOTP blobs; not required
-        app.state.field = FieldCrypto(cfg.field_key)
     app.state.auth_bucket = TokenBucket(10, 20)     # per-IP auth attempts
     app.state.api_bucket = TokenBucket(120, 200)    # general API
 
@@ -93,21 +88,6 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     @app.middleware("http")
     async def security_middleware(request: Request, call_next):
         path = request.url.path
-
-        # Optional WAN source-IP allowlist for the admin API (applied to the
-        # real visitor IP, never the localhost tunnel peer). Empty by default:
-        # all traffic — public and private APIs alike — arrives over the
-        # internet via Cloudflare; /api/admin/* is guarded purely by auth
-        # (SRP login + short-lived JWT + mandatory TOTP step-up) and the
-        # per-IP rate limiter below.
-        if path.startswith("/api/admin") and cfg.admin_nets:
-            try:
-                ip = ipaddress.ip_address(client_ip(request, cfg))
-            except ValueError:
-                ip = None
-            if ip is None or not any(ip in net for net in cfg.admin_nets):
-                return JSONResponse({"detail": "forbidden_network"},
-                                    status_code=403)
 
         # rate limits
         if path.startswith("/api/auth") and \
@@ -118,11 +98,9 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
             return JSONResponse({"detail": "rate_limited"}, status_code=429)
 
         # CSRF double-submit for cookie-driven auth mutations.
-        # Login challenge/verify are exempt: they run BEFORE any session
-        # cookies exist (challenge is additionally protected by rate limits,
-        # lockouts and uniform fake responses; verify requires a valid SRP M1
-        # proof that only the true password holder can compute).
-        _CSRF_EXEMPT = ("/api/auth/challenge", "/api/auth/verify")
+        # /login is exempt: it runs BEFORE any session cookies exist and is
+        # protected by rate limits, lockouts and uniform error responses.
+        _CSRF_EXEMPT = ("/api/auth/login",)
         if request.method in ("POST", "PUT", "PATCH", "DELETE") and \
            path.startswith("/api/auth/") and path not in _CSRF_EXEMPT:
             tok_c = request.cookies.get(CSRF_COOKIE, "")
@@ -192,8 +170,8 @@ def create_app(cfg: Config, db: Database) -> FastAPI:
     # ------------------------------------------- dashboard static files ---
     # Dashboards live INSIDE server/ (server/stagemaster, server/admin) so they
     # are never part of the public site build. They are still served as plain
-    # static files to anyone on the network — security comes exclusively from
-    # the protected APIs (auth: SRP + JWT + TOTP; /api/admin: IP allowlist).
+    # static files to anyone on the internet — security comes exclusively from
+    # the protected APIs (password + JWT + TOTP + role checks + rate limits).
     # Nothing links to them from the public pages; staff type the URL directly.
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # repo root
     srv_root = os.path.dirname(os.path.abspath(__file__))               # server/
