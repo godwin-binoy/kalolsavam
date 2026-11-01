@@ -7,9 +7,6 @@ body {
   font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--color-text-main);
   background-color: var(--color-body-bg);
-  background-image: radial-gradient(var(--color-pattern-dot) 1.25px, transparent 1.25px);
-  background-size: 22px 22px;
-  background-attachment: fixed;
   margin: 0;
   display: flex;
   flex-direction: column;
@@ -18,6 +15,24 @@ body {
   -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
 }
+/* ==== cultural backdrop (auto-managed) ==== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: url('../res/culture-bg.webp') center center / cover no-repeat;
+  opacity: 0.15;
+  z-index: -1;
+  pointer-events: none;
+}
+html.dark body::before {
+  opacity: 0.12;
+  filter: saturate(0.85) brightness(0.95);
+}
+@media (max-width: 640px) {
+  body::before { opacity: 0.11; }
+}
+/* ==== end cultural backdrop ==== */
 
 button, a, input, select { touch-action: manipulation; }
 a { text-decoration: none; }
