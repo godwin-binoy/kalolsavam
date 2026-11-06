@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Find Venue by Item | Mala Kalolsavam{% endblock %}
+{% block content %}
+<main class="wrap">
+  <header class="page-head"><span class="badge">Module 01 · Find</span><h1>Find Venue by Item</h1><p>Type an item code or name.</p></header>
+  <div class="card-pad">
+    <input id="q" type="search" class="inp" placeholder="Search item code or name — 12, Bharathanatyam, Oppana..." autocomplete="off">
+  </div>
+  <div id="results" class="grid-2" style="margin-top:1rem"></div>
+  <p id="empty" class="muted center" hidden>No matching items.</p>
+  <noscript><p class="muted center">JavaScript required for search. <a href="/api/v1/public/schedule">View the schedule as JSON</a>.</p></noscript>
+  <script>
+  (function(){
+    var q=document.getElementById('q'),res=document.getElementById('results'),emp=document.getElementById('empty'),all=[];
+    fetch('/api/v1/public/schedule').then(function(r){return r.json()}).then(function(d){
+      all=d.events||[];render('');
+    }).catch(function(){emp.hidden=false;});
+    function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+    function render(filter){
+      var f=(filter||'').trim().toLowerCase();
+      var m=all.filter(function(e){
+        return !f || String(e.code||'').toLowerCase()===f ||
+          String(e.title||'').toLowerCase().indexOf(f)>=0 ||
+          String(e.venue||'').toLowerCase().indexOf(f)>=0;
+      });
+      emp.hidden=m.length>0;
+      res.innerHTML=m.slice(0,30).map(function(e){
+        return '<div class="card"><div class="card-head blue"><h3>Item #'+esc(e.code)+'</h3><small>'+esc(e.title||'')+'</small></div>'+
+          '<div class="card-body"><p><strong>Venue:</strong> '+esc(e.venue||'TBA')+'</p><p><strong>When:</strong> '+esc(e.day||'')+' · '+esc(e.scheduled_time||'')+'</p></div></div>';
+      }).join('');
+    }
+    q.addEventListener('input',function(){render(q.value)});
+  })();
+  </script>
+</main>
+{% endblock %}

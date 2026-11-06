@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F8F6F0">
+<title>{% block title %}Mala Sub-District Kalolsavam{% endblock %}</title>
+<meta name="description" content="Official web desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala.">
+<link rel="stylesheet" href="{{ asset('css/app.css') }}">
+<script>(function(){try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}})();</script>
+</head>
+<body data-nav="{{ active }}">
+<a class="skip" href="#main">Skip to content</a>
+<header class="hdr">
+  <div class="hdr-in">
+    <a class="brand" href="/">
+      <svg class="brand-logo" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="1.5"/>
+        <text x="16" y="21" text-anchor="middle" font-size="11" font-weight="700" fill="currentColor">SA</text>
+      </svg>
+      <span class="brand-name">St. Antony's HSS Mala<small>Sub-District Kalolsavam</small></span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="/"{% if active=='home' %} class="active" aria-current="page"{% endif %}>Home</a>
+      <a href="/pages/venues.html"{% if active=='venues' %} class="active" aria-current="page"{% endif %}>Stages</a>
+      <a href="/pages/competitions.html"{% if active=='competitions' %} class="active" aria-current="page"{% endif %}>Competitions</a>
+      <a href="/pages/photos.html"{% if active=='photos' %} class="active" aria-current="page"{% endif %}>Photos</a>
+      <a href="/pages/facilities.html"{% if active=='facilities' %} class="active" aria-current="page"{% endif %}>Facilities</a>
+      <a href="/pages/help.html" class="nav-help{% if active=='help' %} active{% endif %}"{% if active=='help' %} aria-current="page"{% endif %}>Help</a>
+    </nav>
+    <button id="theme" class="icbtn" type="button" aria-label="Toggle theme">◐</button>
+    <button id="menu" class="icbtn menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mnav">☰</button>
+  </div>
+  <nav id="mnav" class="mnav" aria-label="Mobile" hidden>
+    <a href="/">Home</a>
+    <a href="/pages/venues.html">01. Stages &amp; Venues</a>
+    <a href="/pages/competitions.html">02. Competitions</a>
+    <a href="/pages/photos.html">03. Photos</a>
+    <a href="/pages/facilities.html">04. Facilities</a>
+    <a href="/pages/transportation.html">06. Transportation</a>
+    <a href="/pages/help.html">05. Help &amp; Emergency</a>
+  </nav>
+</header>
+<main id="main">
+{% block content %}{% endblock %}
+</main>
+<footer class="ftr">
+  <div class="ftr-in">
+    <div>
+      <strong>Mala Sub-District School Kalolsavam</strong>
+      <span>St. Antony's Higher Secondary School, Mala, Thrissur</span>
+    </div>
+    <div class="ftr-meta">v{{ version }} · Host School IT &amp; Media Committee</div>
+  </div>
+</footer>
+<script src="{{ asset('js/app.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Bus Timings | Mala Kalolsavam{% endblock %}
+{% block content %}
+<main class="wrap">
+  <header class="page-head"><span class="badge">Transportation · Bus</span><h1>Bus Timings</h1><p>Indicative departures from Mala Bus Stand.</p></header>
+  <div class="card-pad">
+    <table class="tbl">
+      <thead><tr><th>Departure</th><th>Route</th><th>Type</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>06:30</td><td>Mala → Thrissur</td><td>Private</td><td>First bus</td></tr>
+        <tr><td>07:15</td><td>Mala → Chalakudy</td><td>Private</td><td>Via Annamanada</td></tr>
+        <tr><td>08:00</td><td>Mala → Thrissur</td><td>KSRTC Fast</td><td>Limited stop</td></tr>
+        <tr><td>09:30</td><td>Mala → Kodungallur</td><td>Private</td><td>—</td></tr>
+        <tr><td>12:00</td><td>Mala → Thrissur</td><td>KSRTC Ordinary</td><td>—</td></tr>
+        <tr><td>15:00</td><td>Mala → Chalakudy</td><td>Private</td><td>Return service</td></tr>
+        <tr><td>17:30</td><td>Mala → Thrissur</td><td>KSRTC Fast</td><td>Evening rush</td></tr>
+        <tr><td>19:45</td><td>Mala → Thrissur</td><td>Private</td><td>Last bus</td></tr>
+      </tbody>
+    </table>
+    <p class="muted small">Schedules are indicative. Confirm with the conductor.</p>
+  </div>
+  <p class="back"><a href="/pages/transportation.html">← Back to Transportation</a></p>
+</main>
+{% endblock %}

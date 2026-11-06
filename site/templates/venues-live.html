@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Live Stage Updates | Mala Kalolsavam{% endblock %}
+{% block content %}
+<main class="wrap">
+  <header class="page-head"><span class="badge">Module 01 · Live</span><h1>Live Tracker</h1><p>Auto-refreshes every 5 seconds. If nothing is on stage yet, come back soon.</p></header>
+  <div id="live" class="grid-2"><div class="muted center">Loading…</div></div>
+  <script>
+  (function(){
+    var root=document.getElementById('live');
+    function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+    function load(){
+      fetch('/api/v1/public/status').then(function(r){return r.json()}).then(function(d){
+        if(!d.venues || !d.venues.length){root.innerHTML='<div class="muted center">No stages configured yet.</div>';return}
+        root.innerHTML=d.venues.map(function(v){
+          var now=v.now ? ('<strong>'+esc(v.now.student_name||v.now.school||'—')+'</strong><br><small class="muted">'+esc(v.now.event||'')+'</small>') : '<span class="muted">Idle</span>';
+          var next=v.next ? ('<strong>'+esc(v.next.student_name||v.next.school||'—')+'</strong><br><small class="muted">'+esc(v.next.event||'')+'</small>') : '<span class="muted">—</span>';
+          var pct=v.progress && v.progress.total ? Math.round(100*v.progress.complete/v.progress.total) : 0;
+          return '<div class="card"><div class="card-head blue"><h3>'+esc(v.name)+'</h3><small>'+esc(v.state)+'</small></div>'+
+            '<div class="card-body"><p><small class="muted">On stage</small><br>'+now+'</p>'+
+            '<p><small class="muted">Up next</small><br>'+next+'</p>'+
+            '<div class="bar"><div style="width:'+pct+'%"></div></div>'+
+            '<small class="muted">'+v.progress.complete+' / '+v.progress.total+' complete</small></div></div>';
+        }).join('');
+      }).catch(function(){});
+    }
+    load(); setInterval(load, 5000);
+  })();
+  </script>
+</main>
+{% endblock %}
