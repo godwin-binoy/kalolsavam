@@ -10,6 +10,9 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   test:
     name: Test
@@ -22,7 +25,38 @@ jobs:
           cache: 'pip'
       - name: Install
         run: pip install -r requirements.txt
-      - name: Build static
+      - name: Build static (root base)
         run: python build.py
       - name: Test
         run: pytest server/tests -q
+
+  deploy-pages:
+    name: Deploy to GitHub Pages
+    needs: test
+    if: |
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+      - name: Install
+        run: pip install -r requirements.txt
+      - name: Build for GitHub Pages subpath
+        env:
+          BASE_PATH: ${{ vars.GH_PAGES_BASE || format('/{0}', github.event.repository.name) }}
+        run: python build.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - id: deployment
+        uses: actions/deploy-pages@v4

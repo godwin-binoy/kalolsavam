@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
-"""Render site/templates/*.html -> dist/. Hash asset filenames."""
+"""Render site/templates/*.html -> dist/. Hash asset filenames.
+
+BASE_PATH env var controls the URL prefix:
+  ""              -> backend / Cloudflare Tunnel (served at root)
+  "/kalolsavam"   -> GitHub Pages project site (served at /<repo>/)
+"""
 from __future__ import annotations
 import hashlib
+import os
 import shutil
 from pathlib import Path
 
@@ -10,6 +16,7 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 ROOT = Path(__file__).resolve().parent
 SITE = ROOT / "site"
 DIST = ROOT / "dist"
+BASE = os.environ.get("BASE_PATH", "").rstrip("/")
 
 PAGES = [
     ("index.html", "index.html", "home"),
@@ -62,18 +69,19 @@ def main() -> None:
         loader=FileSystemLoader(str(SITE / "templates")),
         autoescape=select_autoescape(["html"]),
     )
-    env.globals["asset"] = lambda name: manifest.get(name, "/assets/" + name)
+    # BASE is prepended to every asset URL and every {{ base }} reference
+    env.globals["asset"] = lambda name: BASE + manifest.get(name, "/assets/" + name)
     env.globals["version"] = "3.0.0"
 
     for tpl_name, out_name, nav in PAGES:
         tpl = env.get_template(tpl_name)
-        html = tpl.render(active=nav)
+        html = tpl.render(active=nav, base=BASE)
         out_path = DIST / out_name
         out_path.parent.mkdir(parents=True, exist_ok=True)
         out_path.write_text(html, encoding="utf-8")
 
     shutil.copy(SITE / "robots.txt", DIST / "robots.txt")
-    print(f"Built {len(PAGES)} pages -> {DIST}")
+    print(f"Built {len(PAGES)} pages -> {DIST}  (base={BASE or '/':<12})")
 
 
 if __name__ == "__main__":

@@ -14,7 +14,7 @@
     var q=document.getElementById('q'),res=document.getElementById('results'),emp=document.getElementById('empty'),all=[];
     fetch('/api/v1/public/schedule').then(function(r){return r.json()}).then(function(d){
       all=d.events||[];render('');
-    }).catch(function(){emp.hidden=false;});
+    }).catch(function(){emp.hidden=false;emp.textContent='Preview mode \u2014 backend not connected. Showing no items.';});
     function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
     function render(filter){
       var f=(filter||'').trim().toLowerCase();
@@ -23,7 +23,7 @@
           String(e.title||'').toLowerCase().indexOf(f)>=0 ||
           String(e.venue||'').toLowerCase().indexOf(f)>=0;
       });
-      emp.hidden=m.length>0;
+      if(!emp.dataset.static)emp.textContent='No matching items.';emp.hidden=m.length>0;
       res.innerHTML=m.slice(0,30).map(function(e){
         return '<div class="card"><div class="card-head blue"><h3>Item #'+esc(e.code)+'</h3><small>'+esc(e.title||'')+'</small></div>'+
           '<div class="card-body"><p><strong>Venue:</strong> '+esc(e.venue||'TBA')+'</p><p><strong>When:</strong> '+esc(e.day||'')+' · '+esc(e.scheduled_time||'')+'</p></div></div>';

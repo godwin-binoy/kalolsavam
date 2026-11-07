@@ -21,7 +21,7 @@
             '<div class="bar"><div style="width:'+pct+'%"></div></div>'+
             '<small class="muted">'+v.progress.complete+' / '+v.progress.total+' complete</small></div></div>';
         }).join('');
-      }).catch(function(){});
+      }).catch(function(){root.innerHTML='<div class="muted center">Preview mode \u2014 backend not connected.</div>';});
     }
     load(); setInterval(load, 5000);
   })();
