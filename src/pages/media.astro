@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Media & Streaming | Mala Kalolsavam" active="media">
+  <div class="main-container">
+    <PageHead badge="Module 03 · Media Room" title="Media &amp; Live Streaming" data-i18n="media.title" data-i18n="media.title" intro="Official photographs and live broadcasts from the festival stages." data-i18n="media.desc" data-i18n="media.desc" />
+    <div class="grid-2">
+      <div class="fest-card"><div class="fest-header banner-pink"><h3 class="fest-title" data-i18n="media.photo.title">Stage Photos</h3><span class="fest-subtitle" data-i18n="media.photo.sub">Official Media Gallery</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="media.photo.desc">High-resolution photographs uploaded by the media room. Search by item or chest number.</p><div class="fest-action-item" style="opacity:0.6"><span data-i18n="media.photo.soon">Gallery coming soon</span></div></div></div>
+      <div class="fest-card"><div class="fest-header banner-rose"><h3 class="fest-title" data-i18n="media.live.title">Live Streaming</h3><span class="fest-subtitle" data-i18n="media.live.sub">Watch Online</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="media.live.desc">Watch the Main Stage live. Stream begins 15 minutes before the first event.</p><a href="https://youtube.com" target="_blank" rel="noopener" class="fest-action-item"><span data-i18n="media.live.btn">Watch Main Stage</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></a></div></div>
+    </div>
+  </div>
+</BaseLayout>

@@ -1,0 +1,259 @@
+[
+  {
+    "n": 1,
+    "name": "St. Antony's HSS Ground",
+    "short": "Main open-air stage on the school ground.",
+    "banner": "banner-blue",
+    "icon": "map-pin.svg",
+    "loc": "St. Antony's HSS · Main Ground",
+    "block_label": "Open Ground",
+    "capacity": "~1,500 seated · ~3,000 standing",
+    "accessibility": "Flat ground · wheelchair accessible",
+    "directions": [
+      "Enter through the main gate on Mala Road.",
+      "Walk straight along the paved path for ~60 metres.",
+      "The main ground opens to your left, past the flag post.",
+      "Stage 1 is the elevated open-air stage on the far side of the ground."
+    ],
+    "landmarks": [
+      "Flag post (left)",
+      "Canteen (right)",
+      "First aid booth (adjacent)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/campus-ground.png",
+        "alt": "Blueprint for Stage 1",
+        "caption": "Campus/Floor overview — Stage 1 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 2,
+    "name": "HS Hall",
+    "short": "High School main hall — large indoor stage.",
+    "banner": "banner-teal",
+    "icon": "building.svg",
+    "loc": "HS Block · Main Hall",
+    "block_label": "HS Block · Ground Floor",
+    "capacity": "~400 seated",
+    "accessibility": "Ground floor · wheelchair accessible",
+    "directions": [
+      "Enter through the main gate on Mala Road.",
+      "Walk straight and take the covered walkway to the right at the flag post.",
+      "Enter the HS Block through its main door.",
+      "The Main Hall is the first door on your right."
+    ],
+    "landmarks": [
+      "HS Block main door",
+      "Notice board (left)",
+      "Principal's office (far end)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/campus-hshall.png",
+        "alt": "Blueprint for Stage 2",
+        "caption": "Campus/Floor overview — Stage 2 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 3,
+    "name": "GLPS Mala",
+    "short": "Stage at the Government Lower Primary School, Mala.",
+    "banner": "banner-purple",
+    "icon": "map-pin.svg",
+    "loc": "GLPS Mala (adjacent compound)",
+    "block_label": "GLPS Mala · Ground",
+    "capacity": "~200 seated",
+    "accessibility": "Short outdoor path · some uneven ground",
+    "directions": [
+      "Exit St. Antony's HSS through the south gate (opposite the HS Block).",
+      "Cross the narrow lane and enter the GLPS Mala compound.",
+      "Walk past the flag post — Stage 3 is behind the primary classrooms."
+    ],
+    "landmarks": [
+      "South gate",
+      "GLPS Mala flag post"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/campus-base.png",
+        "alt": "Blueprint for Stage 3",
+        "caption": "Campus/Floor overview — Stage 3 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 4,
+    "name": "HSS A1 B1 Classes",
+    "short": "Combined classrooms A1 and B1 — Higher Secondary block.",
+    "banner": "banner-orange",
+    "icon": "building.svg",
+    "loc": "HSS Block · Rooms A1 / B1",
+    "block_label": "HSS Block · Ground Floor",
+    "capacity": "~120 seated",
+    "accessibility": "Ground floor · wheelchair accessible",
+    "directions": [
+      "Enter through the main gate on Mala Road.",
+      "Walk straight along the paved path to the HSS Block.",
+      "Enter the HSS Block through its main door.",
+      "Rooms A1 and B1 are on the ground floor, second corridor to the right."
+    ],
+    "landmarks": [
+      "HSS Block main door",
+      "Staff room (adjacent)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/hss-a1b1.png",
+        "alt": "Blueprint for Stage 4",
+        "caption": "Campus/Floor overview — Stage 4 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 5,
+    "name": "HSS Seminar Hall",
+    "short": "Seminar hall in the HSS block, first floor.",
+    "banner": "banner-pink",
+    "icon": "building.svg",
+    "loc": "HSS Block · Seminar Hall, 1st Floor",
+    "block_label": "HSS Block · First Floor",
+    "capacity": "~150 seated",
+    "accessibility": "Stair access only — assist on request",
+    "directions": [
+      "Enter the HSS Block via the main door.",
+      "Take the central staircase to the first floor.",
+      "The Seminar Hall is directly opposite the staircase landing."
+    ],
+    "landmarks": [
+      "Central staircase",
+      "Library (across the corridor)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/hss-seminar.png",
+        "alt": "Blueprint for Stage 5",
+        "caption": "Campus/Floor overview — Stage 5 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 6,
+    "name": "Vyaapaara Bhavan",
+    "short": "Stage at the Traders' Bhavan near the school.",
+    "banner": "banner-rose",
+    "icon": "building.svg",
+    "loc": "Vyaapaara Bhavan (off-campus)",
+    "block_label": "Vyaapaara Bhavan · Ground Floor",
+    "capacity": "~180 seated",
+    "accessibility": "Separate building · ~3 min walk from main gate",
+    "directions": [
+      "Exit the main gate and turn left (north) on Mala Road.",
+      "Walk about 200 metres along the road.",
+      "Vyaapaara Bhavan is the commercial complex on your right.",
+      "Stage 6 is on the ground floor, left side."
+    ],
+    "landmarks": [
+      "Main gate exit (left turn)",
+      "Mala bus stop (opposite)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/campus-base.png",
+        "alt": "Blueprint for Stage 6",
+        "caption": "Campus/Floor overview — Stage 6 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 7,
+    "name": "HSS 1st Floor Class",
+    "short": "First-floor classroom stage in the HSS block.",
+    "banner": "banner-blue",
+    "icon": "building.svg",
+    "loc": "HSS Block · 1st Floor Classroom",
+    "block_label": "HSS Block · First Floor",
+    "capacity": "~60 seated",
+    "accessibility": "Stair access only — assist on request",
+    "directions": [
+      "Enter the HSS Block via the main door.",
+      "Take the east staircase to the first floor.",
+      "Turn left at the corridor — Room 1F-A is at the far end."
+    ],
+    "landmarks": [
+      "East staircase",
+      "Science lab (adjacent)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/hss-base.png",
+        "alt": "Blueprint for Stage 7",
+        "caption": "Campus/Floor overview — Stage 7 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 8,
+    "name": "HS 9E Class",
+    "short": "Classroom 9E in the High School block.",
+    "banner": "banner-teal",
+    "icon": "building.svg",
+    "loc": "HS Block · Room 9E",
+    "block_label": "HS Block · Ground Floor",
+    "capacity": "~60 seated",
+    "accessibility": "Ground floor · wheelchair accessible",
+    "directions": [
+      "Enter the HS Block via its main door.",
+      "Turn right — Room 9E is the second door on the right."
+    ],
+    "landmarks": [
+      "HS Block main door",
+      "Staff room (adjacent)"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/campus-hs.png",
+        "alt": "Blueprint for Stage 8",
+        "caption": "Campus/Floor overview — Stage 8 highlighted"
+      }
+    ],
+    "floor_images": []
+  },
+  {
+    "n": 9,
+    "name": "HS Arabic Class",
+    "short": "Arabic classroom in the High School block.",
+    "banner": "banner-purple",
+    "icon": "building.svg",
+    "loc": "HS Block · Arabic Room",
+    "block_label": "HS Block · Ground Floor",
+    "capacity": "~60 seated",
+    "accessibility": "Ground floor · wheelchair accessible",
+    "directions": [
+      "Enter the HS Block via its main door.",
+      "Walk past the Main Hall on your left.",
+      "Room Arabic is the last door on the right, at the end of the corridor."
+    ],
+    "landmarks": [
+      "Main Hall (left)",
+      "Corridor end"
+    ],
+    "blueprint_images": [
+      {
+        "src": "img/blueprints/hss-base.png",
+        "alt": "Blueprint for Stage 9",
+        "caption": "Campus/Floor overview — Stage 9 highlighted"
+      }
+    ],
+    "floor_images": []
+  }
+]

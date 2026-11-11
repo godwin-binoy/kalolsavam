@@ -1,0 +1,17 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
+  <div class="main-container">
+    <PageHead badge="Module 01 · Find by Item" title="Find Venue by Item" intro="Type an item code or name — we'll show its venue, day, and scheduled time." />
+    <div class="card-base" style="margin-bottom:1.5rem">
+      <input id="q" type="search" class="inp" placeholder="Search item code or name — e.g. 12, Bharathanatyam, Oppana…" autocomplete="off">
+      <p class="text-muted sm" style="margin:.5rem 0 0">Try: 12 · Bharathanatyam · Oppana · Sangam</p>
+    </div>
+    <div id="results" class="grid-2"></div>
+    <p id="empty" class="text-muted center" style="margin-top:2rem" hidden>No matching items.</p>
+  </div>
+  <script is:inline src={BASE + 'assets/js/find.js'}></script>
+</BaseLayout>

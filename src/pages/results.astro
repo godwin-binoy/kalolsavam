@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Results | Mala Kalolsavam" active="">
+  <div class="main-container">
+    <PageHead badge="Results · Official" title="Results" data-i18n="res.title" data-i18n="res.title" intro="Off-stage, individual, and group item results — linked to the official government portal." data-i18n="res.desc" data-i18n="res.desc" />
+    <div class="grid-3">
+      <a href={url('/results-offstage')} class="fest-card">
+        <div class="fest-header banner-orange">
+          <h3 class="fest-title" data-i18n="res.offstage.title">Off Stage</h3>
+          <span class="fest-subtitle" data-i18n="res.offstage.sub">Drawing · Writing · Crafts</span>
+        </div>
+        <div class="fest-body">
+          <p class="text-muted sm" data-i18n="res.offstage.desc">Chithra drawing, pencil drawing, collage, cartoon, and clay modeling results.</p>
+          <div class="fest-action-item">
+            <span data-i18n="res.offstage.btn">View Off Stage Results</span>
+            <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
+          </div>
+        </div>
+      </a>
+
+      <a href={url('/results-individual')} class="fest-card">
+        <div class="fest-header banner-orange">
+          <h3 class="fest-title" data-i18n="res.indiv.title">Individual Stage</h3>
+          <span class="fest-subtitle" data-i18n="res.indiv.sub">Dance · Music · Elocution</span>
+        </div>
+        <div class="fest-body">
+          <p class="text-muted sm" data-i18n="res.indiv.desc">Bharathanatyam, Mohiniyattam, light music, classical music, and elocution.</p>
+          <div class="fest-action-item">
+            <span data-i18n="res.indiv.btn">View Individual Results</span>
+            <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
+          </div>
+        </div>
+      </a>
+
+      <a href={url('/results-group')} class="fest-card">
+        <div class="fest-header banner-orange">
+          <h3 class="fest-title" data-i18n="res.group.title">Group Stage</h3>
+          <span class="fest-subtitle" data-i18n="res.group.sub">Oppana · Margamkali · Drama</span>
+        </div>
+        <div class="fest-body">
+          <p class="text-muted sm" data-i18n="res.group.desc">Oppana, margamkali, nadan pattu, group dance, and drama results.</p>
+          <div class="fest-action-item">
+            <span data-i18n="res.group.btn">View Group Results</span>
+            <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</BaseLayout>

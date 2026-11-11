@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+const drivers = [
+  { name: "Anil T. V.", sub: "Auto · Mala Junction", desc: "Quick hops to bus stand and railway station. Meter + ₹10 festival surcharge.", phone: "+919999000103" },
+  { name: "Shibu P.", sub: "Auto · 5-Seater", desc: "Shared auto for groups up to 5. Mala ↔ Annamanada fixed fare.", phone: "+919999000105" },
+  { name: "Suresh N.", sub: "Auto · Mala Town", desc: "Local trips within Mala town. Cash / UPI. Available on call from 5 AM.", phone: "+919999000107" },
+  { name: "Manoj K.", sub: "Auto · Bus Stand", desc: "Standby near Mala Bus Stand. Direct trips to the school main gate on request.", phone: "+919999000108" },
+  { name: "Varghese P.", sub: "Auto · Annamanada Route", desc: "Regular driver on the Mala ↔ Annamanada route.", phone: "+919000000109" },
+];
+---
+<BaseLayout title="Auto Drivers | Mala Kalolsavam" active="transportation">
+  <div class="main-container">
+    <PageHead badge="Transportation · Auto" title="Auto Drivers" intro="Verified auto-rickshaw drivers in the Mala area. Tap a number to call." />
+    <div class="grid-3">
+      {drivers.map((d) => (
+        <div class="fest-card">
+          <div class="fest-header banner-purple"><h3 class="fest-title">{d.name}</h3><span class="fest-subtitle">{d.sub}</span></div>
+          <div class="fest-body"><p class="text-muted sm">{d.desc}</p><a href={`tel:${d.phone}`} class="fest-action-item"><span style="font-family:ui-monospace,monospace">{d.phone}</span></a></div>
+        </div>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

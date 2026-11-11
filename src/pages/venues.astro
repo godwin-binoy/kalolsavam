@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+---
+<BaseLayout title="Stages & Venues | Mala Kalolsavam" active="venues">
+  <div class="main-container">
+    <PageHead badge="Module 01 · Stages & Venues" title="Stages & Venues" intro="Pick what you need: venue location, find a venue by competition item, or follow live on-stage updates." />
+    <div class="grid-3">
+      <Card href={url('/venues-location')} title="Location" subtitle="Where is it?" banner="banner-blue" icon="map-pin.svg">
+        <p class="text-muted sm">Every stage, hall, and ground on campus — with walking directions from the main gate.</p>
+        <div class="fest-action-item"><span>Open Venue Locations</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+      </Card>
+      <Card href={url('/venues-find')} title="Find by Item" subtitle="Which venue?" banner="banner-purple" icon="search.svg">
+        <p class="text-muted sm">Type your item code or name — we'll show its venue, day, and scheduled time.</p>
+        <div class="fest-action-item"><span>Search Items</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+      </Card>
+      <Card href={url('/venues-live')} title="Live Updates" subtitle="On-stage Tracker" banner="banner-teal" icon="bolt.svg">
+        <p class="text-muted sm">Real-time chest numbers, queues, delays, and stage announcements.</p>
+        <div class="fest-action-item"><span>Open Live Tracker</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+      </Card>
+    </div>
+  </div>
+</BaseLayout>

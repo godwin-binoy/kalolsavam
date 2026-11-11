@@ -1,0 +1,8 @@
+---
+const { badge = "", title, intro = "", badgeClass = "badge-gov" } = Astro.props;
+---
+<div class="page-head">
+  {badge && <span class={badgeClass} style="margin-bottom:.6rem">{badge}</span>}
+  <h1 class="page-title">{title}</h1>
+  {intro && <p set:html={intro} />}
+</div>

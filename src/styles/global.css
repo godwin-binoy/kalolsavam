@@ -1,0 +1,569 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #233526;
+  --color-brand-2: #2F4536;
+  --color-surface: #FFFFFF;
+  --color-bg: #FCFBF9;
+  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+@import "./legacy.css";
+
+/* ── Motion & Easing Tokens ────────────────────────────────────────── */
+:root {
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.25, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-mid: 220ms;
+}
+
+/* ── Seamless Glass Header ────────────────────────────────────────── */
+.hdr::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  pointer-events: none;
+  transition: bottom var(--dur-mid) var(--ease-out);
+}
+
+/* ── Tactical Button Micro-Press & Hover ──────────────────────────── */
+.btn-primary {
+  transition: transform var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) ease,
+              box-shadow var(--dur-fast) ease !important;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+.btn-primary:active {
+  transform: translateY(1px) scale(0.975);
+}
+
+/* ── Organic Card Hover & Depth ──────────────────────────────────── */
+.fest-card {
+  border-radius: var(--radius-card);
+  background-color: var(--card-bg);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform var(--dur-mid) var(--ease-out),
+              box-shadow var(--dur-mid) var(--ease-out),
+              border-color var(--dur-fast) ease;
+}
+
+.fest-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card-hover);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+.fest-card:active {
+  transform: translateY(-1px) scale(0.995);
+}
+
+.fest-card .fest-watermark {
+  transition: transform 320ms var(--ease-out), opacity 320ms ease;
+}
+.fest-card:hover .fest-watermark {
+  transform: rotate(8deg) scale(1.08);
+  opacity: 0.22;
+}
+
+/* ── Action Items & Icon Animations ───────────────────────────────── */
+.fest-action-item {
+  transition: transform var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) ease,
+              border-color var(--dur-fast) ease,
+              box-shadow var(--dur-fast) ease;
+}
+
+.fest-action-item:hover {
+  transform: translateX(3px);
+  background-color: var(--action-item-hover-bg);
+  border-color: var(--action-item-hover-border);
+}
+
+.fest-action-item:active {
+  transform: translateX(1px) scale(0.99);
+}
+
+.fest-action-item .fest-arrow {
+  transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast) ease;
+}
+
+.fest-action-item:hover .fest-arrow {
+  transform: translateX(3px);
+  color: var(--text-heading);
+}
+
+.fest-action-item .fest-item-icon {
+  transition: transform var(--dur-fast) var(--ease-spring);
+}
+
+.fest-action-item:hover .fest-item-icon {
+  transform: scale(1.08);
+}
+
+/* ── Theme & Control Button Tactility ─────────────────────────────── */
+.icbtn {
+  transition: transform var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) ease,
+              color var(--dur-fast) ease;
+}
+.icbtn:hover {
+  transform: scale(1.06);
+}
+.icbtn:active {
+  transform: scale(0.92);
+}
+.icbtn .icn {
+  transition: transform var(--dur-mid) var(--ease-out);
+}
+.icbtn:hover .icn {
+  transform: rotate(12deg);
+}
+
+/* ── Universal Search Input & Dropdown Styling ────────────────────── */
+.search-wrapper {
+  position: relative;
+  margin-bottom: 2.5rem;
+  max-width: 44rem;
+}
+.search-input-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+#global-search {
+  width: 100%;
+  height: 3.5rem;
+  padding: 0 1.5rem 0 3.25rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 1.02rem;
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur-fast) ease,
+              box-shadow var(--dur-fast) ease,
+              transform var(--dur-fast) var(--ease-out);
+}
+#global-search:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 8px 24px -4px rgba(35, 53, 38, 0.15);
+  transform: translateY(-1px);
+}
+
+
+#search-results-dropdown:not(.hidden) {
+  animation: kal-dropdown-pop 160ms var(--ease-out) both;
+}
+
+@keyframes kal-dropdown-pop {
+  from { opacity: 0; transform: translateY(-4px) scale(0.99); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  color: inherit;
+  border: 1px solid transparent;
+  transition: background var(--dur-fast) ease,
+              border-color var(--dur-fast) ease,
+              transform var(--dur-fast) var(--ease-out);
+}
+.search-result-item:hover,
+.search-result-item.selected {
+  background: var(--bg-alt);
+  border-color: var(--border);
+  transform: translateX(3px);
+}
+.search-result-item mark {
+  background: rgba(234, 179, 8, 0.25);
+  color: var(--text-heading);
+  font-weight: 700;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+html.dark .search-result-item mark {
+  background: rgba(234, 179, 8, 0.35);
+  color: #fff;
+}
+
+/* ── Live Pulse ───────────────────────────────────────────────────── */
+.live-dot {
+  display: inline-block;
+  width: .45rem;
+  height: .45rem;
+  border-radius: 50%;
+  background-color: var(--dot-live);
+  animation: kal-pulse-glow 2.4s var(--ease-snappy) infinite;
+}
+
+@keyframes kal-pulse-glow {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.88);
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+    opacity: 0.8;
+  }
+}
+
+details.card-base > summary::before {
+  transition: transform var(--dur-fast) var(--ease-out) !important;
+}
+
+.tbl tr {
+  transition: background-color var(--dur-fast) ease;
+}
+.tbl tbody tr:hover {
+  background-color: var(--bg-alt);
+}
+
+@keyframes kal-settle-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .hero-text > * { animation: kal-settle-in var(--dur-mid) var(--ease-out) both; }
+  .hero-text > *:nth-child(1) { animation-delay: 20ms; }
+  .hero-text > *:nth-child(2) { animation-delay: 45ms; }
+  .hero-text > *:nth-child(3) { animation-delay: 70ms; }
+  .hero-text > *:nth-child(4) { animation-delay: 95ms; }
+
+  .grid-2 > *, .grid-3 > * { animation: kal-settle-in var(--dur-mid) var(--ease-out) both; }
+  .grid-2 > *:nth-child(1), .grid-3 > *:nth-child(1) { animation-delay: 25ms; }
+  .grid-2 > *:nth-child(2), .grid-3 > *:nth-child(2) { animation-delay: 50ms; }
+  .grid-2 > *:nth-child(3), .grid-3 > *:nth-child(3) { animation-delay: 75ms; }
+  .grid-2 > *:nth-child(4), .grid-3 > *:nth-child(4) { animation-delay: 100ms; }
+  .grid-2 > *:nth-child(5), .grid-3 > *:nth-child(5) { animation-delay: 125ms; }
+  .grid-2 > *:nth-child(n+6), .grid-3 > *:nth-child(n+6) { animation-delay: 150ms; }
+}
+
+.grid-2 {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+}
+
+.grid-3 {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 1fr;
+}
+@media (min-width: 640px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (min-width: 960px) {
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (min-width: 768px) {
+  .nav { display: flex !important; }
+  .mobile-controls { display: none !important; }
+  .mnav { display: none !important; }
+}
+
+@view-transition { navigation: auto; }
+::view-transition-old(root) { animation: 100ms ease-out both vt-fade-out; }
+::view-transition-new(root) { animation: 120ms ease-in both vt-fade-in; }
+@keyframes vt-fade-out { to { opacity: 0; transform: scale(0.996); } }
+@keyframes vt-fade-in { from { opacity: 0; transform: scale(1.004); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .live-dot { animation: none !important; }
+}
+
+
+/* ── Language Toggle Button ──────────────────────────────────────── */
+.lang-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 2.1rem;
+  min-width: 3.5rem;
+  padding: 0 0.75rem;
+  margin-left: 0.25rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--brand);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 140ms var(--ease-out, cubic-bezier(0.16,1,0.3,1)),
+              background-color 140ms ease,
+              border-color 140ms ease,
+              color 140ms ease;
+  white-space: nowrap;
+}
+.lang-btn:hover {
+  background: var(--bg-alt);
+  border-color: var(--brand-2);
+  transform: translateY(-1px);
+}
+.lang-btn:active {
+  transform: scale(0.95);
+}
+html[data-lang="ml"] .lang-btn {
+  font-size: 0.75rem;
+  letter-spacing: 0.02em;
+}
+
+
+/* Responsive title & action button wrapping for mobile screens */
+.page-title {
+  font-size: clamp(1.6rem, 5.5vw, 2.7rem) !important;
+  line-height: 1.2 !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+.fest-action-item {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* ── Mobile Header Optimization & Full Brand Display ────────────── */
+@media (max-width: 639px) {
+  .hdr-in {
+    padding: 0 0.5rem !important;
+    gap: 0.25rem !important;
+    height: 4.25rem !important;
+  }
+  .brand {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    gap: 0.45rem !important;
+    overflow: visible !important;
+  }
+  .logo-box {
+    width: 2.15rem !important;
+    height: 2.15rem !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  .brand-name {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    line-height: 1.15 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+  .brand-name span,
+  .brand-name [data-i18n="brand.name"],
+  .brand-name {
+    font-size: 0.83rem !important;
+    font-weight: 750 !important;
+    color: var(--text-heading) !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .brand-name small,
+  .brand-name [data-i18n="brand.sub"] {
+    display: block !important;
+    font-size: 0.62rem !important;
+    font-weight: 500 !important;
+    color: var(--muted) !important;
+    line-height: 1.15 !important;
+    margin-top: 1px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .mobile-controls {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.2rem !important;
+  }
+  .mobile-controls .lang-btn {
+    height: 1.85rem !important;
+    min-width: unset !important;
+    padding: 0 0.45rem !important;
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .help-btn-m {
+    height: 1.85rem !important;
+    padding: 0 0.45rem !important;
+    font-size: 0.7rem !important;
+    gap: 0.2rem !important;
+    flex-shrink: 0 !important;
+  }
+  .help-btn-m .icn {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+  .mobile-controls .icbtn {
+    width: 1.95rem !important;
+    height: 1.95rem !important;
+    flex-shrink: 0 !important;
+  }
+  .mobile-controls .icbtn [style*="--icon-url"] {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+  .mobile-controls #menu {
+    display: inline-flex !important;
+    background: var(--bg-alt) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-pill) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-name span,
+  .brand-name [data-i18n="brand.name"] {
+    font-size: 0.76rem !important;
+  }
+  .brand-name small,
+  .brand-name [data-i18n="brand.sub"] {
+    font-size: 0.58rem !important;
+  }
+  .mobile-controls {
+    gap: 0.15rem !important;
+  }
+}
+
+
+/* ── Mobile Header Optimization & Full Brand Display ────────────── */
+@media (max-width: 639px) {
+  .hdr-in {
+    padding: 0 0.5rem !important;
+    gap: 0.25rem !important;
+    height: 4.25rem !important;
+  }
+  .brand {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    gap: 0.45rem !important;
+    overflow: visible !important;
+  }
+  .logo-box {
+    width: 2.15rem !important;
+    height: 2.15rem !important;
+    border-radius: 6px !important;
+    flex-shrink: 0 !important;
+  }
+  .brand-name {
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    line-height: 1.15 !important;
+    overflow: visible !important;
+    white-space: nowrap !important;
+  }
+  .brand-name span,
+  .brand-name [data-i18n="brand.name"],
+  .brand-name {
+    font-size: 0.83rem !important;
+    font-weight: 750 !important;
+    color: var(--text-heading) !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .brand-name small,
+  .brand-name [data-i18n="brand.sub"] {
+    display: block !important;
+    font-size: 0.62rem !important;
+    font-weight: 500 !important;
+    color: var(--muted) !important;
+    line-height: 1.15 !important;
+    margin-top: 1px !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  .mobile-controls {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.2rem !important;
+  }
+  .mobile-controls .lang-btn {
+    height: 1.85rem !important;
+    min-width: unset !important;
+    padding: 0 0.45rem !important;
+    font-size: 0.7rem !important;
+    margin: 0 !important;
+    flex-shrink: 0 !important;
+  }
+  .help-btn-m {
+    height: 1.85rem !important;
+    padding: 0 0.45rem !important;
+    font-size: 0.7rem !important;
+    gap: 0.2rem !important;
+    flex-shrink: 0 !important;
+  }
+  .help-btn-m .icn {
+    width: 0.75rem !important;
+    height: 0.75rem !important;
+  }
+  .mobile-controls .icbtn {
+    width: 1.95rem !important;
+    height: 1.95rem !important;
+    flex-shrink: 0 !important;
+  }
+  .mobile-controls .icbtn [style*="--icon-url"] {
+    width: 1.05rem !important;
+    height: 1.05rem !important;
+  }
+  .mobile-controls #menu {
+    display: inline-flex !important;
+    background: var(--bg-alt) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: var(--radius-pill) !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-name span,
+  .brand-name [data-i18n="brand.name"] {
+    font-size: 0.76rem !important;
+  }
+  .brand-name small,
+  .brand-name [data-i18n="brand.sub"] {
+    font-size: 0.58rem !important;
+  }
+  .mobile-controls {
+    gap: 0.15rem !important;
+  }
+}

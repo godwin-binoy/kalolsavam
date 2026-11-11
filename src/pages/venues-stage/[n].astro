@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { BASE, url } from '../../lib/url';
+import PageHead from '../../components/PageHead.astro';
+import stages from '../../data/stages.json';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const publicDir = path.join(process.cwd(), 'public');
+const exists = (rel) => { try { return fs.existsSync(path.join(publicDir, rel)); } catch { return false; } };
+
+export function getStaticPaths() {
+  return stages.map((s) => ({ params: { n: String(s.n) }, props: { stage: s } }));
+}
+const { stage } = Astro.props;
+
+function resolveImg(img) {
+  // Check both direct path and assets/ prefixed path
+  const candidates = [img.src, 'assets/' + img.src, 'img/' + img.src];
+  let foundRel = null;
+  for (const c of candidates) {
+    if (exists(c)) {
+      foundRel = c;
+      break;
+    }
+  }
+  return {
+    alt: img.alt,
+    caption: img.caption,
+    src: foundRel ? BASE + foundRel.replace(/^\/+/, '') : null,
+  };
+}
+
+const bpImages = (stage.blueprint_images || []).map(resolveImg).filter(i => i.src);
+---
+<BaseLayout title={`Stage ${stage.n} · ${stage.name} | Mala Kalolsavam`} active="venues">
+  <div class="main-container">
+    <PageHead badge={`Stage ${stage.n}`} title={stage.name} intro={stage.short} />
+    <div class="card-base" id="stage-live" data-stage-name={stage.name} data-stage-n={stage.n} style="margin-bottom:1.25rem">
+      <h2 class="card-title" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem"><span class="live-dot"></span> Live status</h2>
+      <div id="stage-live-body"><p class="text-muted sm" style="margin:0">Connecting to live data…</p></div>
+    </div>
+    <details class="card-base" open style="margin-bottom:1.25rem">
+      <summary>Directions &amp; Campus Blueprint (Stage {stage.n})</summary>
+      <div style="margin-top:1rem">
+        <h3 class="card-title" style="font-size:1.05rem;margin-bottom:.5rem">Blueprint &amp; Location Map</h3>
+        <p class="text-muted sm" style="margin-bottom:.75rem">Stage {stage.n} is highlighted on the verified campus floor plan below.</p>
+        
+        {bpImages.length
+          ? bpImages.map((img) => (
+              <figure class="stage-fig">
+                <div style="overflow:hidden;border-radius:var(--radius-inner);border:1px solid var(--border);background:var(--bg-alt)">
+                  <img class="stage-blueprint" src={img.src} alt={img.alt} loading="lazy" decoding="async" style="transition:transform .3s var(--ease);cursor:zoom-in" onclick="this.style.transform = this.style.transform === 'scale(1.5)' ? 'scale(1)' : 'scale(1.5)'" title="Click to zoom" />
+                </div>
+                <figcaption>{img.caption} (Click image to zoom)</figcaption>
+              </figure>
+            ))
+          : <div class="stage-blueprint-placeholder">Blueprint image loading or updating from repository.</div>
+        }
+        
+        <h3 class="card-title" style="font-size:1.05rem;margin:1.5rem 0 .5rem">Step-by-step directions</h3>
+        <ol style="margin:0;padding-left:1.25rem;color:var(--text)">{stage.directions.map((step) => <li style="margin-bottom:.4rem">{step}</li>)}</ol>
+        <h3 class="card-title" style="font-size:1.05rem;margin:1.5rem 0 .5rem">Nearby landmarks</h3>
+        <ul style="margin:0;padding-left:1.25rem;color:var(--text)">{stage.landmarks.map((lm) => <li style="margin-bottom:.3rem">{lm}</li>)}</ul>
+      </div>
+    </details>
+    <div class="card-base" id="stage-schedule" data-stage-name={stage.name} style="margin-bottom:1.25rem">
+      <h2 class="card-title" style="margin-bottom:.75rem">Competitions at this stage</h2>
+      <div id="stage-schedule-body"><p class="text-muted sm" style="margin:0">Loading schedule…</p></div>
+    </div>
+    <div class="card-base">
+      <h2 class="card-title" style="margin-bottom:.75rem">Venue information</h2>
+      <dl class="stage-info">
+        <dt>Location</dt><dd>{stage.loc}</dd>
+        <dt>Block</dt><dd>{stage.block_label}</dd>
+        <dt>Capacity</dt><dd>{stage.capacity}</dd>
+        <dt>Accessibility</dt><dd>{stage.accessibility}</dd>
+      </dl>
+    </div>
+  </div>
+  <script is:inline src={BASE + 'assets/js/stage-detail.js'}></script>
+</BaseLayout>

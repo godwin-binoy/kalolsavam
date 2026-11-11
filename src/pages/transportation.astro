@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { BASE, url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Transportation | Mala Kalolsavam" active="transportation">
+  <div class="main-container">
+    <PageHead badge="Module 06 · Transportation" title="Transportation" data-i18n="trans.title" data-i18n="trans.title" intro="Bus timings and auto-rickshaw drivers near St. Antony's HSS Mala. Pick what you need." data-i18n="trans.desc" data-i18n="trans.desc" />
+    <div class="grid-2">
+      <a href={url('/transportation-bus')} class="fest-card"><div class="fest-header banner-blue"><h3 class="fest-title" data-i18n="trans.bus.title">Bus Timings</h3><span class="fest-subtitle" data-i18n="trans.bus.sub">KSRTC &amp; Private · Mala Stand</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="trans.bus.desc">Departures from Mala Bus Stand — route, type, and timing at a glance.</p><div class="fest-action-item"><span data-i18n="trans.bus.btn">Open Bus Schedule</span></div></div></a>
+      <a href={url('/transportation-auto')} class="fest-card"><div class="fest-header banner-purple"><h3 class="fest-title" data-i18n="trans.auto.title">Auto Drivers</h3><span class="fest-subtitle" data-i18n="trans.auto.sub">Auto-Rickshaw · Mala Area</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="trans.auto.desc">Verified auto drivers in the Mala area — tap a card to call directly.</p><div class="fest-action-item"><span data-i18n="trans.auto.btn">View Auto Drivers</span></div></div></a>
+    </div>
+  </div>
+</BaseLayout>

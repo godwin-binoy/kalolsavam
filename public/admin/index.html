@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Admin Console · Kalolsavam</title>
+<link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body class="login-body">
+<main class="login-card">
+  <h1 class="brand">Kalolsavam <span>Admin Console</span></h1>
+  <p class="muted small">Master data, staff accounts, queue, results, and operations.</p>
+  <form id="login-form" autocomplete="off">
+    <label>Email<input id="email" type="email" required maxlength="120" autocomplete="email"></label>
+    <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
+    <button type="submit" id="login-btn">Sign in</button>
+    <p id="login-msg" class="msg" role="status" aria-live="polite"></p>
+  </form>
+</main>
+<div id="app" class="hidden">
+  <header class="topbar">
+    <h1 class="brand">Kalolsavam <span>Admin</span></h1>
+    <span id="who" class="badge"></span>
+    <span class="spacer"></span>
+    <button id="logout-btn">Sign out</button>
+  </header>
+  <main>
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="venues">Venues</button>
+      <button class="tab" data-tab="categories">Categories</button>
+      <button class="tab" data-tab="events">Events</button>
+      <button class="tab" data-tab="queue">Queue</button>
+      <button class="tab" data-tab="users">Users</button>
+      <button class="tab" data-tab="results">Results</button>
+      <button class="tab" data-tab="audit">Audit</button>
+      <button class="tab" data-tab="ops">Ops</button>
+    </nav>
+    <section id="view"></section>
+  </main>
+</div>
+<dialog id="user-dialog">
+  <h3 style="margin-top:0">Edit user</h3>
+  <form id="user-edit-form">
+    <input type="hidden" id="u-edit-id">
+    <label>Email<input id="u-edit-email" type="email" required></label>
+    <label>Role<select id="u-edit-role">
+      <option value="stagemaster">stagemaster</option>
+      <option value="admin">admin</option>
+    </select></label>
+    <label>Status<select id="u-edit-active">
+      <option value="1">Active</option>
+      <option value="0">Disabled</option>
+    </select></label>
+    <fieldset style="margin:.8rem 0 0;border:1px solid var(--border);border-radius:6px;padding:.5rem">
+      <legend class="muted small">Assigned stages</legend>
+      <div id="u-edit-stages"></div>
+    </fieldset>
+    <div class="row" style="margin-top:.9rem">
+      <button value="save" class="primary" type="submit">Save</button>
+      <button value="cancel" type="button" data-cancel-user>Cancel</button>
+    </div>
+  </form>
+  <hr style="margin:1.2rem 0;border:none;border-top:1px solid var(--border)">
+  <h4 style="margin:0 0 .5rem">Reset password</h4>
+  <form id="user-password-form">
+    <input type="hidden" id="u-pass-id">
+    <label>New password (12+ characters)<input id="u-pass-new" type="password" minlength="12" required></label>
+    <div class="row" style="margin-top:.9rem">
+      <button value="save" class="primary" type="submit">Reset password</button>
+    </div>
+  </form>
+</dialog>
+<script src="/dashboard/js/api.js"></script>
+<script src="/dashboard/js/auth.js"></script>
+<script src="/dashboard/js/admin.js"></script>
+</body>
+</html>
