@@ -1,85 +1,68 @@
-name: Deploy
+name: Deploy Astro to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: deploy-main
+  group: "pages"
   cancel-in-progress: false
 
 jobs:
-  test-backend:
-    runs-on: self-hosted
-    timeout-minutes: 20
+  build:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          clean: true
-
-      - name: Resolve Python interpreter
-        id: py
-        run: |
-          for v in python3.13 python3.12 python3.11 python3.15 python3; do
-            if command -v "$v" >/dev/null 2>&1; then
-              echo "interpreter=$(command -v "$v")" >> "$GITHUB_OUTPUT"
-              echo "Using $v ($($v --version 2>&1))"
-              exit 0
-            fi
-          done
-          echo "No python3 found on runner" >&2
-          exit 1
-
-      - name: Install dependencies (isolated venv, PEP 668 safe)
-        run: |
-          ${{ steps.py.outputs.interpreter }} -m venv .venv-ci
-          .venv-ci/bin/python -m pip install --upgrade pip wheel
-          .venv-ci/bin/pip install --prefer-binary --no-input \
-            -r requirements.txt pytest pytest-asyncio httpx
-
-      - name: Run tests
-        run: .venv-ci/bin/pytest -q --disable-warnings --maxfail=1
-
-  build-and-deploy:
-    needs: test-backend
-    runs-on: self-hosted
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          clean: true
-
-      - uses: actions/setup-node@v7
-        with:
-          node-version: 22
-          # Intentionally no `cache: npm` — cloud cache times out on this runner.
+          node-version: 20
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund || npm install --prefer-offline --no-audit --no-fund
 
-      - name: Build Astro site
+      - name: Determine deployment base path
+        id: base
+        run: |
+          if [ -f public/CNAME ]; then
+            DOMAIN=$(cat public/CNAME | tr -d '[:space:]')
+            echo "path=/" >> "$GITHUB_OUTPUT"
+            echo "site=https://${DOMAIN}" >> "$GITHUB_OUTPUT"
+            echo "Detected CNAME → ${DOMAIN} (root base path)"
+          else
+            REPO_NAME="${GITHUB_REPOSITORY#*/}"
+            echo "path=/${REPO_NAME}/" >> "$GITHUB_OUTPUT"
+            echo "site=https://${GITHUB_REPOSITORY_OWNER}.github.io" >> "$GITHUB_OUTPUT"
+            echo "No CNAME → subpath /${REPO_NAME}/"
+          fi
+
+      - name: Build site
         run: npm run build
         env:
-          # 🔑 This is the fix. GitHub Pages serves a project repo at
-          #    /<repo-name>/, so Astro must emit asset URLs with that prefix.
-          BASE_PATH: /${{ github.event.repository.name }}/
-          SITE_URL: https://${{ github.repository_owner }}.github.io
-          PUBLIC_API_BASE: ${{ vars.API_BASE_URL }}
+          BASE_PATH: ${{ steps.base.outputs.path }}
+          SITE_URL: ${{ steps.base.outputs.site }}
 
-      - name: Remove backend-only panels from public deploy
-        run: rm -rf dist/admin dist/stagemaster
-
-      - name: Publish to gh-pages branch
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist
-          publish_branch: gh-pages
-          user_name: "kalolsavam-bot"
-          user_email: "bot@kalolsavam.local"
-          commit_message: "deploy: ${{ github.sha }}"
-          enable_jekyll: false
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
