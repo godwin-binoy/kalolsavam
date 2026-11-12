@@ -39,6 +39,15 @@ const navKey = (k: string) => `nav.${k}`;
 </head>
 <body data-nav={active} data-base={BASE}>
 <a class="skip" href="#main">Skip to content</a>
+<div class="utility-dock" role="group" aria-label="Display settings">
+  <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">
+    <span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span>
+  </button>
+  <button id="theme" class="icbtn" type="button" aria-label="Toggle dark mode">
+    <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
+    <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
+  </button>
+</div>
 <header class="hdr">
   <div class="hdr-in">
     <a class="brand" href={BASE}>
@@ -49,22 +58,12 @@ const navKey = (k: string) => `nav.${k}`;
       {nav.map(([key, href, label]) => (
         <a href={url(href)} class:list={["nav-link", { active: active === key }, key === "help" && "nav-link-help"]} data-active={key} data-i18n={navKey(key)}>{label}</a>
       ))}
-      <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language"><span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span></button>
-      <button id="theme" class="icbtn" style="margin-left:0.5rem" type="button" aria-label="Toggle dark mode">
-        <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
-        <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
-      </button>
     </nav>
     <div class="mobile-controls">
-      <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language"><span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span></button>
       <a href={url('/help')} class="help-btn-m" aria-label="Help & Emergency">
         <span class="icn" style={`--icon-url:url('${BASE}assets/svg/phone.svg')`}></span>
         <span class="help-text" data-i18n="nav.help_fast">Help</span>
       </a>
-      <button id="theme-m" class="icbtn" type="button" aria-label="Toggle dark mode">
-        <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
-        <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
-      </button>
       <button id="menu" class="icbtn" type="button" aria-label="Menu" aria-expanded="false" aria-controls="mnav">
         <span class="icn menu-open" style={`--icon-url:url('${BASE}assets/svg/menu.svg')`}></span>
         <span class="icn menu-close" style={`--icon-url:url('${BASE}assets/svg/close.svg')`}></span>
