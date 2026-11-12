@@ -3,13 +3,16 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
 
-const PAGES = {
-  offstage:   { badge: 'Results · Off Stage',         title: 'Off Stage Results',        items: ['Chithra Drawing','Pencil Drawing','Collage','Cartoon','Clay Modeling'] },
-  individual: { badge: 'Results · Individual Stage',  title: 'Individual Stage Results', items: ['Bharathanatyam','Mohiniyattam','Light Music','Classical Music','Elocution'] },
-  group:      { badge: 'Results · Group Stage',       title: 'Group Stage Results',      items: ['Oppana','Margamkali','Nadan Pattu','Group Dance','Drama'] },
-};
-
 export function getStaticPaths() {
+  // NOTE: PAGES must live INSIDE this function (not at module scope).
+  // Astro extracts getStaticPaths into a separate prerender chunk, and any
+  // module-level constant only referenced by it gets tree-shaken away —
+  // which is exactly what broke the previous build with "PAGES is not defined".
+  const PAGES = {
+    offstage:   { badge: 'Results · Off Stage',         title: 'Off Stage Results',        items: ['Chithra Drawing','Pencil Drawing','Collage','Cartoon','Clay Modeling'] },
+    individual: { badge: 'Results · Individual Stage',  title: 'Individual Stage Results', items: ['Bharathanatyam','Mohiniyattam','Light Music','Classical Music','Elocution'] },
+    group:      { badge: 'Results · Group Stage',       title: 'Group Stage Results',      items: ['Oppana','Margamkali','Nadan Pattu','Group Dance','Drama'] },
+  };
   return Object.keys(PAGES).map((type) => ({ params: { type }, props: PAGES[type] }));
 }
 
