@@ -16,7 +16,7 @@ jobs:
   test-backend:
     # Match only runners that carry the "kalolsavam" label so a CI runner
     # for another project can't grab this job by accident.
-    runs-on: [self-hosted, kalolsavam]
+    runs-on: self-hosted
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +38,7 @@ jobs:
 
   build-and-deploy:
     needs: test-backend
-    runs-on: [self-hosted, kalolsavam]
+    runs-on: self-hosted
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
