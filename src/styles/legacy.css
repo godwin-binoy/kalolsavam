@@ -67,8 +67,7 @@ strong{color:var(--text-heading);font-weight:700}
 
 /* Header & Silky Glassmorphism */
 .hdr{position:sticky;top:0;z-index:50;transition:background-color .3s ease}
-.hdr::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;z-index:-1;backdrop-filter:blur(24px) saturate(200%);-webkit-backdrop-filter:blur(24px) saturate(200%);background:rgba(250,250,247,0.85);border-bottom:1px solid var(--border);pointer-events:none;transition:bottom .25s cubic-bezier(0.16,1,0.3,1)}
-html.dark .hdr::before{background:rgba(10,15,13,0.15)}
+.hdr::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;z-index:-1;backdrop-filter:blur(24px) saturate(200%);-webkit-backdrop-filter:blur(24px) saturate(200%);background:transparent !important;border:none !important;box-shadow:none !important;pointer-events:none;transition:bottom .25s cubic-bezier(0.16,1,0.3,1)}
 .hdr.open::before{bottom:calc(-1 * var(--drawer-h,0px))}
 .hdr-in{position:relative;z-index:1;max-width:78rem;margin:0 auto;padding:0 1rem;height:4.25rem;display:flex;justify-content:space-between;align-items:center;gap:1rem}
 @media(min-width:640px){.hdr-in{padding:0 2rem;height:4.75rem}}

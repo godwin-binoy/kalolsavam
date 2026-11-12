@@ -41,6 +41,19 @@
     });
   });
 
+  // ── Hide Header Controls on Scroll ──────────────────────────────────
+  var hdrEl = document.querySelector('.hdr');
+  if (hdrEl && !hdrEl.dataset.scrollListenerAttached) {
+    hdrEl.dataset.scrollListenerAttached = 'true';
+    window.addEventListener('scroll', function() {
+      if (window.scrollY > 60) {
+        hdrEl.classList.add('scrolled');
+      } else {
+        hdrEl.classList.remove('scrolled');
+      }
+    }, { passive: true });
+  }
+
   // ── Mobile Drawer ───────────────────────────────────────────────────
   if (menu && mnav){
     var header = document.querySelector('.hdr');

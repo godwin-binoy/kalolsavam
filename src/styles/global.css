@@ -533,3 +533,27 @@ html[lang="ml"] textarea {
   }
   .utility-dock { animation: kal-dock-in 0.35s var(--ease-out) both; }
 }
+
+/* ── Transparent Header Buttons & Hide on Scroll ────────────────── */
+.lang-btn, .icbtn, .help-btn-m {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease !important;
+}
+
+.lang-btn:hover, .icbtn:hover, .help-btn-m:hover {
+  background: rgba(128, 128, 128, 0.15) !important;
+}
+
+html.dark .lang-btn:hover, html.dark .icbtn:hover, html.dark .help-btn-m:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+.hdr.scrolled .lang-btn,
+.hdr.scrolled .icbtn,
+.hdr.scrolled .help-btn-m {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-10px) !important;
+}
