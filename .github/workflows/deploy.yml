@@ -40,7 +40,7 @@ jobs:
         run: |
           ${{ steps.py.outputs.interpreter }} -m venv .venv-ci
           .venv-ci/bin/python -m pip install --upgrade pip wheel
-          .venv-ci/bin/pip install -r requirements.txt pytest pytest-asyncio httpx
+          .venv-ci/bin/pip install --prefer-binary --no-input -r requirements.txt pytest pytest-asyncio httpx
 
       - name: Run tests
         run: .venv-ci/bin/pytest -q --disable-warnings --maxfail=1
@@ -54,13 +54,16 @@ jobs:
         with:
           clean: true
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
-          cache: npm
+          # Intentionally NOT using `cache: npm`.
+          # On a persistent self-hosted runner, npm's own cache at
+          # $HOME/.npm already survives between runs. GitHub's cloud cache
+          # restore is ~73 MB over the runner's link and times out. Skip it.
 
       - name: Install dependencies
-        run: npm ci || npm install
+        run: npm ci --prefer-offline --no-audit --no-fund || npm install --prefer-offline --no-audit --no-fund
 
       - name: Build Astro site
         run: npm run build
