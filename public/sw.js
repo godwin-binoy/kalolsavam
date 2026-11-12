@@ -1,6 +1,6 @@
 /* Kalolsavam PWA Service Worker — v4.1.0 */
-const CACHE_NAME = 'kal-v19';
-const PAGE_CACHE_NAME = 'kal-page-cache-v11';
+const CACHE_NAME = 'kal-__SW_BUILD__';
+const PAGE_CACHE_NAME = 'kal-page-__SW_BUILD__';
 
 const PRECACHE_FLEET = [
   './',

@@ -111,7 +111,7 @@
       });
       if (res.ok){
         var htmlText = await res.text();
-        pageCache.set(normUrl, { html: htmlText, time: Date.now() });
+        pageCache.delete(normUrl); pageCache.set(normUrl, { html: htmlText, time: Date.now() }); if (pageCache.size > 80){ pageCache.delete(pageCache.keys().next().value); }
         if ('caches' in window){
           caches.open(CACHE_NAME).then(function(c){
             c.put(normUrl, new Response(htmlText, {
@@ -128,17 +128,6 @@
 
   // ── Immediate Aggressive Route Warming ──────────────────────────────
   // Fires instantly the moment script executes, without waiting for hover or click
-  // ── Purge Stale Caches on Boot ──────────────────────────────────────
-  if ('caches' in window) {
-    caches.keys().then(function(keys) {
-      keys.forEach(function(k) {
-        if (k !== 'kal-v19' && k !== 'kal-page-cache-v11') {
-          caches.delete(k);
-        }
-      });
-    });
-  }
-
   function warmAggressively(){
     var rawBase = document.body.getAttribute('data-base') || '/';
     var base = rawBase.endsWith('/') ? rawBase : rawBase + '/';
@@ -215,13 +204,15 @@
       var htmlText = null;
       var cached = pageCache.get(normUrl);
 
-      if (cached && cached.html){
+      // TTL: treat any in-memory HTML older than 5 minutes as a miss.
+      var PAGE_CACHE_TTL_MS = 5 * 60 * 1000;
+      if (cached && cached.html && (Date.now() - (cached.time || 0)) < PAGE_CACHE_TTL_MS){
         htmlText = cached.html;
       } else if ('caches' in window){
         var match = await caches.match(normUrl);
         if (match){
           htmlText = await match.text();
-          pageCache.set(normUrl, { html: htmlText, time: Date.now() });
+          pageCache.delete(normUrl); pageCache.set(normUrl, { html: htmlText, time: Date.now() }); if (pageCache.size > 80){ pageCache.delete(pageCache.keys().next().value); }
         }
       }
 
@@ -229,7 +220,7 @@
         var res = await fetch(normUrl, { signal: currentController ? currentController.signal : undefined });
         if (!res.ok) throw new Error('Fetch status ' + res.status);
         htmlText = await res.text();
-        pageCache.set(normUrl, { html: htmlText, time: Date.now() });
+        pageCache.delete(normUrl); pageCache.set(normUrl, { html: htmlText, time: Date.now() }); if (pageCache.size > 80){ pageCache.delete(pageCache.keys().next().value); }
       }
 
       var doc = new DOMParser().parseFromString(htmlText, 'text/html');

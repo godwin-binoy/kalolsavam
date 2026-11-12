@@ -84,6 +84,23 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             resp.headers["Cache-Control"] = "no-store"
         elif path.startswith("/assets/"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        elif path.startswith("/api/v1/admin/"):
+            resp.headers["Cache-Control"] = "no-store"
+        elif path.startswith("/api/v1/live/"):
+            resp.headers["Cache-Control"] = "no-store"
+        elif path in ("/healthz", "/readyz"):
+            resp.headers["Cache-Control"] = "no-store"
+        elif path == "/sw.js":
+            # Force revalidation every load so SW updates land immediately.
+            resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+        else:
+            # HTML pages: always revalidate. FileResponse supplies ETag, so
+            # revalidation is a cheap 304 when unchanged. setdefault preserves
+            # any Cache-Control a route already set (e.g. public API TTLs).
+            if "text/html" in resp.headers.get("content-type", ""):
+                resp.headers.setdefault(
+                    "Cache-Control", "public, max-age=0, must-revalidate"
+                )
         dur = int((time.perf_counter() - start) * 1000)
         log.info("req", extra={
             "request_id": request.state.request_id, "method": request.method,
