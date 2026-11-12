@@ -126,9 +126,7 @@
 .icbtn .icn {
   transition: transform var(--dur-mid) var(--ease-out);
 }
-.icbtn:hover .icn {
-  transform: rotate(12deg);
-}
+
 
 /* ── Universal Search Input & Dropdown Styling ────────────────────── */
 .search-wrapper {
@@ -534,26 +532,27 @@ html[lang="ml"] textarea {
   .utility-dock { animation: kal-dock-in 0.35s var(--ease-out) both; }
 }
 
-/* ── Transparent Header Buttons & Hide on Scroll ────────────────── */
-.lang-btn, .icbtn, .help-btn-m {
+/* ── Transparent Header Buttons & Targeted Hide on Scroll ───────── */
+.lang-btn, #theme, #theme-m {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease !important;
+  transition: opacity 0.3s var(--ease-out), transform 0.3s var(--ease-out), background-color 0.2s ease !important;
 }
 
-.lang-btn:hover, .icbtn:hover, .help-btn-m:hover {
+.lang-btn:hover, #theme:hover, #theme-m:hover {
   background: rgba(128, 128, 128, 0.15) !important;
 }
 
-html.dark .lang-btn:hover, html.dark .icbtn:hover, html.dark .help-btn-m:hover {
+html.dark .lang-btn:hover, html.dark #theme:hover, html.dark #theme-m:hover {
   background: rgba(255, 255, 255, 0.1) !important;
 }
 
+/* Organically hide ONLY language and theme buttons on scroll */
 .hdr.scrolled .lang-btn,
-.hdr.scrolled .icbtn,
-.hdr.scrolled .help-btn-m {
+.hdr.scrolled #theme,
+.hdr.scrolled #theme-m {
   opacity: 0 !important;
   pointer-events: none !important;
-  transform: translateY(-10px) !important;
+  transform: translateY(-12px) !important;
 }
