@@ -362,15 +362,6 @@ html[lang="ml"] textarea {
   font-family: "Noto Sans Malayalam", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
-/* ── Malayalam Typography Overrides ─────────────────────────────── */
-html[lang="ml"] body,
-html[lang="ml"] button,
-html[lang="ml"] input,
-html[lang="ml"] select,
-html[lang="ml"] textarea {
-  font-family: "Noto Sans Malayalam", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-
 /* ── Mobile Header Optimization & Full Brand Display ────────────── */
 @media (max-width: 767px) {
   .hdr-in {

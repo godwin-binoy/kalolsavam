@@ -74,6 +74,19 @@ def status(request: Request):
     )
 
 
+@router.get("/venues")
+def venues(request: Request):
+    """Active venues list. The live tracker maps stage card names to
+    backend venue IDs via this endpoint; /status then supplies the live
+    state for each venue."""
+    db = request.app.state.db
+    rows = db.q("SELECT id, name, kind FROM venues WHERE active = 1 ORDER BY id")
+    return JSONResponse(
+        {"venues": [dict(r) for r in rows]},
+        headers={"Cache-Control": "public, max-age=60"},
+    )
+
+
 @router.get("/schedule")
 def schedule(request: Request, day: str | None = None):
     db = request.app.state.db
