@@ -242,10 +242,10 @@
       }
     });
 
-    // 3. Update Toggle button text
+    // 3. Update Toggle button aria-label and title
     document.querySelectorAll('[data-lang-toggle]').forEach(function(btn){
-      btn.textContent = (target === 'ml') ? 'English' : 'മലയാളം';
-      btn.setAttribute('aria-label', target === 'ml' ? 'Switch to English' : 'മലയാളത്തിലേക്ക് മാറ്റുക');
+      btn.setAttribute('aria-label', target === 'ml' ? 'Switch to English' : 'Switch to Malayalam');
+      btn.setAttribute('title', target === 'ml' ? 'Switch to English' : 'Switch to Malayalam');
     });
 
     window.dispatchEvent(new CustomEvent('kal:langchange', { detail: { lang: target } }));

@@ -310,8 +310,8 @@ details.card-base > summary::before {
   align-items: center;
   justify-content: center;
   height: 2.1rem;
-  min-width: 3.5rem;
-  padding: 0 0.75rem;
+  width: 2.1rem;
+  padding: 0;
   margin-left: 0.25rem;
   border-radius: 999px;
   border: 1px solid var(--border);
