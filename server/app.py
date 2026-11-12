@@ -115,7 +115,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
     if (dist / "pages").exists():
         app.mount("/pages", StaticFiles(directory=dist / "pages"), name="pages")
-    app.mount("/dashboard", StaticFiles(directory=srv / "dashboard", html=True), name="dashboard")
+    if (dist / "dashboard").exists():
+        app.mount("/dashboard", StaticFiles(directory=dist / "dashboard", html=True), name="dashboard")
 
     @app.get("/healthz")
     async def healthz():
