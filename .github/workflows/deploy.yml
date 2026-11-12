@@ -25,13 +25,13 @@ jobs:
         run: npm run build
 
       - name: Ensure Cloudflare Pages Project Exists
-        run: npx wrangler pages project create kalolsavam --production-branch main || echo "Project already exists or creation skipped"
+        run: npx wrangler pages project create mala-subdistrict-kalolsavam --production-branch main || echo "Project already exists or creation skipped"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Pages
-        run: npx wrangler pages deploy dist --project-name=kalolsavam
+        run: npx wrangler pages deploy dist --project-name=mala-subdistrict-kalolsavam
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
