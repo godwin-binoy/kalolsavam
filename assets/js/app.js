@@ -132,7 +132,7 @@
   if ('caches' in window) {
     caches.keys().then(function(keys) {
       keys.forEach(function(k) {
-        if (k !== 'kal-v10' && k !== 'kal-page-cache-v11') {
+        if (k !== 'kal-v19' && k !== 'kal-page-cache-v11') {
           caches.delete(k);
         }
       });
