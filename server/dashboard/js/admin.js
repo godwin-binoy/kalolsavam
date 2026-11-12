@@ -689,8 +689,8 @@
       '<div class="panel"><h2>Operations</h2>' +
         '<div class="row" style="flex-wrap:wrap">' +
           '<button id="op-backup" class="primary">💾 Backup databases</button>' +
-          '<a class="button" href="/api/v1/admin/export/participants.csv" download style="display:inline-flex;align-items:center;padding:.5rem .9rem;border:1px solid var(--border);border-radius:6px;background:var(--panel-2);color:var(--text);text-decoration:none">⬇ Participants CSV</a>' +
-          '<a class="button" href="/api/v1/admin/export/results.csv" download style="display:inline-flex;align-items:center;padding:.5rem .9rem;border:1px solid var(--border);border-radius:6px;background:var(--panel-2);color:var(--text);text-decoration:none">⬇ Results CSV</a>' +
+          '<a class="btn" href="/api/v1/admin/export/participants.csv" download>⬇ Participants CSV</a>' +
+          '<a class="btn" href="/api/v1/admin/export/results.csv" download>⬇ Results CSV</a>' +
         '</div>' +
       '</div>'
     );

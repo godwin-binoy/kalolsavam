@@ -609,6 +609,110 @@ def leaderboard(request: Request, user=Depends(require_admin)):
     return {"schools": school_totals, "events": per_event}
 
 
+@router.get("/dashboard")
+def dashboard(request: Request, user=Depends(require_admin)):
+    """Aggregated stats for the /dashboard/ statistics page.
+
+    Returns KPIs, per-venue breakdown, leaderboard, recent activity, and
+    system health in one round-trip. Admin-only.
+    """
+    import os as _os
+    import shutil as _shutil
+
+    db, cfg = get_db(request), get_cfg(request)
+
+    def count(sql, params=()):
+        return db.one(sql, params)["c"]
+
+    overall = {
+        "venues": count("SELECT COUNT(*) c FROM venues"),
+        "active_venues": count("SELECT COUNT(*) c FROM venues WHERE active=1"),
+        "categories": count("SELECT COUNT(*) c FROM categories"),
+        "events": count("SELECT COUNT(*) c FROM events"),
+        "participants": count("SELECT COUNT(*) c FROM participants"),
+        "queue_items": count("SELECT COUNT(*) c FROM queue_items"),
+        "queue_waiting": count("SELECT COUNT(*) c FROM queue_items WHERE status='WAITING'"),
+        "queue_onstage": count("SELECT COUNT(*) c FROM queue_items WHERE status IN ('ON-STAGE','PAUSED')"),
+        "queue_complete": count("SELECT COUNT(*) c FROM queue_items WHERE status='COMPLETE'"),
+        "queue_skipped": count("SELECT COUNT(*) c FROM queue_items WHERE status='SKIPPED'"),
+        "scores_entered": count("SELECT COUNT(*) c FROM scores"),
+    }
+
+    per_venue = [
+        dict(r) for r in db.q("""
+            SELECT v.id, v.name, v.kind, v.active,
+                   COUNT(q.id) AS total,
+                   SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END) AS waiting,
+                   SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END) AS onstage,
+                   SUM(CASE WHEN q.status='COMPLETE' THEN 1 ELSE 0 END) AS complete,
+                   SUM(CASE WHEN q.status='SKIPPED' THEN 1 ELSE 0 END) AS skipped
+            FROM venues v
+            LEFT JOIN queue_items q ON q.venue_id = v.id
+            GROUP BY v.id
+            ORDER BY v.id
+        """)
+    ]
+
+    # Reuse the existing leaderboard logic directly (Depends is bypassed on
+    # direct calls, so we supply the already-resolved `user` explicitly).
+    lb = leaderboard(request, user=user)
+    top_schools = lb["schools"][:10]
+
+    recent_scores = [
+        dict(r) for r in db.q("""
+            SELECT s.queue_item_id, s.judge_no, s.value, s.entered_at,
+                   e.code AS event_code, e.title AS event_title,
+                   p.school, p.student_name
+            FROM scores s
+            JOIN queue_items q ON q.id = s.queue_item_id
+            JOIN events e ON e.id = q.event_id
+            LEFT JOIN participants p ON p.id = q.participant_id
+            ORDER BY s.entered_at DESC LIMIT 20
+        """)
+    ]
+
+    recent_completed = [
+        dict(r) for r in db.q("""
+            SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
+                   p.school, p.student_name
+            FROM queue_items q
+            JOIN events e ON e.id = q.event_id
+            LEFT JOIN participants p ON p.id = q.participant_id
+            WHERE q.status='COMPLETE' AND q.completed_at IS NOT NULL
+            ORDER BY q.completed_at DESC LIMIT 20
+        """)
+    ]
+
+    try:
+        db_size = _os.stat(cfg.db_path).st_size
+    except OSError:
+        db_size = 0
+    try:
+        disk_free = _shutil.disk_usage(cfg.db_path).free
+    except OSError:
+        disk_free = 0
+
+    auth_fails_24h = count(
+        "SELECT COUNT(*) c FROM auth_audit WHERE event='login_fail' AND ts > ?",
+        (db.now() - 86400,),
+    )
+
+    return {
+        "updated_at": db.now(),
+        "overall": overall,
+        "per_venue": per_venue,
+        "top_schools": top_schools,
+        "recent_scores": recent_scores,
+        "recent_completed": recent_completed,
+        "health": {
+            "db_bytes": db_size,
+            "disk_free_bytes": disk_free,
+            "sse_connections": len(request.app.state.subscribers),
+            "auth_failures_24h": auth_fails_24h,
+        },
+    }
+
+
 @router.get("/export/participants.csv")
 def export_participants(request: Request, user=Depends(require_admin)):
     db = get_db(request)

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Dashboard · Kalolsavam</title>
+<link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body class="login-body">
+<main class="login-card">
+  <h1 class="brand">Kalolsavam <span>Dashboard</span></h1>
+  <p class="muted small">Statistics and operations overview. Admin sign-in required.</p>
+  <form id="login-form" autocomplete="off">
+    <label>Email<input id="email" type="email" required maxlength="120" autocomplete="email"></label>
+    <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
+    <button type="submit" id="login-btn">Sign in</button>
+    <p id="login-msg" class="msg" role="status" aria-live="polite"></p>
+  </form>
+</main>
+<div id="app" class="hidden">
+  <header class="topbar">
+    <h1 class="brand">Kalolsavam <span>Dashboard</span></h1>
+    <span id="who" class="badge"></span>
+    <span class="spacer"></span>
+    <a href="/admin/" class="btn-link">&larr; Admin</a>
+    <button id="refresh-btn">&#x21bb; Refresh</button>
+    <button id="logout-btn">Sign out</button>
+  </header>
+  <main class="dashboard-main">
+    <section id="kpi-grid" class="kpi-grid"></section>
+    <section id="venue-panel" class="panel"></section>
+    <div class="split">
+      <section id="leaderboard-panel" class="panel"></section>
+      <section id="health-panel" class="panel"></section>
+    </div>
+    <div class="split">
+      <section id="recent-scores-panel" class="panel"></section>
+      <section id="recent-completed-panel" class="panel"></section>
+    </div>
+  </main>
+</div>
+<script src="/dashboard/js/api.js"></script>
+<script src="/dashboard/js/auth.js"></script>
+<script src="/dashboard/js/stats.js"></script>
+</body>
+</html>
