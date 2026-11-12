@@ -17,12 +17,10 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           clean: true
 
-      # Pick the best Python available: prefer 3.13 → 3.12 → 3.11 → 3.15
-      # (3.15 is last because several deps don't yet ship wheels for it).
       - name: Resolve Python interpreter
         id: py
         run: |
@@ -40,7 +38,8 @@ jobs:
         run: |
           ${{ steps.py.outputs.interpreter }} -m venv .venv-ci
           .venv-ci/bin/python -m pip install --upgrade pip wheel
-          .venv-ci/bin/pip install --prefer-binary --no-input -r requirements.txt pytest pytest-asyncio httpx
+          .venv-ci/bin/pip install --prefer-binary --no-input \
+            -r requirements.txt pytest pytest-asyncio httpx
 
       - name: Run tests
         run: .venv-ci/bin/pytest -q --disable-warnings --maxfail=1
@@ -50,17 +49,14 @@ jobs:
     runs-on: self-hosted
     timeout-minutes: 25
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           clean: true
 
       - uses: actions/setup-node@v7
         with:
           node-version: 22
-          # Intentionally NOT using `cache: npm`.
-          # On a persistent self-hosted runner, npm's own cache at
-          # $HOME/.npm already survives between runs. GitHub's cloud cache
-          # restore is ~73 MB over the runner's link and times out. Skip it.
+          # Intentionally no `cache: npm` — cloud cache times out on this runner.
 
       - name: Install dependencies
         run: npm ci --prefer-offline --no-audit --no-fund || npm install --prefer-offline --no-audit --no-fund
@@ -68,10 +64,8 @@ jobs:
       - name: Build Astro site
         run: npm run build
         env:
-          # Astro `base` — must match the GitHub Pages subpath.
-          # Project pages (repo != <user>.github.io) live at /<repo-name>/.
-          # User/org pages (<user>.github.io) live at /.
-          # If you later add a custom domain, change to BASE_PATH=/.
+          # 🔑 This is the fix. GitHub Pages serves a project repo at
+          #    /<repo-name>/, so Astro must emit asset URLs with that prefix.
           BASE_PATH: /${{ github.event.repository.name }}/
           SITE_URL: https://${{ github.repository_owner }}.github.io
           PUBLIC_API_BASE: ${{ vars.API_BASE_URL }}
