@@ -18,9 +18,12 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username, password: password })
       });
-      var v = await r.json();
+      var v = await r.json().catch(function(){ return {}; });
       if (!r.ok){
-        msg(v.detail || 'Sign-in failed.', 'err');
+        // Backend emits {"error": "..."} (see server/errors.py) and Pydantic
+        // emits {"detail": ...}. Prefer either, fall back to the status code.
+        var why = (v && (v.error || v.detail)) || ('Sign-in failed (' + r.status + ').');
+        msg(typeof why === 'string' ? why : 'Sign-in failed.', 'err');
         return false;
       }
       var me = await A.api('/api/v1/auth/me');

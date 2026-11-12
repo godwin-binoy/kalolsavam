@@ -21,7 +21,11 @@
       b.classList.toggle('active', b.dataset.tab === tab);
     });
     viewEl.innerHTML = '<div class="panel"><p class="muted">Loading…</p></div>';
-    VIEWS[tab]().then(function(html){ viewEl.innerHTML = html; });
+    return VIEWS[tab]().then(function(html){
+      viewEl.innerHTML = html;
+      // Wire per-render handlers AFTER the DOM is in place. No magic timeouts.
+      if (tab === 'ops') wireOpsHandlers();
+    });
   }
 
   async function fetchVenues(){
@@ -728,17 +732,6 @@
 
     // Wire up dialogs and global buttons
     wireUserDialog();
-    wireOpsHandlers();
-
-    // Wrap show() so ops handlers are re-wired after every render
-    var _origShow = show;
-    show = function(tab){
-      _origShow(tab);
-      if (tab === 'ops') {
-        setTimeout(wireOpsHandlers, 50);
-      }
-    };
-
     window.KalAuth.init();
   });
 })();

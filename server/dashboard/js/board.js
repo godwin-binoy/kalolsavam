@@ -131,21 +131,27 @@
     var payload = { venue_id: Number(venueId), action: action, version: version };
     if (typeof itemId === 'number') payload.item_id = itemId;
 
-    var r = await A.api('/api/v1/live/advance', {
-      method: 'POST',
-      headers: { 'Idempotency-Key': idemKey() },
-      body: payload
-    });
-    if (!r.ok){
-      if (panel) {
+    try {
+      var r = await A.api('/api/v1/live/advance', {
+        method: 'POST',
+        headers: { 'Idempotency-Key': idemKey() },
+        body: payload
+      });
+      if (!r.ok){
+        if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state'){
+          A.toast('Board changed — re-syncing.'); await loadBoard();
+        } else A.toast('Action failed: ' + (r.detail || r.status), true);
+        return;
+      }
+      await loadBoard();
+    } finally {
+      // If the panel still exists in the DOM, loadBoard() did NOT replace it
+      // (e.g. network blip / 5xx). Unlock the buttons so the operator can
+      // retry instead of being stuck on a frozen board.
+      if (panel && document.body.contains(panel)){
         panel.querySelectorAll('button').forEach(function(b){ b.disabled = false; });
       }
-      if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state'){
-        A.toast('Board changed — re-syncing.'); loadBoard();
-      } else A.toast('Action failed: ' + (r.detail || r.status), true);
-      return;
     }
-    loadBoard();
   }
 
   async function postState(venueId, state, announcement){
