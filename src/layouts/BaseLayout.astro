@@ -20,6 +20,9 @@ const navKey = (k: string) => `nav.${k}`;
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#FCFBF9">
 <link rel="manifest" href={BASE + 'manifest.json'}>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -53,7 +56,7 @@ const navKey = (k: string) => `nav.${k}`;
       <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language">മലയാളം</button>
       <a href={url('/help')} class="help-btn-m" aria-label="Help & Emergency">
         <span class="icn" style={`--icon-url:url('${BASE}assets/svg/phone.svg')`}></span>
-        <span data-i18n="nav.help_fast">Help</span>
+        <span class="help-text" data-i18n="nav.help_fast">Help</span>
       </a>
       <button id="theme-m" class="icbtn" type="button" aria-label="Toggle dark mode">
         <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
