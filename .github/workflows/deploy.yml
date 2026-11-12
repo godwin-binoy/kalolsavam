@@ -23,7 +23,12 @@ jobs:
 
       - name: Build Project
         run: npm run build
-        # This runs: astro build && node scripts/stamp-sw.mjs && touch dist/.nojekyll
+
+      - name: Ensure Cloudflare Pages Project Exists
+        run: npx wrangler pages project create kalolsavam --production-branch main || echo "Project already exists or creation skipped"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy to Cloudflare Pages
         run: npx wrangler pages deploy dist --project-name=kalolsavam
