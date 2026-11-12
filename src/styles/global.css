@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./legacy.css";
 
 @theme {
   --color-brand: #233526;
@@ -8,7 +9,6 @@
   --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
-@import "./legacy.css";
 
 /* ── Motion & Easing Tokens ────────────────────────────────────────── */
 :root {
