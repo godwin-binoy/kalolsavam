@@ -147,19 +147,32 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         if not dist.exists():
             gate = srv / "static" / "gate.html"
             return FileResponse(gate)
-        # 1. Exact file match
+
+        dist_root = dist.resolve()
+
+        def _safe(p: Path) -> bool:
+            try:
+                p.resolve().relative_to(dist_root)
+                return True
+            except ValueError:
+                return False
+
+        # 1. Exact file match (sandboxed under dist_root)
         target = dist / full_path
-        if target.is_file():
+        if _safe(target) and target.is_file():
             return FileResponse(target)
+
         # 2. Directory with index.html (e.g. venues -> dist/venues/index.html)
         target_html = dist / full_path / "index.html"
-        if target_html.is_file():
+        if _safe(target_html) and target_html.is_file():
             return FileResponse(target_html)
+
         # 3. File with .html appended
         target_ext = dist / f"{full_path}.html"
-        if target_ext.is_file():
+        if _safe(target_ext) and target_ext.is_file():
             return FileResponse(target_ext)
-        # 4. Default root index
+
+        # 4. Default root index (SPA fallback)
         index = dist / "index.html"
         if index.exists():
             return FileResponse(index)

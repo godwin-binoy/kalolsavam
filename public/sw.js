@@ -1,5 +1,5 @@
 /* Kalolsavam PWA Service Worker — v4.1.0 */
-const CACHE_NAME = 'kal-v18';
+const CACHE_NAME = 'kal-v19';
 const PAGE_CACHE_NAME = 'kal-page-cache-v11';
 
 const PRECACHE_FLEET = [
@@ -55,10 +55,10 @@ self.addEventListener('fetch', function (event) {
   // Never intercept API endpoints, SSE streams, or Admin/Staff portals
   if (
     url.origin !== location.origin ||
-    url.pathname.startsWith('/api/') ||
-    url.pathname.startsWith('/admin') ||
-    url.pathname.startsWith('/stagemaster') ||
-    url.pathname.startsWith('/dashboard')
+    url.pathname.indexOf('/api/') >= 0 ||
+    url.pathname.indexOf('/admin') >= 0 ||
+    url.pathname.indexOf('/stagemaster') >= 0 ||
+    url.pathname.indexOf('/dashboard') >= 0
   ) {
     return;
   }
