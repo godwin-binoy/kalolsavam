@@ -65,6 +65,12 @@ jobs:
       - name: Build Astro site
         run: npm run build
         env:
+          # Astro `base` — must match the GitHub Pages subpath.
+          # Project pages (repo != <user>.github.io) live at /<repo-name>/.
+          # User/org pages (<user>.github.io) live at /.
+          # If you later add a custom domain, change to BASE_PATH=/.
+          BASE_PATH: /${{ github.event.repository.name }}/
+          SITE_URL: https://${{ github.repository_owner }}.github.io
           PUBLIC_API_BASE: ${{ vars.API_BASE_URL }}
 
       - name: Remove backend-only panels from public deploy
