@@ -2,6 +2,9 @@
   'use strict';
 
   function apiBase(){
+    if (typeof window.KAL_API_BASE === 'string' && window.KAL_API_BASE) {
+      return window.KAL_API_BASE.replace(/\/+$/, '');
+    }
     var explicit = document.body && document.body.getAttribute('data-api');
     if (explicit === 'same-origin' || explicit === '') return '';
     if (explicit != null) return explicit.replace(/\/+$/, '');
