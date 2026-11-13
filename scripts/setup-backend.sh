@@ -47,25 +47,12 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   echo "Created .env from .env.example."
 fi
 
-echo "==> Initializing SQLite database..."
-HAS_EXISTING_USER="$(python - <<'PY_INIT'
-from pathlib import Path
-from server.config import Settings
-from server.db import Database
+echo "==> Running database migrations..."
+python -m server migrate
 
-cfg = Settings()
-db = Database(Path(cfg.db_path))
-has_user = db.one("SELECT id FROM users LIMIT 1") is not None
-print("1" if has_user else "0")
-PY_INIT
-)"
-
-if [ "$HAS_EXISTING_USER" = "0" ]; then
-  echo "==> Seeding initial admin account ($ADMIN_EMAIL)..."
-  python -m server.scripts.seed_admin "$ADMIN_EMAIL"
-else
-  echo "==> Admin/staff user already exists in DB; skipping seed_admin."
-fi
+echo "==> Seeding initial admin and stages..."
+python -m server seed-admin --email "$ADMIN_EMAIL"
+python -m server seed-stages
 
 echo "==> Running backend test suite..."
 pytest -q server/tests
@@ -74,5 +61,5 @@ echo ""
 echo "Backend setup complete!"
 echo "Next steps:"
 echo "  1. Verify server/.env PUBLIC_ORIGIN=https://mala-subdistrict-kalolsavam.pages.dev."
-echo "  2. Run locally:        source $VENV_DIR/bin/activate && python -m server"
+echo "  2. Run locally:        source $VENV_DIR/bin/activate && python -m server serve"
 echo "  3. Or run via Docker:  set CLOUDFLARE_TUNNEL_TOKEN in .env, then run: docker compose up -d --build"

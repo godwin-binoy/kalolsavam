@@ -1,11 +1,13 @@
-"""Test fixtures: isolated SQLite DB per test run, sync TestClient."""
+"""Test fixtures: isolated test DB and test client."""
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlmodel import SQLModel
 
 from server.app import create_app
 from server.config import Settings
+from server.database import make_engine
 from server.db import Database
 
 
@@ -44,5 +46,15 @@ def client(tmp_path, monkeypatch):
     cfg = Settings()
     db = Database(db_path)
     app = create_app(cfg, db)
+
+    # Ensure SQLModel tables exist for tests
+    import asyncio
+    async def _init_tables():
+        engine = make_engine(db_path)
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        await engine.dispose()
+    asyncio.run(_init_tables())
+
     with TestClient(app) as c:
         yield c

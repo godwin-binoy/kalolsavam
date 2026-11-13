@@ -1,4 +1,4 @@
-"""FastAPI app factory. Single-DB auth, static mounts, SSE bus."""
+"""FastAPI app factory: FullAuth, security middleware, GZip, SSE bus."""
 from __future__ import annotations
 
 import asyncio
@@ -12,12 +12,14 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from .auth import router as auth_router
+from .auth import create_auth
 from .config import Settings
 from .db import Database
+from .deps import client_ip, hash_ip
 from .errors import http_error
 
 log = logging.getLogger("kalolsavam")
@@ -35,6 +37,8 @@ SEC_HEADERS = {
 async def lifespan(app: FastAPI):
     app.state.loop = asyncio.get_running_loop()
     yield
+    if getattr(app.state, "auth_engine", None):
+        await app.state.auth_engine.dispose()
     app.state.db.close_all()
 
 
@@ -46,6 +50,12 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     app.state.cfg = cfg
     app.state.db = db
     app.state.subscribers = {}
+
+    fullauth, auth_engine, auth_session_maker = create_auth(cfg)
+    fullauth.init_app(app)
+    app.state.fullauth = fullauth
+    app.state.auth_engine = auth_engine
+    app.state.auth_session_maker = auth_session_maker
 
     expected_origin = urlparse(cfg.public_origin)
     cors_origins = [cfg.public_origin]
@@ -74,27 +84,44 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         request.state.request_id = uuid.uuid4().hex[:12]
         start = time.perf_counter()
 
-        if request.url.path.rstrip("/") == "/api/v1/auth/register":
+        clean_path = request.url.path.rstrip("/")
+        if clean_path in ("/api/v1/auth/register", "/auth/register"):
             return JSONResponse({"error": "registration_disabled"}, status_code=403)
 
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            origin = request.headers.get("origin")
+            host_hdr = request.headers.get("host", "")
             auth_hdr = request.headers.get("authorization", "")
             using_bearer = auth_hdr.lower().startswith("bearer ")
-            host_hdr = request.headers.get("host", "")
-            origin = request.headers.get("origin")
-            referer = request.headers.get("referer")
 
-            if origin:
-                if not _origin_allowed(origin, host_hdr):
-                    return JSONResponse({"error": "origin_mismatch"}, status_code=403)
-            elif not using_bearer and referer:
-                if not _origin_allowed(referer, host_hdr):
+            if origin and not _origin_allowed(origin, host_hdr):
+                return JSONResponse({"error": "origin_mismatch"}, status_code=403)
+            elif not origin and not using_bearer:
+                referer = request.headers.get("referer")
+                if referer and not _origin_allowed(referer, host_hdr):
                     return JSONResponse({"error": "origin_mismatch"}, status_code=403)
 
         resp = await call_next(request)
+
+        # Audit login attempts
+        if request.method == "POST" and clean_path in ("/api/v1/auth/login", "/auth/login"):
+            ip_h = hash_ip(client_ip(request), cfg.secret_key)
+            now = db.now()
+            if resp.status_code == 200:
+                db.ex(
+                    "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
+                    (now, "staff", ip_h, "login_ok", "status=200"),
+                )
+            elif resp.status_code in (400, 401, 403, 429):
+                db.ex(
+                    "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
+                    (now, "unknown", ip_h, "login_fail", f"status={resp.status_code}"),
+                )
+
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)
         resp.headers["X-Request-ID"] = request.state.request_id
+
         path = request.url.path
         if path.startswith(("/admin", "/stagemaster", "/dashboard")):
             resp.headers["Cache-Control"] = "no-store"
@@ -111,9 +138,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             resp.headers["Cache-Control"] = "no-cache, must-revalidate"
         else:
             if "text/html" in resp.headers.get("content-type", ""):
-                resp.headers.setdefault(
-                    "Cache-Control", "public, max-age=0, must-revalidate"
-                )
+                resp.headers.setdefault("Cache-Control", "public, max-age=0, must-revalidate")
+
         dur = int((time.perf_counter() - start) * 1000)
         log.info("req", extra={
             "request_id": request.state.request_id, "method": request.method,
@@ -127,6 +153,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     if (dist / "assets").exists():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+
     dashboard_dir = next((p for p in (dist / "dashboard", pub / "dashboard", srv / "dashboard") if p.exists()), None)
     if dashboard_dir is not None:
         app.mount("/dashboard", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
@@ -139,7 +166,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     async def readyz():
         try:
             db.one("SELECT 1 AS x")
-            return {"ok": True, "version": "4.0.0"}
+            return {"ok": True, "version": "4.3.0"}
         except Exception:
             return JSONResponse({"ok": False}, status_code=503)
 
@@ -163,7 +190,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     from .routes.public import router as public_router
     from .routes.live import router as live_router
     from .routes.admin import router as admin_router
-    app.include_router(auth_router, prefix="/api/v1/auth")
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")
@@ -206,6 +232,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
         return JSONResponse({"error": "not_found"}, status_code=404)
 
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
