@@ -166,6 +166,7 @@ def test_full_admin_workflow_and_security(client):
         headers={**headers, "Idempotency-Key": "k1"},
     )
     assert r_start.status_code == 200
+    assert r_start.json()["item_id"] == q1["id"]
 
     r_pause = client.post(
         "/api/v1/live/advance",
@@ -173,15 +174,18 @@ def test_full_admin_workflow_and_security(client):
         headers={**headers, "Idempotency-Key": "k2"},
     )
     assert r_pause.status_code == 200
+    assert r_pause.json()["item_id"] == q1["id"]
 
     board = client.get("/api/v1/live/board", headers=headers).json()["board"]
     assert len(board) == 1
     assert board[0]["items"][0]["status"] == "PAUSED"
+    assert board[0]["items"][0]["id"] == q1["id"]
+    assert board[0]["items"][1]["id"] == q2["id"]
 
-    # Score item
+    # Score item (q1 is currently PAUSED, so it is scorable)
     r_score = client.post(
         "/api/v1/live/score",
-        json={"queue_item_id": q2["id"], "judge_no": 1, "value": 94.0},
+        json={"queue_item_id": q1["id"], "judge_no": 1, "value": 94.0},
         headers=headers,
     )
     assert r_score.status_code == 200 and r_score.json()["total"] == 94.0
@@ -190,6 +194,7 @@ def test_full_admin_workflow_and_security(client):
     dash = client.get("/api/v1/admin/dashboard", headers=headers)
     assert dash.status_code == 200
     assert dash.json()["overall"]["scores_entered"] == 1
+    assert dash.json()["top_schools"][0]["school"] == "=CMD()"
 
     audit = client.get("/api/v1/admin/audit", headers=headers)
     assert audit.status_code == 200
