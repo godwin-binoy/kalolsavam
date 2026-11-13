@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  backend:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - ./deployment:/app/deployment
+      - ./server/.env:/app/server/.env
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token YOUR_CLOUDFLARE_TUNNEL_TOKEN_HERE
+    depends_on:
+      - backend

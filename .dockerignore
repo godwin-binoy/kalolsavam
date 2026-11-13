@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.astro/
+.git/
+.github/
+.venv/
+venv/
+__pycache__/
+*.pyc
+deployment/*.db
+deployment/*.db-*
+deployment/backups/
+.env

@@ -124,7 +124,11 @@
       });
       if (res.ok){
         var htmlText = await res.text();
-        pageCache.delete(normUrl); pageCache.set(normUrl, { html: htmlText, time: Date.now() }); if (pageCache.size > 80){ pageCache.delete(pageCache.keys().next().value); }
+        pageCache.delete(normUrl); 
+        pageCache.set(normUrl, { html: htmlText, time: Date.now() }); 
+        if (pageCache.size > 80) {
+          pageCache.delete(pageCache.keys().next().value); 
+        }
         if ('caches' in window){
           caches.open(CACHE_NAME).then(function(c){
             c.put(normUrl, new Response(htmlText, {
@@ -292,6 +296,8 @@
 
       var scrollPos = isBack && scrollPositions.has(normUrl) ? scrollPositions.get(normUrl) : 0;
       window.scrollTo({ top: scrollPos, left: 0, behavior: 'instant' });
+      // Clear old scroll positions if map gets too large
+      if (scrollPositions.size > 50) scrollPositions.clear();
 
       hideProgress();
 

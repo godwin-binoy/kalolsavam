@@ -616,9 +616,6 @@ def dashboard(request: Request, user=Depends(require_admin)):
     Returns KPIs, per-venue breakdown, leaderboard, recent activity, and
     system health in one round-trip. Admin-only.
     """
-    import os as _os
-    import shutil as _shutil
-
     db, cfg = get_db(request), get_cfg(request)
 
     def count(sql, params=()):
@@ -684,11 +681,11 @@ def dashboard(request: Request, user=Depends(require_admin)):
     ]
 
     try:
-        db_size = _os.stat(cfg.db_path).st_size
+        db_size = os.stat(cfg.db_path).st_size
     except OSError:
         db_size = 0
     try:
-        disk_free = _shutil.disk_usage(cfg.db_path).free
+        disk_free = shutil.disk_usage(cfg.db_path).free
     except OSError:
         disk_free = 0
 

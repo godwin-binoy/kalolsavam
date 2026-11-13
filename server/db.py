@@ -6,6 +6,7 @@ import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator, Any
 
 
 class Database:
@@ -45,7 +46,10 @@ class Database:
             ver = int(mig.stem.split("_")[0])
             if ver <= current:
                 continue
-            conn.executescript(mig.read_text(encoding="utf-8"))
+            try:
+                conn.executescript(mig.read_text(encoding="utf-8"))
+            except sqlite3.Error as e:
+                raise RuntimeError(f"Migration {mig.name} failed: {e}") from e
             conn.execute(
                 "INSERT INTO _meta(k,v) VALUES('schema_version',?) "
                 "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
@@ -53,17 +57,17 @@ class Database:
             )
             current = ver
 
-    def q(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
+    def q(self, sql: str, params: tuple[Any, ...] = ()) -> list[sqlite3.Row]:
         return self._conn().execute(sql, params).fetchall()
 
-    def one(self, sql: str, params: tuple = ()) -> sqlite3.Row | None:
+    def one(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Row | None:
         return self._conn().execute(sql, params).fetchone()
 
-    def ex(self, sql: str, params: tuple = ()) -> sqlite3.Cursor:
+    def ex(self, sql: str, params: tuple[Any, ...] = ()) -> sqlite3.Cursor:
         return self._conn().execute(sql, params)
 
     @contextmanager
-    def transaction(self):
+    def transaction(self) -> Iterator[Database]:
         if getattr(self._local, "tx_depth", 0) > 0:
             raise RuntimeError("nested db.transaction() is not supported")
         c = self._conn()
