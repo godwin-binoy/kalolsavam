@@ -6,9 +6,10 @@ time. With future annotations active, `list["Role"]` becomes the literal
 string `"list['Role']"`, which SQLModel forwards to SQLAlchemy as the
 target model — causing `InvalidRequestError: relationship("list['Role']")`.
 """
+import json
 from pathlib import Path
 
-from fastapi_fullauth import FullAuth, FullAuthConfig
+from fastapi_fullauth import FullAuth, FullAuthConfig, UserSchema
 from fastapi_fullauth.adapters import SQLModelAdapter
 from fastapi_fullauth.backends import CookieBackend
 from fastapi_fullauth.models.sqlmodel import (
@@ -18,6 +19,7 @@ from fastapi_fullauth.models.sqlmodel import (
     UserRoleMixin,
 )
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from pydantic import Field as PydanticField
 from sqlmodel import Field, Relationship
 
 from .config import Settings
@@ -47,6 +49,11 @@ class User(UserMixin, table=True):
     )
 
 
+class KalUserSchema(UserSchema):
+    stages: str = "[]"
+    roles: list[str] = PydanticField(default_factory=list)
+
+
 def create_auth(cfg: Settings):
     db_path = Path(cfg.auth_db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -62,27 +69,30 @@ def create_auth(cfg: Settings):
         refresh_token_model=RefreshToken,
         role_model=Role,
         user_role_model=UserRole,
+        user_schema=KalUserSchema,
     )
     config = FullAuthConfig(
         SECRET_KEY=cfg.secret_key,
         ACCESS_TOKEN_EXPIRE_MINUTES=cfg.session_ttl_min,
-        COOKIE_SECURE=cfg.public_origin.startswith("https://"),
     )
     fullauth = FullAuth(
         adapter=adapter,
         config=config,
-        backends=[CookieBackend(config)],
+        backends=[CookieBackend(config, secure=cfg.public_origin.startswith("https://"))],
     )
     return fullauth, engine, session_maker
 
 
-def get_user_stages(user: User) -> list[int]:
-    import json
+def get_user_stages(user: User | KalUserSchema) -> list[int]:
     try:
-        return json.loads(user.stages or "[]")
+        return json.loads(getattr(user, "stages", "[]") or "[]")
     except Exception:
         return []
 
 
-def has_role(user: User, *names: str) -> bool:
-    return any(r.name in names for r in user.roles)
+def has_role(user: User | KalUserSchema, *names: str) -> bool:
+    for r in getattr(user, "roles", ()) or ():
+        role_name = r if isinstance(r, str) else getattr(r, "name", None)
+        if role_name in names:
+            return True
+    return False
