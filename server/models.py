@@ -1,10 +1,24 @@
-"""Request DTOs with input normalization and validation."""
-from __future__ import annotations
+"""Unified SQLModel database tables and Pydantic/SQLModel request schemas.
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+Do NOT add `from __future__ import annotations` here: SQLModel's Relationship()
+inspects string annotations at class creation time.
+"""
+import re
+from typing import Optional
+
+from fastapi_fullauth import UserSchema
+from fastapi_fullauth.models.sqlmodel import (
+    RefreshTokenMixin,
+    RoleMixin,
+    UserMixin,
+    UserRoleMixin,
+)
+from pydantic import BaseModel, EmailStr, Field as PydanticField, field_validator
+from sqlalchemy import Column, ForeignKey, Index, Integer, UniqueConstraint, text
+from sqlmodel import Field, Relationship, SQLModel
 
 
-def _require_non_blank(v: str | None) -> str | None:
+def _require_non_blank(v: Optional[str]) -> Optional[str]:
     if v is None:
         return None
     stripped = v.strip()
@@ -13,13 +27,166 @@ def _require_non_blank(v: str | None) -> str | None:
     return stripped
 
 
-def _optional_slug(v: str | None) -> str | None:
+def _clean_slug_val(v: Optional[str]) -> Optional[str]:
     if v is None:
         return None
     s = v.strip().lower()
-    return s or None
+    if not s:
+        return None
+    if not re.fullmatch(r"[a-z0-9-]+", s) or len(s) > 64:
+        raise ValueError("invalid slug")
+    return s
 
 
+# ── Auth Tables (fastapi-fullauth SQLModel) ───────────────────────────────────
+class RefreshToken(RefreshTokenMixin, table=True):
+    pass
+
+
+class Role(RoleMixin, table=True):
+    pass
+
+
+class UserRole(UserRoleMixin, table=True):
+    pass
+
+
+class User(UserMixin, table=True):
+    __tablename__ = "fullauth_users"
+    stages: str = Field(default="[]", max_length=2000)
+    roles: list["Role"] = Relationship(
+        link_model=UserRole,
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    refresh_tokens: list["RefreshToken"] = Relationship(
+        sa_relationship_kwargs={"lazy": "noload"},
+    )
+
+
+class KalUserSchema(UserSchema):
+    stages: str = "[]"
+    roles: list[str] = PydanticField(default_factory=list)
+
+
+# ── Festival Tables + Shared Base Schemas ─────────────────────────────────────
+class VenueBase(SQLModel):
+    name: str = Field(min_length=1, max_length=120)
+    kind: str = Field(default="stage", max_length=32)
+    slug: Optional[str] = Field(default=None, max_length=64)
+    active: bool = Field(default=True)
+
+
+class Venue(VenueBase, table=True):
+    __tablename__ = "venues"
+    __table_args__ = (
+        Index("idx_venues_slug", "slug", unique=True, sqlite_where=text("slug IS NOT NULL")),
+    )
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
+class Category(SQLModel, table=True):
+    __tablename__ = "categories"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(min_length=1, max_length=120)
+    grp: str = Field(default="HSS GENERAL", max_length=64)
+
+
+class EventBase(SQLModel):
+    code: str = Field(min_length=1, max_length=32)
+    title: str = Field(min_length=1, max_length=200)
+    category_id: Optional[int] = Field(default=None, foreign_key="categories.id")
+    venue_id: Optional[int] = Field(default=None, foreign_key="venues.id")
+    day: Optional[str] = Field(default=None, max_length=32)
+    scheduled_time: Optional[str] = Field(default=None, max_length=16)
+
+
+class Event(EventBase, table=True):
+    __tablename__ = "events"
+    __table_args__ = (
+        UniqueConstraint("code", name="uq_events_code"),
+        Index("idx_events_venue", "venue_id"),
+        Index("idx_events_day_time", "day", "scheduled_time"),
+    )
+    id: Optional[int] = Field(default=None, primary_key=True)
+
+
+class Participant(SQLModel, table=True):
+    __tablename__ = "participants"
+    id: Optional[int] = Field(default=None, primary_key=True)
+    event_id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=True),
+    )
+    school: str = Field(min_length=1, max_length=200)
+    student_name: Optional[str] = Field(default=None, max_length=200)
+    roll: Optional[str] = Field(default=None, max_length=64)
+
+
+class QueueItem(SQLModel, table=True):
+    __tablename__ = "queue_items"
+    __table_args__ = (
+        Index("idx_queue_board", "venue_id", "status", "position"),
+        Index("idx_queue_venue_status_pos", "venue_id", "status", "position"),
+    )
+    id: Optional[int] = Field(default=None, primary_key=True)
+    venue_id: int = Field(foreign_key="venues.id")
+    event_id: int = Field(foreign_key="events.id")
+    participant_id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=True),
+    )
+    status: str = Field(default="WAITING", max_length=16)
+    position: int = Field(default=0)
+    version: int = Field(default=1)
+    started_at: Optional[float] = Field(default=None)
+    completed_at: Optional[float] = Field(default=None)
+    updated_at: float
+
+
+class Score(SQLModel, table=True):
+    __tablename__ = "scores"
+    __table_args__ = (UniqueConstraint("queue_item_id", "judge_no", name="uq_scores_item_judge"),)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    queue_item_id: Optional[int] = Field(
+        default=None,
+        sa_column=Column(Integer, ForeignKey("queue_items.id", ondelete="CASCADE"), nullable=True),
+    )
+    judge_no: int
+    value: float
+    entered_by: str
+    entered_at: float
+
+
+class LiveState(SQLModel, table=True):
+    __tablename__ = "live_state"
+    venue_id: int = Field(primary_key=True, foreign_key="venues.id")
+    state: str = Field(default="IDLE", max_length=16)
+    announcement: str = Field(default="", max_length=280)
+    updated_at: float
+
+
+class Idempotency(SQLModel, table=True):
+    __tablename__ = "idempotency"
+    key: str = Field(primary_key=True)
+    response: str
+    created_at: float
+
+
+class AuthAudit(SQLModel, table=True):
+    __tablename__ = "auth_audit"
+    __table_args__ = (
+        Index("idx_audit_ts", "ts"),
+        Index("idx_audit_ip_event_ts", "ip_hash", "event", "ts"),
+    )
+    id: Optional[int] = Field(default=None, primary_key=True)
+    ts: float
+    username: Optional[str] = Field(default=None)
+    ip_hash: Optional[str] = Field(default=None)
+    event: str
+    detail: Optional[str] = Field(default=None)
+
+
+# ── API Request DTOs ──────────────────────────────────────────────────────────
 class StateIn(BaseModel):
     venue_id: int
     state: str = Field(pattern=r"^(IDLE|RUNNING|PAUSED|BREAK|FINISHED)$")
@@ -29,8 +196,8 @@ class StateIn(BaseModel):
 class AdvanceIn(BaseModel):
     venue_id: int
     action: str = Field(pattern=r"^(START_NEXT|COMPLETE_CURRENT|PAUSE|RESUME|SKIP|RECALL)$")
-    version: int | None = None
-    item_id: int | None = None
+    version: Optional[int] = None
+    item_id: Optional[int] = None
 
 
 class ScoreIn(BaseModel):
@@ -39,16 +206,11 @@ class ScoreIn(BaseModel):
     value: float = Field(ge=0, le=100)
 
 
-class VenueIn(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    kind: str = Field(default="stage", max_length=32)
-    slug: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
-    active: bool = True
-
+class VenueIn(VenueBase):
     @field_validator("slug", mode="before")
     @classmethod
-    def _clean_slug(cls, v: str | None) -> str | None:
-        return _optional_slug(v)
+    def _clean_slug(cls, v: Optional[str]) -> Optional[str]:
+        return _clean_slug_val(v)
 
     @field_validator("name", "kind")
     @classmethod
@@ -57,19 +219,19 @@ class VenueIn(BaseModel):
 
 
 class VenueUpdateIn(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    kind: str | None = Field(default=None, max_length=32)
-    slug: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
-    active: bool | None = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    kind: Optional[str] = Field(default=None, max_length=32)
+    slug: Optional[str] = Field(default=None, max_length=64)
+    active: Optional[bool] = None
 
     @field_validator("slug", mode="before")
     @classmethod
-    def _clean_slug(cls, v: str | None) -> str | None:
-        return _optional_slug(v)
+    def _clean_slug(cls, v: Optional[str]) -> Optional[str]:
+        return _clean_slug_val(v)
 
     @field_validator("name", "kind")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: Optional[str]) -> Optional[str]:
         return _require_non_blank(v)
 
 
@@ -84,23 +246,16 @@ class CategoryIn(BaseModel):
 
 
 class CategoryUpdateIn(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    group: str | None = Field(default=None, max_length=64)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    group: Optional[str] = Field(default=None, max_length=64)
 
     @field_validator("name", "group")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: Optional[str]) -> Optional[str]:
         return _require_non_blank(v)
 
 
-class EventIn(BaseModel):
-    code: str = Field(min_length=1, max_length=32)
-    title: str = Field(min_length=1, max_length=200)
-    category_id: int | None = None
-    venue_id: int | None = None
-    day: str | None = Field(default=None, max_length=32)
-    scheduled_time: str | None = Field(default=None, max_length=16)
-
+class EventIn(EventBase):
     @field_validator("code", "title")
     @classmethod
     def _clean(cls, v: str) -> str:
@@ -108,16 +263,16 @@ class EventIn(BaseModel):
 
 
 class EventUpdateIn(BaseModel):
-    code: str | None = Field(default=None, min_length=1, max_length=32)
-    title: str | None = Field(default=None, min_length=1, max_length=200)
-    category_id: int | None = None
-    venue_id: int | None = None
-    day: str | None = Field(default=None, max_length=32)
-    scheduled_time: str | None = Field(default=None, max_length=16)
+    code: Optional[str] = Field(default=None, min_length=1, max_length=32)
+    title: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    category_id: Optional[int] = None
+    venue_id: Optional[int] = None
+    day: Optional[str] = Field(default=None, max_length=32)
+    scheduled_time: Optional[str] = Field(default=None, max_length=16)
 
     @field_validator("code", "title")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: Optional[str]) -> Optional[str]:
         return _require_non_blank(v)
 
 
@@ -129,10 +284,10 @@ class UserIn(BaseModel):
 
 
 class UserUpdateIn(BaseModel):
-    email: EmailStr | None = None
-    role: str | None = Field(default=None, pattern=r"^(stagemaster|admin)$")
-    stages: list[int] | None = None
-    is_active: bool | None = None
+    email: Optional[EmailStr] = None
+    role: Optional[str] = Field(default=None, pattern=r"^(stagemaster|admin)$")
+    stages: Optional[list[int]] = None
+    is_active: Optional[bool] = None
 
 
 class PasswordResetIn(BaseModel):
@@ -143,8 +298,8 @@ class AddToQueueIn(BaseModel):
     venue_id: int
     event_id: int
     school: str = Field(min_length=1, max_length=200)
-    student_name: str | None = Field(default=None, max_length=200)
-    roll: str | None = Field(default=None, max_length=64)
+    student_name: Optional[str] = Field(default=None, max_length=200)
+    roll: Optional[str] = Field(default=None, max_length=64)
 
     @field_validator("school")
     @classmethod
@@ -153,13 +308,13 @@ class AddToQueueIn(BaseModel):
 
 
 class QueueItemUpdateIn(BaseModel):
-    school: str | None = Field(default=None, min_length=1, max_length=200)
-    student_name: str | None = Field(default=None, max_length=200)
-    roll: str | None = Field(default=None, max_length=64)
+    school: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    student_name: Optional[str] = Field(default=None, max_length=200)
+    roll: Optional[str] = Field(default=None, max_length=64)
 
     @field_validator("school")
     @classmethod
-    def _clean_school(cls, v: str | None) -> str | None:
+    def _clean_school(cls, v: Optional[str]) -> Optional[str]:
         return _require_non_blank(v)
 
 

@@ -1,0 +1,21 @@
+[project]
+name = "kalolsavam"
+version = "4.3.0"
+requires-python = ">=3.11"
+description = "Mala Sub-District School Kalolsavam web desk and live stage API"
+
+[tool.pytest.ini_options]
+testpaths = ["server/tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["dist", "node_modules", ".astro", "server/alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "S", "I", "UP"]
+ignore = ["B008", "E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"server/tests/*" = ["S101", "S105", "S106"]
