@@ -1,30 +1,58 @@
-FROM python:3.11-slim
+# syntax=docker/dockerfile:1
+# ============================================================================
+# Kalolsavam — unified production image
+# Stage 1: build the Astro site  |  Stage 2: Python backend + built dist
+# ============================================================================
+
+# ---------- Stage 1: Astro frontend ----------
+FROM node:20-alpine AS frontend
+
+WORKDIR /frontend
+
+COPY package.json ./
+COPY astro.config.mjs tsconfig.json ./
+RUN npm install --no-audit --no-fund
+
+COPY src ./src
+COPY public ./public
+COPY scripts ./scripts
+
+# Same-origin by default: the backend serves the frontend and the API.
+ARG PUBLIC_API_URL=same-origin
+RUN echo "PUBLIC_API_URL=${PUBLIC_API_URL}" > .env
+
+RUN npm run build
+
+# ---------- Stage 2: Python backend ----------
+FROM python:3.11-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
     SERVER_HOST=0.0.0.0 \
-    SERVER_PORT=8000
+    SERVER_PORT=8000 \
+    DB_PATH=/app/deployment/kalolsavam.db \
+    DIST_PATH=/app/dist
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements.txt ./
+RUN pip install -r requirements.txt
 
-COPY alembic.ini ./alembic.ini
+COPY alembic.ini ./
 COPY server ./server
-COPY public/assets ./public/assets
-COPY public/admin ./public/admin
-COPY public/stagemaster ./public/stagemaster
-COPY public/dashboard ./public/dashboard
-COPY public/manifest.json ./public/manifest.json
-COPY public/robots.txt ./public/robots.txt
+COPY --from=frontend /frontend/dist ./dist
 COPY src/data/stages.json ./src/data/stages.json
 
-RUN mkdir -p /app/deployment
+COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
+ && mkdir -p /app/deployment \
+ && touch /app/server/.env
 
 EXPOSE 8000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"
 
-CMD ["python", "-m", "server"]
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]

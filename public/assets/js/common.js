@@ -2,9 +2,10 @@
   'use strict';
 
   function apiBase(){
-    if (location.port === '8000' || location.hostname === 'testserver') return '';
     var explicit = document.body && document.body.getAttribute('data-api');
-    if (explicit != null && explicit !== '') return explicit.replace(/\/+$/, '');
+    if (explicit === 'same-origin' || explicit === '') return '';
+    if (explicit != null) return explicit.replace(/\/+$/, '');
+    if (location.port === '8000' || location.hostname === 'testserver') return '';
     return 'https://apikalolsavammala.dpdns.org';
   }
 

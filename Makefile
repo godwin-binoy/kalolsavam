@@ -1,36 +1,34 @@
-.PHONY: dev serve migrate seed-admin seed-stages lint audit test build check docker-up docker-down
+.PHONY: up up-tunnel down restart logs build migrate shell ps dev clean
+
+up:
+	docker compose up -d --build
+
+up-tunnel:
+	docker compose --profile tunnel up -d --build
+
+down:
+	docker compose down
+
+restart:
+	docker compose restart backend
+
+logs:
+	docker compose logs -f backend
+
+build:
+	docker compose build
+
+migrate:
+	docker compose exec backend python -m server migrate
+
+shell:
+	docker compose exec backend bash
+
+ps:
+	docker compose ps
 
 dev:
 	npm run dev
 
-serve:
-	python -m server serve
-
-migrate:
-	python -m server migrate
-
-seed-admin:
-	python -m server seed-admin
-
-seed-stages:
-	python -m server seed-stages
-
-lint:
-	ruff check server
-
-audit:
-	pip-audit -r requirements.txt
-
-test:
-	pytest -q server/tests
-
-build:
-	npm run build
-
-check: lint test
-
-docker-up:
-	docker compose up -d --build
-
-docker-down:
+clean:
 	docker compose down

@@ -208,28 +208,47 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     @app.get("/{full_path:path}")
     async def catch_all(full_path: str):
-        clean_path = full_path.lstrip("/")
+        clean_path = full_path.strip("/")
+
         if clean_path == "favicon.ico":
             return Response(status_code=204)
+
         if (
             clean_path in ("api", "assets", "dashboard")
             or clean_path.startswith(("api/", "assets/", "dashboard/"))
         ):
             return JSONResponse({"error": "not_found"}, status_code=404)
 
-        if clean_path in ("admin/", "admin/index.html"):
-            for candidate in (dist / "admin" / "index.html", pub / "admin" / "index.html"):
-                if candidate.is_file():
-                    return FileResponse(candidate)
+        dist_root = dist.resolve()
 
-        if clean_path in ("stagemaster/", "stagemaster/index.html"):
-            for candidate in (dist / "stagemaster" / "index.html", pub / "stagemaster" / "index.html"):
-                if candidate.is_file():
-                    return FileResponse(candidate)
+        def _safe(rel: str):
+            try:
+                c = (dist / rel).resolve()
+                if c.is_relative_to(dist_root) and c.is_file():
+                    return c
+            except (ValueError, OSError):
+                pass
+            return None
+
+        candidates: list[str] = []
+        if clean_path:
+            candidates.append(clean_path)
+            candidates.append(clean_path.rstrip("/") + "/index.html")
+            if "." not in clean_path.rsplit("/", 1)[-1]:
+                candidates.append(clean_path + ".html")
+        else:
+            candidates.append("index.html")
+
+        for rel in candidates:
+            path = _safe(rel)
+            if path:
+                return FileResponse(path)
+
+        nf = _safe("404.html")
+        if nf:
+            return FileResponse(nf, status_code=404)
 
         if not clean_path:
-            if (dist / "index.html").is_file():
-                return FileResponse(dist / "index.html")
             gate = srv / "static" / "gate.html"
             if gate.is_file():
                 return FileResponse(gate)

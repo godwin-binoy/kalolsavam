@@ -1,27 +1,41 @@
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: kalolsavam-backend:latest
     restart: unless-stopped
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
       - ./deployment:/app/deployment:Z
-      - ./server/.env:/app/server/.env:ro,Z
     environment:
-      - PYTHONUNBUFFERED=1
-      - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8000
+      PYTHONUNBUFFERED: "1"
+      SERVER_HOST: "0.0.0.0"
+      SERVER_PORT: "8000"
+      DB_PATH: "/app/deployment/kalolsavam.db"
+      DIST_PATH: "/app/dist"
+      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-http://localhost:8000}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
+      SECRET_KEY: "${SECRET_KEY:-}"
+      SESSION_TTL_MIN: "${SESSION_TTL_MIN:-480}"
+      TRUST_PROXY_HEADERS: "${TRUST_PROXY_HEADERS:-true}"
+      RESULTS_URL: "${RESULTS_URL:-https://kalolsavam.kerala.gov.in/}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@kalolsavam.example.com}"
+      ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3)"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
 
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
     depends_on:
       backend:
         condition: service_healthy
+    profiles:
+      - tunnel
