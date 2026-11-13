@@ -1,4 +1,4 @@
-"""Unified SQLModel database tables and Pydantic/SQLModel request schemas.
+"""Unified SQLModel database tables and Pydantic request schemas.
 
 Do NOT add `from __future__ import annotations` here: SQLModel's Relationship()
 inspects string annotations at class creation time.
@@ -12,10 +12,9 @@ from fastapi_fullauth.models.sqlmodel import (
     UserMixin,
     UserRoleMixin,
 )
-from pydantic import BaseModel, EmailStr, field_validator
-from pydantic import Field as PydanticField
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import Column, ForeignKey, Index, Integer, UniqueConstraint, text
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field as SQLField, Relationship, SQLModel
 
 
 def _require_non_blank(v: str | None) -> str | None:
@@ -53,7 +52,7 @@ class UserRole(UserRoleMixin, table=True):
 
 class User(UserMixin, table=True):
     __tablename__ = "fullauth_users"
-    stages: str = Field(default="[]", max_length=2000)
+    stages: str = SQLField(default="[]", max_length=2000)
     roles: list["Role"] = Relationship(
         link_model=UserRole,
         sa_relationship_kwargs={"lazy": "selectin"},
@@ -65,15 +64,15 @@ class User(UserMixin, table=True):
 
 class KalUserSchema(UserSchema):
     stages: str = "[]"
-    roles: list[str] = PydanticField(default_factory=list)
+    roles: list[str] = Field(default_factory=list)
 
 
-# ── Festival Tables + Shared Base Schemas ─────────────────────────────────────
+# ── Festival Tables (SQLModel) ────────────────────────────────────────────────
 class VenueBase(SQLModel):
-    name: str = Field(min_length=1, max_length=120)
-    kind: str = Field(default="stage", max_length=32)
-    slug: str | None = Field(default=None, max_length=64)
-    active: bool = Field(default=True)
+    name: str = SQLField(min_length=1, max_length=120)
+    kind: str = SQLField(default="stage", max_length=32)
+    slug: str | None = SQLField(default=None, max_length=64)
+    active: bool = SQLField(default=True)
 
 
 class Venue(VenueBase, table=True):
@@ -81,23 +80,23 @@ class Venue(VenueBase, table=True):
     __table_args__ = (
         Index("idx_venues_slug", "slug", unique=True, sqlite_where=text("slug IS NOT NULL")),
     )
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = SQLField(default=None, primary_key=True)
 
 
 class Category(SQLModel, table=True):
     __tablename__ = "categories"
-    id: int | None = Field(default=None, primary_key=True)
-    name: str = Field(min_length=1, max_length=120)
-    grp: str = Field(default="HSS GENERAL", max_length=64)
+    id: int | None = SQLField(default=None, primary_key=True)
+    name: str = SQLField(min_length=1, max_length=120)
+    grp: str = SQLField(default="HSS GENERAL", max_length=64)
 
 
 class EventBase(SQLModel):
-    code: str = Field(min_length=1, max_length=32)
-    title: str = Field(min_length=1, max_length=200)
-    category_id: int | None = Field(default=None, foreign_key="categories.id")
-    venue_id: int | None = Field(default=None, foreign_key="venues.id")
-    day: str | None = Field(default=None, max_length=32)
-    scheduled_time: str | None = Field(default=None, max_length=16)
+    code: str = SQLField(min_length=1, max_length=32)
+    title: str = SQLField(min_length=1, max_length=200)
+    category_id: int | None = SQLField(default=None, foreign_key="categories.id")
+    venue_id: int | None = SQLField(default=None, foreign_key="venues.id")
+    day: str | None = SQLField(default=None, max_length=32)
+    scheduled_time: str | None = SQLField(default=None, max_length=16)
 
 
 class Event(EventBase, table=True):
@@ -107,19 +106,19 @@ class Event(EventBase, table=True):
         Index("idx_events_venue", "venue_id"),
         Index("idx_events_day_time", "day", "scheduled_time"),
     )
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = SQLField(default=None, primary_key=True)
 
 
 class Participant(SQLModel, table=True):
     __tablename__ = "participants"
-    id: int | None = Field(default=None, primary_key=True)
-    event_id: int | None = Field(
+    id: int | None = SQLField(default=None, primary_key=True)
+    event_id: int | None = SQLField(
         default=None,
         sa_column=Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=True),
     )
-    school: str = Field(min_length=1, max_length=200)
-    student_name: str | None = Field(default=None, max_length=200)
-    roll: str | None = Field(default=None, max_length=64)
+    school: str = SQLField(min_length=1, max_length=200)
+    student_name: str | None = SQLField(default=None, max_length=200)
+    roll: str | None = SQLField(default=None, max_length=64)
 
 
 class QueueItem(SQLModel, table=True):
@@ -128,26 +127,26 @@ class QueueItem(SQLModel, table=True):
         Index("idx_queue_board", "venue_id", "status", "position"),
         Index("idx_queue_venue_status_pos", "venue_id", "status", "position"),
     )
-    id: int | None = Field(default=None, primary_key=True)
-    venue_id: int = Field(foreign_key="venues.id")
-    event_id: int = Field(foreign_key="events.id")
-    participant_id: int | None = Field(
+    id: int | None = SQLField(default=None, primary_key=True)
+    venue_id: int = SQLField(foreign_key="venues.id")
+    event_id: int = SQLField(foreign_key="events.id")
+    participant_id: int | None = SQLField(
         default=None,
         sa_column=Column(Integer, ForeignKey("participants.id", ondelete="CASCADE"), nullable=True),
     )
-    status: str = Field(default="WAITING", max_length=16)
-    position: int = Field(default=0)
-    version: int = Field(default=1)
-    started_at: float | None = Field(default=None)
-    completed_at: float | None = Field(default=None)
+    status: str = SQLField(default="WAITING", max_length=16)
+    position: int = SQLField(default=0)
+    version: int = SQLField(default=1)
+    started_at: float | None = SQLField(default=None)
+    completed_at: float | None = SQLField(default=None)
     updated_at: float
 
 
 class Score(SQLModel, table=True):
     __tablename__ = "scores"
     __table_args__ = (UniqueConstraint("queue_item_id", "judge_no", name="uq_scores_item_judge"),)
-    id: int | None = Field(default=None, primary_key=True)
-    queue_item_id: int | None = Field(
+    id: int | None = SQLField(default=None, primary_key=True)
+    queue_item_id: int | None = SQLField(
         default=None,
         sa_column=Column(Integer, ForeignKey("queue_items.id", ondelete="CASCADE"), nullable=True),
     )
@@ -159,15 +158,15 @@ class Score(SQLModel, table=True):
 
 class LiveState(SQLModel, table=True):
     __tablename__ = "live_state"
-    venue_id: int = Field(primary_key=True, foreign_key="venues.id")
-    state: str = Field(default="IDLE", max_length=16)
-    announcement: str = Field(default="", max_length=280)
+    venue_id: int = SQLField(primary_key=True, foreign_key="venues.id")
+    state: str = SQLField(default="IDLE", max_length=16)
+    announcement: str = SQLField(default="", max_length=280)
     updated_at: float
 
 
 class Idempotency(SQLModel, table=True):
     __tablename__ = "idempotency"
-    key: str = Field(primary_key=True)
+    key: str = SQLField(primary_key=True)
     response: str
     created_at: float
 
@@ -178,15 +177,15 @@ class AuthAudit(SQLModel, table=True):
         Index("idx_audit_ts", "ts"),
         Index("idx_audit_ip_event_ts", "ip_hash", "event", "ts"),
     )
-    id: int | None = Field(default=None, primary_key=True)
+    id: int | None = SQLField(default=None, primary_key=True)
     ts: float
-    username: str | None = Field(default=None)
-    ip_hash: str | None = Field(default=None)
+    username: str | None = SQLField(default=None)
+    ip_hash: str | None = SQLField(default=None)
     event: str
-    detail: str | None = Field(default=None)
+    detail: str | None = SQLField(default=None)
 
 
-# ── API Request DTOs ──────────────────────────────────────────────────────────
+# ── Request Validation DTOs (Pydantic v2 BaseModel) ───────────────────────────
 class StateIn(BaseModel):
     venue_id: int
     state: str = Field(pattern=r"^(IDLE|RUNNING|PAUSED|BREAK|FINISHED)$")
