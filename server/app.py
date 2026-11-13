@@ -16,6 +16,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
+from . import __version__
 from .auth import create_auth
 from .config import Settings
 from .db import Database
@@ -151,8 +152,9 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     pub = srv.parent / "public"
     dist = Path(cfg.dist_path)
 
-    if (dist / "assets").exists():
-        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+    assets_dir = next((p for p in (dist / "assets", pub / "assets") if p.exists()), None)
+    if assets_dir is not None:
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
     dashboard_dir = next((p for p in (dist / "dashboard", pub / "dashboard", srv / "dashboard") if p.exists()), None)
     if dashboard_dir is not None:
@@ -166,7 +168,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     async def readyz():
         try:
             db.one("SELECT 1 AS x")
-            return {"ok": True, "version": "4.3.0"}
+            return {"ok": True, "version": __version__}
         except Exception:
             return JSONResponse({"ok": False}, status_code=503)
 
@@ -179,8 +181,10 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     @app.get("/manifest.json")
     async def manifest():
-        f = dist / "manifest.json"
-        return FileResponse(f, media_type="application/json") if f.exists() else JSONResponse({}, status_code=404)
+        for f in (dist / "manifest.json", pub / "manifest.json"):
+            if f.is_file():
+                return FileResponse(f, media_type="application/json")
+        return JSONResponse({}, status_code=404)
 
     @app.get("/sw.js")
     async def sw():

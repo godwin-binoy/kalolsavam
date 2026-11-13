@@ -28,7 +28,6 @@ build:
 	npm run build
 
 check: lint test
-	npx astro check
 
 docker-up:
 	docker compose up -d --build

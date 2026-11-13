@@ -1,4 +1,8 @@
-"""SQLite (WAL) data layer — per-thread connections + explicit transactions."""
+"""SQLite (WAL) data layer — per-thread connections + explicit transactions.
+
+Schema is owned exclusively by Alembic (see server/schema.py). This class never
+creates, alters, or migrates tables.
+"""
 from __future__ import annotations
 
 import logging
@@ -18,22 +22,16 @@ class Database:
         self._local = threading.local()
         self._conns_lock = threading.Lock()
         self._conns: set[sqlite3.Connection] = set()
-        conn = self._new_conn(track=False)
-        try:
-            self._migrate(conn)
-        finally:
-            conn.close()
 
-    def _new_conn(self, track: bool = True) -> sqlite3.Connection:
+    def _new_conn(self) -> sqlite3.Connection:
         c = sqlite3.connect(self.path, check_same_thread=False, isolation_level=None)
         c.row_factory = sqlite3.Row
         c.execute("PRAGMA journal_mode=WAL")
         c.execute("PRAGMA synchronous=NORMAL")
         c.execute("PRAGMA foreign_keys=ON")
         c.execute("PRAGMA busy_timeout=5000")
-        if track:
-            with self._conns_lock:
-                self._conns.add(c)
+        with self._conns_lock:
+            self._conns.add(c)
         return c
 
     def _conn(self) -> sqlite3.Connection:
@@ -52,28 +50,6 @@ class Database:
                 c.close()
             except Exception as exc:
                 logging.getLogger("kalolsavam").debug("DB connection close failed: %s", exc)
-
-    def _migrate(self, conn: sqlite3.Connection) -> None:
-        conn.execute(
-            "CREATE TABLE IF NOT EXISTS _meta (k TEXT PRIMARY KEY, v TEXT NOT NULL)"
-        )
-        row = conn.execute("SELECT v FROM _meta WHERE k='schema_version'").fetchone()
-        current = int(row["v"]) if row else 0
-        mig_dir = Path(__file__).resolve().parent / "migrations"
-        for mig in sorted(mig_dir.glob("*.sql")):
-            ver = int(mig.stem.split("_")[0])
-            if ver <= current:
-                continue
-            try:
-                conn.executescript(mig.read_text(encoding="utf-8"))
-            except sqlite3.Error as e:
-                raise RuntimeError(f"Migration {mig.name} failed: {e}") from e
-            conn.execute(
-                "INSERT INTO _meta(k,v) VALUES('schema_version',?) "
-                "ON CONFLICT(k) DO UPDATE SET v=excluded.v",
-                (str(ver),),
-            )
-            current = ver
 
     def q(self, sql: str, params: tuple[Any, ...] = ()) -> list[sqlite3.Row]:
         return self._conn().execute(sql, params).fetchall()

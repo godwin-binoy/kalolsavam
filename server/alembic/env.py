@@ -1,27 +1,38 @@
-"""Async Alembic environment configured for SQLModel + SQLite batch mode."""
+"""Async Alembic environment (SQLModel metadata, SQLite batch mode)."""
 from __future__ import annotations
 
 import asyncio
+import sys
 from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
 from sqlmodel import SQLModel
 
-import server.models  # noqa: F401
-from server.config import Settings
-from server.database import make_engine
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+import server.models  # noqa: E402,F401
+from server.config import Settings  # noqa: E402
+from server.database import make_engine  # noqa: E402
 
 config = context.config
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 target_metadata = SQLModel.metadata
 
 
+def _db_path() -> Path:
+    override = config.get_main_option("kal_db_path")
+    if override:
+        return Path(override)
+    return Path(Settings().db_path).expanduser().resolve()
+
+
 def _db_url() -> str:
-    cfg = Settings()
-    return f"sqlite+aiosqlite:///{Path(cfg.db_path)}"
+    return f"sqlite+aiosqlite:///{_db_path()}"
 
 
 def run_migrations_offline() -> None:
@@ -47,11 +58,12 @@ def do_run_migrations(connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    cfg = Settings()
-    connectable = make_engine(cfg.db_path)
-    async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
-    await connectable.dispose()
+    connectable = make_engine(_db_path())
+    try:
+        async with connectable.connect() as connection:
+            await connection.run_sync(do_run_migrations)
+    finally:
+        await connectable.dispose()
 
 
 def run_migrations_online() -> None:

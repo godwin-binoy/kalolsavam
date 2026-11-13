@@ -1,7 +1,9 @@
 ---
 import '../styles/global.css';
 import { API_BASE, BASE, url } from '../lib/url';
+import pkg from '../../package.json';
 const { title = "Mala Sub-District Kalolsavam", active = "" } = Astro.props;
+const VERSION = pkg.version;
 const siteOrigin = Astro.site || 'https://mala-subdistrict-kalolsavam.pages.dev';
 const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).href;
 const ogImage = new URL(BASE + 'assets/img/logo.webp', siteOrigin).href;
@@ -43,10 +45,10 @@ const navKey = (k: string) => `nav.${k}`;
 <meta name="twitter:card" content="summary">
 <link rel="icon" type="image/webp" href={BASE + 'assets/img/logo.webp'}>
 <script is:inline>try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
-<script is:inline src={BASE + 'assets/js/lang.js?v=4.2.0'}></script>
+<script is:inline src={BASE + 'assets/js/lang.js?v=' + VERSION}></script>
 </head>
 <body data-nav={active} data-base={BASE} data-api={API_BASE}>
-<script is:inline src={BASE + 'assets/js/common.js?v=4.2.0'}></script>
+<script is:inline src={BASE + 'assets/js/common.js?v=' + VERSION}></script>
 <a class="skip" href="#main">Skip to content</a>
 <div class="utility-dock" role="group" aria-label="Display settings">
   <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">
@@ -92,9 +94,9 @@ const navKey = (k: string) => `nav.${k}`;
       <strong data-i18n="footer.title">Mala Sub-District School Kalolsavam</strong>
       <span data-i18n="footer.address">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
     </div>
-    <div class="ftr-meta">v4.2.0 · <a href={url('/developers')} style="color:var(--footer-fg);text-decoration:underline" data-i18n="footer.dev">Meet the Developers</a></div>
+    <div class="ftr-meta">v{VERSION} · <a href={url('/developers')} style="color:var(--footer-fg);text-decoration:underline" data-i18n="footer.dev">Meet the Developers</a></div>
   </div>
 </footer>
-<script is:inline src={BASE + 'assets/js/app.js?v=4.2.0'}></script>
+<script is:inline src={BASE + 'assets/js/app.js?v=' + VERSION}></script>
 </body>
 </html>

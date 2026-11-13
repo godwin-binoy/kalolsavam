@@ -1,4 +1,4 @@
-@import "../../assets/css/tokens.css";
+/* Design tokens are loaded via <link rel="stylesheet"> in each portal. */
 
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.5;font-size:15px}

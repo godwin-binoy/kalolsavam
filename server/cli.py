@@ -33,22 +33,24 @@ def serve(
     port: int | None = typer.Option(None, "--port", "-p", help="Bind port"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload for dev"),
 ) -> None:
-    """Run the FastAPI + Uvicorn server."""
+    """Run the FastAPI + Uvicorn server (schema is upgraded to head first)."""
     import uvicorn
 
     from .app import create_app
     from .config import Settings
     from .db import Database
     from .logging_setup import setup as setup_logging
+    from .schema import upgrade_to_head
 
     setup_logging()
     cfg = Settings()
+    upgrade_to_head(cfg.db_path)
     db = Database(Path(cfg.db_path))
     app_instance = create_app(cfg, db)
 
     bind_host = host or cfg.server_host
     bind_port = port or cfg.server_port
-    logging.getLogger("kalolsavam").info(f"Binding {bind_host}:{bind_port}")
+    log.info("Binding %s:%s", bind_host, bind_port)
     uvicorn.run(
         app=app_instance,
         host=bind_host,
@@ -62,11 +64,10 @@ def serve(
 @app.command()
 def migrate() -> None:
     """Run Alembic migrations to head."""
-    from alembic import command
-    from alembic.config import Config
+    from .config import Settings
+    from .schema import upgrade_to_head
 
-    alembic_cfg = Config("alembic.ini")
-    command.upgrade(alembic_cfg, "head")
+    upgrade_to_head(Settings().db_path)
     typer.echo("Database migrations applied successfully.")
 
 
@@ -83,7 +84,6 @@ async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str
     session_maker = make_session_maker(engine)
     ph = PasswordHasher()
     used_password = password or secrets.token_urlsafe(16)
-
     try:
         async with session_maker() as session:
             admin_role = (
@@ -92,7 +92,6 @@ async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str
             if not admin_role:
                 admin_role = Role(name="admin")
                 session.add(admin_role)
-
             sm_role = (
                 await session.execute(select(Role).where(Role.name == "stagemaster"))
             ).scalar_one_or_none()
@@ -125,10 +124,18 @@ async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str
 
 @app.command()
 def seed_admin(
-    email: str = typer.Option("admin@kalolsavam.example.com", "--email", "-e", help="Admin email"),
-    password: str | None = typer.Option(None, "--password", help="Admin password (generated if omitted)"),
+    email: str = typer.Option(
+        "admin@kalolsavam.example.com", "--email", "-e", help="Admin email"
+    ),
+    password: str | None = typer.Option(
+        None, "--password", help="Admin password (generated if omitted)"
+    ),
 ) -> None:
     """Seed initial admin and staff roles."""
+    from .config import Settings
+    from .schema import upgrade_to_head
+
+    upgrade_to_head(Settings().db_path)
     created, final_pass = asyncio.run(_async_seed_admin(email, password))
     if not created:
         typer.echo(f"Admin user '{email}' already exists. Skipping.")
@@ -142,13 +149,17 @@ def seed_admin(
 
 @app.command()
 def seed_stages(
-    stages_file: Path = typer.Option(Path("src/data/stages.json"), "--file", "-f", help="Path to stages.json"),
+    stages_file: Path = typer.Option(
+        Path("src/data/stages.json"), "--file", "-f", help="Path to stages.json"
+    ),
 ) -> None:
     """Seed or update all 9 stages in the database from stages.json."""
     from .config import Settings
     from .db import Database
+    from .schema import upgrade_to_head
 
     cfg = Settings()
+    upgrade_to_head(cfg.db_path)
     db = Database(Path(cfg.db_path))
 
     data = None
@@ -157,7 +168,6 @@ def seed_stages(
             data = json.loads(stages_file.read_text(encoding="utf-8"))
         except Exception as e:
             typer.echo(f"Warning: could not read {stages_file} ({e}), using fallback stages.")
-
     items = data if isinstance(data, list) else FALLBACK_STAGES
 
     with db.transaction():
@@ -204,22 +214,28 @@ def backup() -> None:
             old.unlink()
         except OSError:
             pass
-
     typer.echo(f"Backup created: {dst}")
 
 
 @app.command()
 def check() -> None:
-    """Check database health, tables, and settings."""
+    """Check database health, tables, and settings (read-only)."""
     from .config import Settings
     from .db import Database
 
     cfg = Settings()
     db = Database(Path(cfg.db_path))
-    tables = [r["name"] for r in db.q("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
+    tables = [
+        r["name"]
+        for r in db.q("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
+    ]
     typer.echo(f"DB Path: {cfg.db_path}")
     typer.echo(f"Tables present ({len(tables)}): {', '.join(tables)}")
-    user_count = db.one("SELECT COUNT(*) c FROM fullauth_users")["c"] if "fullauth_users" in tables else 0
+    user_count = (
+        db.one("SELECT COUNT(*) c FROM fullauth_users")["c"]
+        if "fullauth_users" in tables
+        else 0
+    )
     typer.echo(f"Users registered: {user_count}")
 
 
