@@ -1,13 +1,13 @@
 (function(){
   'use strict';
   var S = { onAuthLost: function(){} };
-  var DEFAULT_API_ORIGIN = 'https://malakalolsavamapi.qd.je';
+  var DEFAULT_API_ORIGIN = 'https://apikalolsavammala.dpdns.org';
 
   function resolveApiOrigin(){
     if (typeof window.KAL_API_BASE === 'string') return window.KAL_API_BASE.replace(/\/+$/, '');
     var meta = document.querySelector('meta[name="kal-api"]');
     if (meta && meta.content) return meta.content.replace(/\/+$/, '');
-    if (location.port === '8000' || location.hostname === 'testserver') return '';
+    if (location.port === '8000' || location.hostname === 'testserver' || location.hostname === 'apikalolsavammala.dpdns.org') return '';
     return DEFAULT_API_ORIGIN;
   }
 

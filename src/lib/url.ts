@@ -3,7 +3,7 @@
 const RAW = import.meta.env.BASE_URL || "/";
 export const BASE = RAW.endsWith("/") ? RAW : RAW + "/";
 
-const RAW_API = (import.meta.env.PUBLIC_API_URL ?? "https://malakalolsavamapi.qd.je").trim();
+const RAW_API = (import.meta.env.PUBLIC_API_URL ?? "https://apikalolsavammala.dpdns.org").trim();
 export const API_BASE = RAW_API.replace(/\/+$/, "");
 
 export function url(path: string): string {

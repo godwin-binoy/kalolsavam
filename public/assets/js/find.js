@@ -6,7 +6,7 @@
     if (location.port === '8000' || location.hostname === 'testserver') return '';
     var explicit = document.body.getAttribute('data-api');
     if (explicit != null) return explicit.replace(/\/+$/, '');
-    return 'https://malakalolsavamapi.qd.je';
+    return 'https://apikalolsavammala.dpdns.org';
   }
   var API_BASE = resolveApiBase();
 

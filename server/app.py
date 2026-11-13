@@ -97,6 +97,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         path = request.url.path
         if path.startswith(("/admin", "/stagemaster", "/dashboard")):
             resp.headers["Cache-Control"] = "no-store"
+            resp.headers["X-Robots-Tag"] = "noindex, nofollow"
         elif path.startswith("/assets/js/"):
             resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
         elif path.startswith("/assets/"):
@@ -151,8 +152,10 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     @app.get("/robots.txt")
     async def robots():
-        f = dist / "robots.txt"
-        return FileResponse(f, media_type="text/plain") if f.exists() else JSONResponse({}, status_code=404)
+        for f in (dist / "robots.txt", pub / "robots.txt"):
+            if f.is_file():
+                return FileResponse(f, media_type="text/plain")
+        return JSONResponse({}, status_code=404)
 
     @app.get("/manifest.json")
     async def manifest():
