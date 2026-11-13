@@ -1,0 +1,4 @@
+# Development / CI-only requirements.
+# Not installed in the production Docker image.
+-r requirements.txt
+pytest>=8

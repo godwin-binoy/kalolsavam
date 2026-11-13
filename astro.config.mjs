@@ -13,7 +13,7 @@ const base = normalizeBase(process.env.BASE_PATH || '/');
 
 export default defineConfig({
   output: 'static',
-  build: { assets: 'astro' },  // avoid Jekyll _* stripping
+  build: { assets: 'astro' },  // avoid leading-underscore asset dirs (some static hosts strip them)
   base,
   site: process.env.SITE_URL || 'https://kalolsavam.example.com',
   vite: { plugins: [tailwindcss()] },

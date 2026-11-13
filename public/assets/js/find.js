@@ -14,27 +14,14 @@
 
   // Embedded festival program dataset for offline & preview availability
   var FALLBACK_EVENTS = [
+    // Representative sample shown only when the backend is unreachable.
+    // The authoritative schedule comes from /api/v1/public/schedule.
     { code: "101", title: "Bharathanatyam (HS Girls)", venue: "Stage 1: Main Ground", day: "Day 1", scheduled_time: "09:30 AM", category: "HS General" },
-    { code: "102", title: "Mohiniyattam (HSS Girls)", venue: "Stage 1: Main Ground", day: "Day 1", scheduled_time: "01:30 PM", category: "HSS General" },
-    { code: "103", title: "Kuchipudi (HS Girls)", venue: "Stage 1: Main Ground", day: "Day 2", scheduled_time: "10:00 AM", category: "HS General" },
     { code: "201", title: "Light Music Vocal (HS Boys)", venue: "Stage 2: HS Hall", day: "Day 1", scheduled_time: "10:00 AM", category: "HS General" },
-    { code: "202", title: "Classical Music Vocal (HSS)", venue: "Stage 2: HS Hall", day: "Day 1", scheduled_time: "02:00 PM", category: "HSS General" },
-    { code: "203", title: "Mappilapattu (HS Girls)", venue: "Stage 2: HS Hall", day: "Day 2", scheduled_time: "09:30 AM", category: "HS General" },
     { code: "301", title: "Folk Dance (HS Boys)", venue: "Stage 3: GLPS Mala", day: "Day 1", scheduled_time: "10:30 AM", category: "HS General" },
-    { code: "302", title: "Folk Dance (HSS Girls)", venue: "Stage 3: GLPS Mala", day: "Day 2", scheduled_time: "11:00 AM", category: "HSS General" },
-    { code: "401", title: "Elocution Malayalam (HS)", venue: "Stage 4: HSS A1 B1 Classes", day: "Day 1", scheduled_time: "09:30 AM", category: "HS General" },
-    { code: "402", title: "Elocution English (HSS)", venue: "Stage 4: HSS A1 B1 Classes", day: "Day 1", scheduled_time: "01:30 PM", category: "HSS General" },
-    { code: "501", title: "Recitation Malayalam (HSS)", venue: "Stage 5: HSS Seminar Hall", day: "Day 1", scheduled_time: "10:00 AM", category: "HSS General" },
-    { code: "502", title: "Recitation Sanskrit (HS)", venue: "Stage 5: HSS Seminar Hall", day: "Day 2", scheduled_time: "11:00 AM", category: "HS General" },
+    { code: "401", title: "Elocution Malayalam (HS)", venue: "Stage 4: HSS A1 B1", day: "Day 1", scheduled_time: "09:30 AM", category: "HS General" },
     { code: "601", title: "Oppana (HSS Girls)", venue: "Stage 6: Vyaapaara Bhavan", day: "Day 1", scheduled_time: "11:00 AM", category: "HSS General" },
-    { code: "602", title: "Margamkali (HS Girls)", venue: "Stage 6: Vyaapaara Bhavan", day: "Day 2", scheduled_time: "01:30 PM", category: "HS General" },
-    { code: "701", title: "Pencil Drawing (HS)", venue: "Stage 7: HSS 1st Floor Class", day: "Day 1", scheduled_time: "09:30 AM", category: "Off-Stage" },
-    { code: "702", title: "Water Color Painting (HSS)", venue: "Stage 7: HSS 1st Floor Class", day: "Day 1", scheduled_time: "01:00 PM", category: "Off-Stage" },
-    { code: "703", title: "Cartoon (HS)", venue: "Stage 7: HSS 1st Floor Class", day: "Day 2", scheduled_time: "10:00 AM", category: "Off-Stage" },
-    { code: "801", title: "Clay Modeling (HS)", venue: "Stage 8: HS 9E Class", day: "Day 1", scheduled_time: "10:00 AM", category: "Off-Stage" },
-    { code: "802", title: "Collage (HSS)", venue: "Stage 8: HS 9E Class", day: "Day 2", scheduled_time: "01:00 PM", category: "Off-Stage" },
-    { code: "901", title: "Arabic Recitation (HS)", venue: "Stage 9: HS Arabic Class", day: "Day 1", scheduled_time: "10:00 AM", category: "HS General" },
-    { code: "902", title: "Arabic Elocution (HSS)", venue: "Stage 9: HS Arabic Class", day: "Day 2", scheduled_time: "11:30 AM", category: "HSS General" }
+    { code: "701", title: "Pencil Drawing (HS)", venue: "Stage 7: HSS 1st Floor", day: "Day 1", scheduled_time: "09:30 AM", category: "Off-Stage" }
   ];
 
   fetch(BASE + '/api/v1/public/schedule')

@@ -32,7 +32,7 @@ const navKey = (k: string) => `nav.${k}`;
 <title>{title}</title>
 <meta name="description" content="Official web desk for the Mala Sub-District School Kalolsavam at St. Antony's HSS Mala.">
 <link rel="icon" type="image/webp" href={BASE + 'assets/img/logo.webp'}>
-<script is:inline src={BASE + 'assets/js/theme.js'}></script>
+<script is:inline>try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
 <script is:inline src={BASE + 'assets/js/lang.js?v=4.1.7'}></script>
 </head>
 <body data-nav={active} data-base={BASE}>

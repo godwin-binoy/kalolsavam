@@ -6,7 +6,7 @@ set -e
 # export CLOUDFLARE_API_TOKEN="your-api-token"
 # export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 
-PROJECT_NAME="kalolsavam"
+PROJECT_NAME="${PROJECT_NAME:-kalolsavam}"
 
 if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
   echo "❌ Error: CLOUDFLARE_API_TOKEN is not set."
