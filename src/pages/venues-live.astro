@@ -7,7 +7,7 @@ import stages from '../data/stages.json';
 <BaseLayout title="Live Stage Updates | Mala Kalolsavam" active="venues">
   <div class="main-container">
     <PageHead badge="Module 01 · Live Tracker" title="All Stages — Live" intro="Real-time status across all 9 stages. Tap any stage for its full detail page." />
-    <div id="live" class="grid-3" data-refresh-ms="5000">
+    <div id="live" class="grid-3" data-refresh-ms="10000">
       {stages.map((s) => (
         <a href={url(`venues-stage/${s.n}`)} class="fest-card stage-live-card" data-stage-name={s.name} data-stage-slug={s.slug} data-stage-n={s.n} style="text-decoration:none;color:inherit">
           <div class={`fest-header ${s.banner}`} style="padding:1rem 1.25rem">

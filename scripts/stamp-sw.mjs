@@ -1,5 +1,3 @@
-// Stamp public/sw.js placeholders (__SW_BUILD__) with a content-derived id.
-// Runs after `astro build`, against dist/sw.js (the served copy).
 import { readFileSync, writeFileSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { resolve, join, relative } from 'node:path';
@@ -16,13 +14,12 @@ function walk(dir, acc = []) {
   return acc;
 }
 
-// Hash only content whose change should invalidate the SW cache:
-// compiled JS, CSS, and rendered HTML. Exclude sw.js (it's the target).
 const critical = walk(distDir).filter((p) => {
   const rel = relative(distDir, p).replace(/\\/g, '/');
   if (rel === 'sw.js') return false;
+  if (rel.startsWith('astro/')) return true;
   if (rel.startsWith('assets/js/') && rel.endsWith('.js')) return true;
-  if (rel.startsWith('assets/css/') && rel.endsWith('.css')) return true;
+  if (rel.startsWith('dashboard/')) return true;
   if (rel.endsWith('.html')) return true;
   return false;
 }).sort();
