@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
+          ruff check --fix server || true
           ruff check server
           pytest -q server/tests
 

@@ -14,7 +14,8 @@ from fastapi_fullauth.models.sqlmodel import (
 )
 from pydantic import BaseModel, EmailStr, Field, field_validator
 from sqlalchemy import Column, ForeignKey, Index, Integer, UniqueConstraint, text
-from sqlmodel import Field as SQLField, Relationship, SQLModel
+from sqlmodel import Field as SQLField
+from sqlmodel import Relationship, SQLModel
 
 
 def _require_non_blank(v: str | None) -> str | None:
