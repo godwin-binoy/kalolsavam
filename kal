@@ -294,16 +294,26 @@ def ensure_backend_running():
 # ---------------------------------------------------------------------------
 # Prompts & validators
 # ---------------------------------------------------------------------------
-def prompt(text, default=None, secret=False, allow_empty=False, validate=None):
+def prompt(text, default=None, secret=False, allow_empty=False, validate=None, show_length=False):
     suffix = f" [{default}]" if default not in (None, "") else ""
     while True:
         try:
             if secret:
-                val = getpass.getpass(f"{text}{suffix}: ").strip()
+                val = getpass.getpass(f"{text}{suffix}: ")
             else:
-                val = input(f"{text}{suffix}: ").strip()
-        except EOFError:
+                val = input(f"{text}{suffix}: ")
+        except (EOFError, KeyboardInterrupt):
+            print()
             die("aborted.")
+        except Exception as exc:
+            warn(f"input error: {exc} - retrying with visible input")
+            try:
+                val = input(f"{text}{suffix}: ")
+            except EOFError:
+                die("aborted.")
+        val = val.strip()
+        if secret or show_length:
+            print(dim(f"  (received {len(val)} chars)"))
         if not val:
             if default is not None:
                 return default
@@ -339,12 +349,15 @@ def validate_password(v):
     return True, ""
 
 def validate_token(v):
-    if len(v) < 50:
-        return False, "cloudflare tunnel token looks too short (<50 chars)."
+    n = len(v)
+    if n < 50:
+        return False, f"cloudflare tunnel token looks too short (received {n} chars, need >= 50). paste may have been truncated - try --token or --token-file."
     if " " in v:
-        return False, "token must not contain spaces."
-    if not re.match(r"^[A-Za-z0-9._+/=-]+$", v):
-        return False, "token contains unexpected characters."
+        return False, f"token must not contain spaces (received {n} chars)."
+    bad = [ch for ch in v if not re.match(r"[A-Za-z0-9._+/=-]", ch)]
+    if bad:
+        preview = "".join(bad[:5])
+        return False, f"token contains {len(bad)} unexpected char(s): {preview!r} (received {n} chars)."
     return True, ""
 
 # ---------------------------------------------------------------------------
@@ -399,6 +412,31 @@ def _print_urls():
 # ---------------------------------------------------------------------------
 # Commands
 # ---------------------------------------------------------------------------
+def _resolve_token(args):
+    """Resolve tunnel token from --token, KAL_TUNNEL_TOKEN, or --token-file."""
+    for src, getter in (
+        ("--token", lambda: (getattr(args, "token", None) or "").strip()),
+        ("KAL_TUNNEL_TOKEN", lambda: os.environ.get("KAL_TUNNEL_TOKEN", "").strip()),
+    ):
+        t = getter()
+        if t:
+            good, why = validate_token(t)
+            if not good:
+                die(f"{src} invalid: {why}")
+            return t
+    tf = getattr(args, "token_file", None)
+    if tf:
+        try:
+            t = Path(tf).expanduser().read_text().strip()
+        except Exception as e:
+            die(f"could not read --token-file {tf}: {e}")
+        good, why = validate_token(t)
+        if not good:
+            die(f"--token-file content invalid: {why}")
+        return t
+    return None
+
+
 def cmd_init(args):
     banner()
     ensure_docker()
@@ -431,8 +469,16 @@ def cmd_init(args):
                          default="admin@kalolsavam.example.com",
                          validate=validate_email)
     env.set("ADMIN_EMAIL", admin_email)
-    set_pass = confirm("set an admin password now?", default=True)
-    if set_pass:
+
+    preset_pw = (getattr(args, "admin_password", None) or os.environ.get("KAL_ADMIN_PASSWORD", "")).strip()
+    if preset_pw:
+        good, why = validate_password(preset_pw)
+        if not good:
+            die(f"preset admin password invalid: {why}")
+        env.set("ADMIN_PASSWORD", preset_pw)
+        ok(f"admin password set from arg/env ({len(preset_pw)} chars).")
+        set_pass = True
+    elif confirm("set an admin password now?", default=True):
         while True:
             p1 = prompt("admin password (12+ chars)", secret=True,
                         validate=validate_password)
@@ -443,17 +489,40 @@ def cmd_init(args):
             env.set("ADMIN_PASSWORD", p1)
             ok("admin password stored in .env.")
             break
+        set_pass = True
     else:
-        info("no password set — one will be generated on first boot; run 'kal logs backend' to read it.")
+        info("no password set - one will be generated on first boot; run 'kal logs backend' to read it.")
+        set_pass = False
 
     section("4. Cloudflare Tunnel (optional)")
     use_tunnel = False
-    if confirm("configure Cloudflare Tunnel now?", default=False):
+    token_val = _resolve_token(args)
+    if token_val is not None:
+        env.set("CLOUDFLARE_TUNNEL_TOKEN", token_val)
+        ok(f"tunnel token saved from arg/env/file ({len(token_val)} chars).")
+        use_tunnel = True
+    elif confirm("configure Cloudflare Tunnel now?", default=False):
         while True:
-            tok = prompt("tunnel token (paste from Zero Trust dashboard)",
-                         secret=True, validate=validate_token)
+            try:
+                tok = input("tunnel token (visible paste; Ctrl+C to skip): ")
+            except (EOFError, KeyboardInterrupt):
+                print()
+                info("skipped tunnel setup.")
+                break
+            tok = tok.strip()
+            print(dim(f"  (received {len(tok)} chars)"))
+            if not tok:
+                warn("empty input - paste token, or Ctrl+C to skip.")
+                continue
+            good, why = validate_token(tok)
+            if not good:
+                warn(why)
+                if confirm("retry?", default=True):
+                    continue
+                info("skipped tunnel setup.")
+                break
             env.set("CLOUDFLARE_TUNNEL_TOKEN", tok)
-            ok("tunnel token saved.")
+            ok(f"tunnel token saved ({len(tok)} chars).")
             use_tunnel = True
             break
 
@@ -544,15 +613,21 @@ def cmd_token(args):
         print(f"length: {len(tok)}")
         return 0
     if action == "set":
-        val = args.value
+        val = (args.value or "").strip()
         if not val:
-            val = prompt("tunnel token", secret=True, validate=validate_token)
-        else:
-            good, why = validate_token(val)
-            if not good:
-                die(why)
+            try:
+                val = input("tunnel token (visible paste): ").strip()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                die("aborted.")
+            print(dim(f"  (received {len(val)} chars)"))
+            if not val:
+                die("empty token.")
+        good, why = validate_token(val)
+        if not good:
+            die(why)
         env.set("CLOUDFLARE_TUNNEL_TOKEN", val)
-        ok("token saved. run 'kal up --tunnel' or 'kal deploy --tunnel'.")
+        ok(f"token saved ({len(val)} chars). run 'kal up --tunnel' or 'kal deploy --tunnel'.")
         return 0
     if action == "clear":
         env.unset("CLOUDFLARE_TUNNEL_TOKEN")
@@ -873,6 +948,9 @@ def build_parser():
 
     p_init = sub.add_parser("init", help="first-time setup wizard")
     p_init.add_argument("--force", action="store_true", help="overwrite .env without asking")
+    p_init.add_argument("--token", help="Cloudflare Tunnel token (skips prompt)")
+    p_init.add_argument("--token-file", help="file containing the tunnel token")
+    p_init.add_argument("--admin-password", help="admin password (skips prompt)")
 
     p_up = sub.add_parser("up", help="start the stack")
     p_up.add_argument("--tunnel", action="store_true", help="include Cloudflare Tunnel")
