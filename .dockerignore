@@ -11,3 +11,5 @@ deployment/*.db
 deployment/*.db-*
 deployment/backups/
 .env
+server/.env
+deployment/secret.key

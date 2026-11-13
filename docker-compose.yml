@@ -5,8 +5,8 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     volumes:
-      - ./deployment:/app/deployment
-      - ./server/.env:/app/server/.env
+      - ./deployment:/app/deployment:Z
+      - ./server/.env:/app/server/.env:ro,Z
     environment:
       - PYTHONUNBUFFERED=1
       - SERVER_HOST=0.0.0.0
