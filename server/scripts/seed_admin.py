@@ -1,5 +1,6 @@
 """Backward-compatibility wrapper for python -m server.scripts.seed_admin."""
 import sys
+
 from server.cli import seed_admin
 
 if __name__ == "__main__":

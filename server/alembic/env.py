@@ -6,12 +6,11 @@ from logging.config import fileConfig
 from pathlib import Path
 
 from alembic import context
-from sqlalchemy import pool
 from sqlmodel import SQLModel
 
+import server.models  # noqa: F401
 from server.config import Settings
 from server.database import make_engine
-import server.models  # noqa: F401
 
 config = context.config
 if config.config_file_name is not None:

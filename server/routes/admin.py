@@ -20,9 +20,20 @@ from sqlmodel import select
 
 from ..deps import client_ip, get_cfg, get_db, hash_ip, require_admin
 from ..models import (
-    AddToQueueIn, CategoryIn, CategoryUpdateIn, EventIn, EventUpdateIn,
-    PasswordResetIn, QueueItemUpdateIn, QueueMoveIn, Role, User, UserIn,
-    UserUpdateIn, VenueIn, VenueUpdateIn,
+    AddToQueueIn,
+    CategoryIn,
+    CategoryUpdateIn,
+    EventIn,
+    EventUpdateIn,
+    PasswordResetIn,
+    QueueItemUpdateIn,
+    QueueMoveIn,
+    Role,
+    User,
+    UserIn,
+    UserUpdateIn,
+    VenueIn,
+    VenueUpdateIn,
 )
 from .public import invalidate_public_cache
 
@@ -181,8 +192,8 @@ def create_venue(body: VenueIn, request: Request, user=Depends(require_admin)):
             "INSERT INTO venues(name, kind, slug, active) VALUES (?,?,?,?)",
             (body.name, body.kind, body.slug, int(body.active)),
         )
-    except sqlite3.IntegrityError:
-        raise HTTPException(409, "duplicate_slug")
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_slug") from exc
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "create_venue", f"id={cur.lastrowid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (cur.lastrowid,)))
@@ -203,8 +214,8 @@ def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(r
             "UPDATE venues SET name = ?, kind = ?, slug = ?, active = ? WHERE id = ?",
             (name, kind, slug, active, vid),
         )
-    except sqlite3.IntegrityError:
-        raise HTTPException(409, "duplicate_slug")
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_slug") from exc
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "update_venue", f"id={vid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (vid,)))
@@ -293,8 +304,8 @@ def create_event(body: EventIn, request: Request, user=Depends(require_admin)):
             "VALUES (?,?,?,?,?,?)",
             (body.code, body.title, body.category_id, body.venue_id, body.day, body.scheduled_time),
         )
-    except sqlite3.IntegrityError:
-        raise HTTPException(409, "duplicate_or_fk")
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_or_fk") from exc
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "create_event", f"id={cur.lastrowid},code={body.code}")
     return {"id": cur.lastrowid}
@@ -318,8 +329,8 @@ def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(r
             " day = ?, scheduled_time = ? WHERE id = ?",
             (code, title, cat, ven, day, when, eid),
         )
-    except sqlite3.IntegrityError:
-        raise HTTPException(409, "duplicate_code_or_fk")
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_code_or_fk") from exc
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "update_event", f"id={eid}")
     return dict(db.one("SELECT * FROM events WHERE id = ?", (eid,)))

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import sqlite3
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -14,6 +15,7 @@ from ..models import AdvanceIn, ScoreIn, StateIn
 from .public import invalidate_public_cache
 
 router = APIRouter()
+log = logging.getLogger("kalolsavam")
 
 _MAX_SSE_SUBSCRIBERS = 200
 _TRANSITIONS = {
@@ -43,21 +45,16 @@ def _broadcast_sync(request: Request, msg: dict) -> None:
         return
     try:
         asyncio.run_coroutine_threadsafe(_broadcast(request, msg), loop)
-    except Exception:
-        pass
+    except Exception as exc:
+        log.debug("SSE broadcast failed: %s", exc)
 
 
 def _active_venues_for_user(db, user):
+    all_active = db.q("SELECT * FROM venues WHERE active = 1 ORDER BY id")
     if has_role(user, "admin"):
-        return db.q("SELECT * FROM venues WHERE active = 1 ORDER BY id")
-    stages = get_user_stages(user)
-    if not stages:
-        return []
-    ph = ",".join("?" * len(stages))
-    return db.q(
-        f"SELECT * FROM venues WHERE active = 1 AND id IN ({ph}) ORDER BY id",
-        tuple(stages),
-    )
+        return all_active
+    stages = set(get_user_stages(user))
+    return [v for v in all_active if v["id"] in stages]
 
 
 def _require_active_venue(db, venue_id: int):
@@ -76,8 +73,7 @@ def board(request: Request, user=Depends(require_staff)):
     if not venues:
         return {"board": []}
 
-    vids = [v["id"] for v in venues]
-    ph = ",".join("?" * len(vids))
+    vid_set = {v["id"] for v in venues}
     items = db.q(
         "SELECT q.*, e.title AS event, c.name AS category, "
         " p.school, p.student_name, p.roll "
@@ -85,19 +81,15 @@ def board(request: Request, user=Depends(require_staff)):
         "JOIN events e ON e.id = q.event_id "
         "LEFT JOIN categories c ON c.id = e.category_id "
         "LEFT JOIN participants p ON p.id = q.participant_id "
-        f"WHERE q.venue_id IN ({ph}) "
         "ORDER BY q.venue_id, "
-        "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position",
-        tuple(vids),
+        "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position"
     )
-    states = db.q(
-        f"SELECT venue_id, state, announcement FROM live_state WHERE venue_id IN ({ph})",
-        tuple(vids),
-    )
-    state_map = {s["venue_id"]: dict(s) for s in states}
+    states = db.q("SELECT venue_id, state, announcement FROM live_state")
+    state_map = {s["venue_id"]: dict(s) for s in states if s["venue_id"] in vid_set}
     by_venue: dict[int, list[dict]] = {}
     for it in items:
-        by_venue.setdefault(it["venue_id"], []).append(dict(it))
+        if it["venue_id"] in vid_set:
+            by_venue.setdefault(it["venue_id"], []).append(dict(it))
 
     return {
         "board": [
@@ -128,7 +120,7 @@ async def stream(request: Request, user=Depends(require_staff)):
                 try:
                     msg = await asyncio.wait_for(q.get(), timeout=15.0)
                     yield f"event: update\ndata: {json.dumps(msg)}\n\n"
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield "event: heartbeat\ndata: {}\n\n"
         finally:
             request.app.state.subscribers.pop(q, None)
@@ -258,7 +250,8 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
     invalidate_public_cache(request.app)
     for msg in broadcasts:
         _broadcast_sync(request, msg)
-    assert resp is not None
+    if resp is None:
+        raise HTTPException(500, "unexpected_state")
     return resp
 
 

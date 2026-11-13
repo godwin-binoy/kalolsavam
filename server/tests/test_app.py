@@ -6,6 +6,7 @@ import json
 
 from argon2 import PasswordHasher
 from sqlmodel import select
+
 from server.database import make_engine, make_session_maker
 from server.models import Role, User
 
@@ -115,7 +116,6 @@ def test_score_endpoint_unauthorized(client):
 
 def test_full_admin_workflow_and_security(client):
     cfg = client.app.state.cfg
-    db = client.app.state.db
     asyncio.run(_seed_user(cfg.db_path, "admin@example.com", "StrongPass1234!", "admin", []))
     login_res = _login(client, "admin@example.com", "StrongPass1234!")
     tok = login_res.json()["access_token"]

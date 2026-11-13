@@ -1,12 +1,14 @@
 """SQLite (WAL) data layer — per-thread connections + explicit transactions."""
 from __future__ import annotations
 
+import logging
 import sqlite3
 import threading
 import time
+from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 
 class Database:
@@ -48,8 +50,8 @@ class Database:
         for c in conns:
             try:
                 c.close()
-            except Exception:
-                pass
+            except Exception as exc:
+                logging.getLogger("kalolsavam").debug("DB connection close failed: %s", exc)
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
         conn.execute(

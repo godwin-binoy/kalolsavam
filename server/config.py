@@ -1,6 +1,7 @@
 """Runtime settings loaded from env / server/.env."""
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 
 from pydantic import Field, field_validator
@@ -43,23 +44,24 @@ class Settings(BaseSettings):
         if not v:
             import secrets
             key_file = ROOT / "deployment" / "secret.key"
+            log = logging.getLogger("kalolsavam")
             if key_file.exists():
                 try:
                     stored = key_file.read_text().strip()
                     if stored:
                         return stored
-                except Exception:
-                    pass
+                except Exception as exc:
+                    log.warning("Could not read secret.key: %s", exc)
             key = secrets.token_urlsafe(48)
             try:
                 key_file.parent.mkdir(parents=True, exist_ok=True)
                 key_file.write_text(key)
                 try:
                     key_file.chmod(0o600)
-                except Exception:
-                    pass
-            except Exception:
-                pass
+                except Exception as exc:
+                    log.warning("Could not chmod secret.key: %s", exc)
+            except Exception as exc:
+                log.warning("Could not persist secret.key: %s", exc)
             return key
         return v
 

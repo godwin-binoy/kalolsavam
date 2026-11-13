@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import asyncio
-from contextlib import asynccontextmanager
 import logging
 import re
-from pathlib import Path
 import time
-from urllib.parse import urlparse
 import uuid
+from contextlib import asynccontextmanager
+from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -187,9 +187,9 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         f = dist / "sw.js"
         return FileResponse(f, media_type="application/javascript") if f.exists() else JSONResponse({}, status_code=404)
 
-    from .routes.public import router as public_router
-    from .routes.live import router as live_router
     from .routes.admin import router as admin_router
+    from .routes.live import router as live_router
+    from .routes.public import router as public_router
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")

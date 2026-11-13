@@ -5,11 +5,9 @@ import asyncio
 import json
 import logging
 import secrets
-import shutil
 import sqlite3
 import time as _t
 from pathlib import Path
-from typing import Optional
 
 import typer
 
@@ -31,12 +29,13 @@ FALLBACK_STAGES = [
 
 @app.command()
 def serve(
-    host: Optional[str] = typer.Option(None, "--host", "-h", help="Bind host"),
-    port: Optional[int] = typer.Option(None, "--port", "-p", help="Bind port"),
+    host: str | None = typer.Option(None, "--host", "-h", help="Bind host"),
+    port: int | None = typer.Option(None, "--port", "-p", help="Bind port"),
     reload: bool = typer.Option(False, "--reload", help="Enable auto-reload for dev"),
 ) -> None:
     """Run the FastAPI + Uvicorn server."""
     import uvicorn
+
     from .app import create_app
     from .config import Settings
     from .db import Database
@@ -71,9 +70,10 @@ def migrate() -> None:
     typer.echo("Database migrations applied successfully.")
 
 
-async def _async_seed_admin(email: str, password: Optional[str]) -> tuple[bool, str]:
+async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str]:
     from argon2 import PasswordHasher
     from sqlmodel import select
+
     from .config import Settings
     from .database import make_engine, make_session_maker
     from .models import Role, User
@@ -126,7 +126,7 @@ async def _async_seed_admin(email: str, password: Optional[str]) -> tuple[bool, 
 @app.command()
 def seed_admin(
     email: str = typer.Option("admin@kalolsavam.example.com", "--email", "-e", help="Admin email"),
-    password: Optional[str] = typer.Option(None, "--password", help="Admin password (generated if omitted)"),
+    password: str | None = typer.Option(None, "--password", help="Admin password (generated if omitted)"),
 ) -> None:
     """Seed initial admin and staff roles."""
     created, final_pass = asyncio.run(_async_seed_admin(email, password))
