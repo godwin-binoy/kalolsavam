@@ -5,7 +5,7 @@
 # ============================================================================
 
 # ---------- Stage 1: Astro frontend ----------
-FROM node:20-alpine AS frontend
+FROM node:22-alpine AS frontend
 
 WORKDIR /frontend
 
@@ -24,7 +24,7 @@ RUN echo "PUBLIC_API_URL=${PUBLIC_API_URL}" > .env
 RUN npm run build
 
 # ---------- Stage 2: Python backend ----------
-FROM python:3.11-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -42,7 +42,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt ./
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt
 
 COPY alembic.ini ./
 COPY server ./server
