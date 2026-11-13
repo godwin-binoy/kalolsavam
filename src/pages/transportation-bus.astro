@@ -1,32 +1,29 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
-const rows = [
-  ["06:30", "Mala → Thrissur", "Private", "First bus"],
-  ["07:15", "Mala → Chalakudy", "Private", "Via Annamanada"],
-  ["08:00", "Mala → Thrissur", "KSRTC Fast", "Limited stop"],
-  ["09:30", "Mala → Kodungallur", "Private", "—"],
-  ["12:00", "Mala → Thrissur", "KSRTC Ordinary", "—"],
-  ["15:00", "Mala → Chalakudy", "Private", "Return service"],
-  ["17:30", "Mala → Thrissur", "KSRTC Fast", "Evening rush"],
-  ["19:45", "Mala → Thrissur", "Private", "Last bus"],
-];
+import Card from '../components/Card.astro';
+import { BUS_SCHEDULE } from '../data/festival';
 ---
 <BaseLayout title="Bus Timings | Mala Kalolsavam" active="transportation">
   <div class="main-container">
     <PageHead badge="Transportation · Bus" title="Bus Timings" intro="KSRTC and private departures from Mala Bus Stand." />
-    <div class="fest-card">
-      <div class="fest-header banner-blue"><h3 class="fest-title">Mala Bus Stand</h3><span class="fest-subtitle">KSRTC &amp; Private · Daily</span></div>
-      <div class="fest-body">
-        <div style="overflow-x:auto">
-          <table class="tbl">
-            <thead><tr><th>Departure</th><th>Route</th><th>Type</th><th>Notes</th></tr></thead>
-            <tbody>{rows.map(([time, route, type, note]) => <tr><td class="mono">{time}</td><td>{route}</td><td>{type}</td><td class="text-muted">{note}</td></tr>)}</tbody>
-          </table>
-        </div>
-        <p class="text-muted sm" style="margin-top:.75rem">Schedules are indicative. Confirm at the bus stand enquiry counter (0480 2890 500).</p>
+    <Card title="Mala Bus Stand" subtitle="KSRTC & Private · Daily" tone="blue">
+      <div style="overflow-x:auto">
+        <table class="tbl">
+          <thead><tr><th>Departure</th><th>Route</th><th>Type</th><th>Notes</th></tr></thead>
+          <tbody>
+            {BUS_SCHEDULE.map((b) => (
+              <tr>
+                <td class="mono">{b.time}</td>
+                <td>{b.route}</td>
+                <td>{b.type}</td>
+                <td class="text-muted">{b.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </div>
+      <p class="text-muted sm" style="margin-top:.75rem">Schedules are indicative. Confirm at the bus stand enquiry counter (0480 2890 500).</p>
+    </Card>
   </div>
 </BaseLayout>

@@ -18,7 +18,7 @@ const critical = walk(distDir).filter((p) => {
   const rel = relative(distDir, p).replace(/\\/g, '/');
   if (rel === 'sw.js') return false;
   if (rel.startsWith('astro/')) return true;
-  if (rel.startsWith('assets/js/') && rel.endsWith('.js')) return true;
+  if (rel.startsWith('assets/')) return true;
   if (rel.startsWith('dashboard/')) return true;
   if (rel.endsWith('.html')) return true;
   return false;

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE, url } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
 import stages from '../data/stages.json';
 ---
 <BaseLayout title="Venue Locations | Mala Kalolsavam" active="venues">
@@ -9,20 +10,10 @@ import stages from '../data/stages.json';
     <PageHead badge="Module 01 · Location" title="Venue Locations" intro="All 9 stages at the Mala Sub-District Kalolsavam. Tap a stage for its blueprint, directions, live status, and schedule." />
     <div class="grid-3">
       {stages.map((s) => (
-        <a href={url(`venues-stage/${s.n}`)} class="fest-card" style="text-decoration:none;color:inherit">
-          <div class={`fest-header ${s.banner}`}>
-            <span style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.9">Stage {s.n}</span>
-            <h3 class="fest-title" style="margin-top:.3rem">{s.name}</h3>
-            <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/${s.icon}')`}></span>
-          </div>
-          <div class="fest-body">
-            <p class="text-muted sm">{s.short}</p>
-            <div class="fest-action-item">
-              <span class="left"><span class="fest-item-icon c-emerald"><span class="icn" style={`--icon-url:url('${BASE}assets/svg/map-pin.svg')`}></span></span><span>{s.loc}</span></span>
-              <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
-            </div>
-          </div>
-        </a>
+        <Card href={`/venues-stage/${s.n}`} title={s.name} badge={`Stage ${s.n}`} tone={s.banner ? s.banner.replace('banner-', '') : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'}>
+          <p class="text-muted sm">{s.short}</p>
+          <ActionItem href={`/venues-stage/${s.n}`} icon="map-pin" iconTone="c-emerald" title={s.loc} />
+        </Card>
       ))}
     </div>
   </div>

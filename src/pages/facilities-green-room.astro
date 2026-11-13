@@ -1,15 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import { GREEN_ROOMS } from '../data/festival';
 ---
 <BaseLayout title="Green Rooms | Mala Kalolsavam" active="facilities">
   <div class="main-container">
     <PageHead badge="Module 04 · Green Room" title="Green Rooms" intro="Designated dressing and waiting rooms for participants, allotted by competition code. Rooms G1–G6 on the Annex Block first floor." />
     <div class="grid-3">
-      <div class="fest-card"><div class="fest-header banner-teal"><h3 class="fest-title">Rooms G1 &amp; G2</h3><span class="fest-subtitle">Boys · Annex 1st Floor</span></div><div class="fest-body"><p class="text-muted sm">Dressing space for male participants in the HS General category.</p><div class="fest-action-item"><span><strong>Location:</strong> Annex Block, 1st Floor, East Stairs</span></div></div></div>
-      <div class="fest-card"><div class="fest-header banner-teal"><h3 class="fest-title">Rooms G3 &amp; G4</h3><span class="fest-subtitle">Girls · Annex 1st Floor</span></div><div class="fest-body"><p class="text-muted sm">Dressing space for female participants. Full-length mirrors and electrical points.</p><div class="fest-action-item"><span><strong>Location:</strong> Annex Block, 1st Floor, West Stairs</span></div></div></div>
-      <div class="fest-card"><div class="fest-header banner-teal"><h3 class="fest-title">Rooms G5 &amp; G6</h3><span class="fest-subtitle">Common · Annex 1st Floor</span></div><div class="fest-body"><p class="text-muted sm">Shared rooms for HSS General and team items.</p><div class="fest-action-item"><span><strong>Location:</strong> Annex Block, 1st Floor, North Wing</span></div></div></div>
+      {GREEN_ROOMS.map((g) => (
+        <Card title={g.name} subtitle={g.sub} tone="teal">
+          <p class="text-muted sm">{g.desc}</p>
+          <div class="fest-action-item">
+            <span><strong>Location:</strong> {g.loc}</span>
+          </div>
+        </Card>
+      ))}
     </div>
   </div>
 </BaseLayout>

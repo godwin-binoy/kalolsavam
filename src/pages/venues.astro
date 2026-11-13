@@ -1,24 +1,24 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE, url } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
 import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
 ---
 <BaseLayout title="Stages & Venues | Mala Kalolsavam" active="venues">
   <div class="main-container">
     <PageHead badge="Module 01 · Stages & Venues" title="Stages & Venues" intro="Pick what you need: venue location, find a venue by competition item, or follow live on-stage updates." />
     <div class="grid-3">
-      <Card href={url('/venues-location')} title="Location" subtitle="Where is it?" banner="banner-blue" icon="map-pin.svg">
+      <Card href="/venues-location" title="Location" subtitle="Where is it?" tone="blue" icon="map-pin">
         <p class="text-muted sm">Every stage, hall, and ground on campus — with walking directions from the main gate.</p>
-        <div class="fest-action-item"><span>Open Venue Locations</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+        <ActionItem href="/venues-location" title="Open Venue Locations" />
       </Card>
-      <Card href={url('/venues-find')} title="Find by Item" subtitle="Which venue?" banner="banner-purple" icon="search.svg">
+      <Card href="/venues-find" title="Find by Item" subtitle="Which venue?" tone="purple" icon="search">
         <p class="text-muted sm">Type your item code or name — we'll show its venue, day, and scheduled time.</p>
-        <div class="fest-action-item"><span>Search Items</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+        <ActionItem href="/venues-find" title="Search Items" />
       </Card>
-      <Card href={url('/venues-live')} title="Live Updates" subtitle="On-stage Tracker" banner="banner-teal" icon="bolt.svg">
+      <Card href="/venues-live" title="Live Updates" subtitle="On-stage Tracker" tone="teal" icon="bolt">
         <p class="text-muted sm">Real-time chest numbers, queues, delays, and stage announcements.</p>
-        <div class="fest-action-item"><span>Open Live Tracker</span><span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span></div>
+        <ActionItem href="/venues-live" title="Open Live Tracker" />
       </Card>
     </div>
   </div>

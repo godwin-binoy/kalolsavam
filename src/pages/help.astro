@@ -1,50 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE, url } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
 ---
 <BaseLayout title="Help & Emergency | Mala Kalolsavam" active="help">
   <div class="main-container">
     <PageHead badge="Emergency Desk" badgeClass="badge-emergency" title="Help Desk & Emergency Directory" titleI18n="help.title" intro="Convenor contact numbers, First Aid / Medical unit location, and Volunteer control room." />
-    
-    <div class="grid-2" style="margin-bottom: 2rem;">
-      <!-- Medical Unit -->
-      <div class="fest-card">
-        <div class="fest-header banner-rose">
-          <h3 class="fest-title" data-i18n="help.medical.title">Medical Unit</h3>
-          <span class="fest-subtitle" data-i18n="help.medical.sub">First Aid · 24/7 Standby</span>
-          <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/medical.svg')`}></span>
-        </div>
-        <div class="fest-body">
-          <p style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem;" data-i18n="help.medical.desc">Physicians, nursing staff, and emergency medical ambulance available on campus during festival hours.</p>
-          <a class="fest-action-item" href="tel:9744686093" style="background:var(--badge-emergency-bg);border-color:var(--badge-emergency-border)">
-            <span class="left" style="min-width:0;flex:1;overflow:hidden">
-              <span class="fest-item-icon c-rose"><span class="icn" style={`--icon-url:url('${BASE}assets/svg/phone.svg')`}></span></span>
-              <span style="color:var(--badge-emergency-text);font-weight:700" data-i18n="btn.call_now">Call Now</span>
-            </span>
-            <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
-          </a>
-        </div>
-      </div>
-
-      <!-- General Convener -->
-      <div class="fest-card">
-        <div class="fest-header banner-purple">
-          <h3 class="fest-title" data-i18n="help.convener.title">General Convener</h3>
-          <span class="fest-subtitle" data-i18n="help.convener.sub">Control Room · Auditorium</span>
-          <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/building.svg')`}></span>
-        </div>
-        <div class="fest-body">
-          <p style="color: var(--text); font-size: 0.95rem; margin-bottom: 0.75rem;" data-i18n="help.convener.desc">For urgent inquiries regarding chest number reporting, schedule rescheduling, and official committee sanctions.</p>
-          <a class="fest-action-item" href="tel:9744686093">
-            <span class="left" style="min-width:0;flex:1;overflow:hidden">
-              <span class="fest-item-icon c-indigo"><span class="icn" style={`--icon-url:url('${BASE}assets/svg/phone.svg')`}></span></span>
-              <span style="color:var(--brand);font-weight:700" data-i18n="btn.call_now">Call Now</span>
-            </span>
-            <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
-          </a>
-        </div>
-      </div>
+    <div class="grid-2" style="margin-bottom:2rem">
+      <Card title="Medical Unit" titleI18n="help.medical.title" subtitle="First Aid · 24/7 Standby" subtitleI18n="help.medical.sub" tone="rose" icon="medical">
+        <p style="color:var(--text);font-size:.95rem;margin-bottom:.75rem" data-i18n="help.medical.desc">Physicians, nursing staff, and emergency medical ambulance available on campus during festival hours.</p>
+        <ActionItem href="tel:9744686093" external={true} title="Call Medical Unit" titleI18n="btn.call_now" icon="phone" iconTone="c-rose" style="background:var(--badge-emergency-bg);border-color:var(--badge-emergency-border)" />
+      </Card>
+      <Card title="General Convener" titleI18n="help.convener.title" subtitle="Control Room · Auditorium" subtitleI18n="help.convener.sub" tone="purple" icon="building">
+        <p style="color:var(--text);font-size:.95rem;margin-bottom:.75rem" data-i18n="help.convener.desc">For urgent inquiries regarding chest number reporting, schedule rescheduling, and official committee sanctions.</p>
+        <ActionItem href="tel:9744686093" external={true} title="Call General Convener" titleI18n="btn.call_now" icon="phone" iconTone="c-indigo" />
+      </Card>
     </div>
   </div>
 </BaseLayout>

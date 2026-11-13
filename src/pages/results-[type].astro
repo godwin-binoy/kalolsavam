@@ -1,19 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import ActionItem from '../components/ActionItem.astro';
+import { RESULTS_CATEGORIES } from '../data/festival';
 
 export function getStaticPaths() {
-  // NOTE: PAGES must live INSIDE this function (not at module scope).
-  // Astro extracts getStaticPaths into a separate prerender chunk, and any
-  // module-level constant only referenced by it gets tree-shaken away —
-  // which is exactly what broke the previous build with "PAGES is not defined".
-  const PAGES = {
-    offstage:   { badge: 'Results · Off Stage',         title: 'Off Stage Results',        items: ['Chithra Drawing','Pencil Drawing','Collage','Cartoon','Clay Modeling'] },
-    individual: { badge: 'Results · Individual Stage',  title: 'Individual Stage Results', items: ['Bharathanatyam','Mohiniyattam','Light Music','Classical Music','Elocution'] },
-    group:      { badge: 'Results · Group Stage',       title: 'Group Stage Results',      items: ['Oppana','Margamkali','Nadan Pattu','Group Dance','Drama'] },
+  const categories = {
+    offstage: { badge: "Results · Off Stage", title: "Off Stage Results", items: ["Chithra Drawing", "Pencil Drawing", "Collage", "Cartoon", "Clay Modeling"] },
+    individual: { badge: "Results · Individual Stage", title: "Individual Stage Results", items: ["Bharathanatyam", "Mohiniyattam", "Light Music", "Classical Music", "Elocution"] },
+    group: { badge: "Results · Group Stage", title: "Group Stage Results", items: ["Oppana", "Margamkali", "Nadan Pattu", "Group Dance", "Drama"] },
   };
-  return Object.keys(PAGES).map((type) => ({ params: { type }, props: PAGES[type] }));
+  return Object.keys(categories).map((type) => ({
+    params: { type },
+    props: categories[type as keyof typeof categories],
+  }));
 }
 
 const { badge, title, items } = Astro.props;
@@ -23,11 +23,8 @@ const resultsUrl = "https://kalolsavam.kerala.gov.in/";
   <div class="main-container">
     <PageHead badge={badge} title={title} intro="Select an item to view the declared results on the official government portal." />
     <div class="grid-2" style="max-width:900px">
-      {items.map((item) => (
-        <a href={resultsUrl} target="_blank" rel="noopener" class="fest-action-item" style="padding:1.25rem 1.5rem">
-          <span class="left"><span style="font-weight:600;font-size:1.05rem">{item}</span></span>
-          <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`}></span>
-        </a>
+      {items.map((item: string) => (
+        <ActionItem href={resultsUrl} external={true} title={item} icon="clipboard-check" iconTone="c-amber" style="padding:1.25rem 1.5rem" />
       ))}
     </div>
   </div>

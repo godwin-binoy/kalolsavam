@@ -1,18 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE, url } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
+import { FACILITIES } from '../data/festival';
 ---
 <BaseLayout title="Facilities | Mala Kalolsavam" active="facilities">
   <div class="main-container">
     <PageHead badge="Module 04 · Facilities" title="All Campus Facilities" intro="Everything you need — green rooms, toilets, drinking water, dining hall, help desk, medical room, and sanitary facilities." />
     <div class="grid-3">
-      <a href={url('/facilities-green-room')} class="fest-card"><div class="fest-header banner-teal"><h3 class="fest-title" data-i18n="fac.green.title">Green Room</h3><span class="fest-subtitle" data-i18n="fac.green.sub">Dressing · Annex 1st Floor</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.green.desc">Rooms G1–G6 for dressing and pre-stage waiting.</p><div class="fest-action-item"><span><strong>Location:</strong> <span data-i18n="fac.green.loc">Annex Block, 1st Floor</span></span></div></div></a>
-      <a href={url('/facilities-toilet')} class="fest-card"><div class="fest-header banner-blue"><h3 class="fest-title" data-i18n="fac.toilet.title">Toilet</h3><span class="fest-subtitle" data-i18n="fac.toilet.sub">Washrooms · 3 Blocks</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.toilet.desc">Washroom blocks A, B, C across the campus.</p><div class="fest-action-item"><span data-i18n="fac.toilet.near"><strong>Nearest to Stage 1:</strong> Block A</span></div></div></a>
-      <div class="fest-card"><div class="fest-header banner-teal"><h3 class="fest-title" data-i18n="fac.water.title">Drinking Water</h3><span class="fest-subtitle" data-i18n="fac.water.sub">Filtered · 4 Stations</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.water.desc">Filtered RO water dispensers with disposable cups.</p><div class="fest-action-item"><span data-i18n="fac.water.loc"><strong>Locations:</strong> Main Block, Annex, Ground, Dining Hall</span></div></div></div>
-      <div class="fest-card"><div class="fest-header banner-orange"><h3 class="fest-title" data-i18n="fac.dining.title">Dining Hall</h3><span class="fest-subtitle" data-i18n="fac.dining.sub">Oottupura · Main Block GF</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.dining.desc">Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.</p><div class="fest-action-item"><span data-i18n="fac.dining.loc"><strong>Location:</strong> Main Block, Ground Floor</span></div></div></div>
-      <a href={url('/help')} class="fest-card"><div class="fest-header banner-purple"><h3 class="fest-title" data-i18n="fac.help.title">Help Desk</h3><span class="fest-subtitle" data-i18n="fac.help.sub">Convener · Main Gate</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.help.desc">General convener, chest-number queries, schedule changes, and volunteer dispatch.</p><div class="fest-action-item"><span data-i18n="fac.help.loc"><strong>Location:</strong> Main Gate / Control Room</span></div></div></a>
-      <a href={url('/help')} class="fest-card"><div class="fest-header banner-rose"><h3 class="fest-title" data-i18n="fac.med.title">Medical Room</h3><span class="fest-subtitle" data-i18n="fac.med.sub">First Aid · 24/7 Standby</span></div><div class="fest-body"><p class="text-muted sm" data-i18n="fac.med.desc">Nursing staff, oxygen, stretcher, and emergency ambulance.</p><div class="fest-action-item"><span data-i18n="fac.med.loc"><strong>Location:</strong> Near Main Gate (west side)</span></div></div></a>
+      {FACILITIES.map((f) => (
+        <Card title={f.title} titleI18n={f.titleI18n} subtitle={f.sub} subtitleI18n={f.subI18n} tone={f.tone} href={f.href}>
+          <p class="text-muted sm" data-i18n={f.descI18n || undefined}>{f.desc}</p>
+          <div class="fest-action-item">
+            <span><strong>Location:</strong> {f.location}</span>
+          </div>
+        </Card>
+      ))}
     </div>
   </div>
 </BaseLayout>

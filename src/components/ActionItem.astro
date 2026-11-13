@@ -1,0 +1,54 @@
+---
+import { BASE, url } from '../lib/url';
+import Icon from './Icon.astro';
+
+interface Props {
+  href?: string;
+  icon?: string;
+  iconTone?: string;
+  title?: string;
+  titleI18n?: string;
+  subtitle?: string;
+  external?: boolean;
+  arrow?: boolean;
+  class?: string;
+  style?: string;
+}
+
+const {
+  href,
+  icon,
+  iconTone = "c-indigo",
+  title,
+  titleI18n,
+  subtitle,
+  external = false,
+  arrow = true,
+  class: className = "",
+  style = "",
+} = Astro.props;
+
+const Tag = href ? "a" : "div";
+const targetProps = external && href ? { target: "_blank", rel: "noopener" } : {};
+---
+<Tag
+  href={href ? (external ? href : url(href)) : undefined}
+  class={`fest-action-item ${className}`.trim()}
+  style={style}
+  {...targetProps}
+>
+  <span class="left">
+    {icon && (
+      <span class={`fest-item-icon ${iconTone}`}>
+        <Icon name={icon} />
+      </span>
+    )}
+    <span style="display:flex;flex-direction:column;min-width:0">
+      <span data-i18n={titleI18n || undefined}>{title}<slot /></span>
+      {subtitle && <small class="text-muted xs">{subtitle}</small>}
+    </span>
+  </span>
+  {arrow && (
+    <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`} aria-hidden="true"></span>
+  )}
+</Tag>

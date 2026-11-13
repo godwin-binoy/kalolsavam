@@ -1,0 +1,15 @@
+---
+import { BASE } from '../lib/url';
+
+interface Props {
+  name: string;
+  class?: string;
+  style?: string;
+  size?: string;
+}
+
+const { name, class: className = "", style = "", size } = Astro.props;
+const sizeStyle = size ? `width:${size};height:${size};` : '';
+const maskStyle = `--icon-url:url('${BASE}assets/svg/${name}.svg');${sizeStyle}${style}`;
+---
+<span class={`icn ${className}`.trim()} style={maskStyle} aria-hidden="true"></span>

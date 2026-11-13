@@ -1,4 +1,4 @@
-/* Kalolsavam PWA Service Worker */
+/* Kalolsavam PWA Service Worker — v4.3.0 */
 const CACHE_NAME = 'kal-__SW_BUILD__';
 
 const PRECACHE_FLEET = [
@@ -8,7 +8,17 @@ const PRECACHE_FLEET = [
   'venues-location/',
   'venues-find/',
   'facilities/',
+  'facilities-green-room/',
+  'facilities-toilet/',
   'transportation/',
+  'transportation-bus/',
+  'transportation-auto/',
+  'results/',
+  'results-offstage/',
+  'results-individual/',
+  'results-group/',
+  'media/',
+  'developers/',
   'help/'
 ];
 
@@ -57,11 +67,12 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Cache-first for hashed Astro assets and static images/SVGs
+  // Cache-first for immutable and static media
   if (
     url.pathname.indexOf('/astro/') >= 0 ||
     url.pathname.indexOf('/assets/img/') >= 0 ||
-    url.pathname.indexOf('/assets/svg/') >= 0
+    url.pathname.indexOf('/assets/svg/') >= 0 ||
+    url.pathname.indexOf('/assets/css/') >= 0
   ) {
     event.respondWith(
       caches.match(event.request).then(function (hit) {
@@ -75,7 +86,7 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Network-first for HTML navigations and unhashed JS
+  // Network-first for HTML pages and app JS
   event.respondWith(
     fetch(event.request).then(function (networkRes) {
       cachePut(event.request, networkRes);

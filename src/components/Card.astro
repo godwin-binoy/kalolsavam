@@ -1,12 +1,44 @@
 ---
 import { BASE, url } from '../lib/url';
-const { title, subtitle = "", banner = "banner-blue", icon = "map-pin.svg", href } = Astro.props;
+
+interface Props {
+  title: string;
+  subtitle?: string;
+  tone?: string;
+  icon?: string;
+  href?: string;
+  titleI18n?: string;
+  subtitleI18n?: string;
+  badge?: string;
+  class?: string;
+}
+
+const {
+  title,
+  subtitle = "",
+  tone = "blue",
+  icon,
+  href,
+  titleI18n,
+  subtitleI18n,
+  badge = "",
+  class: className = "",
+} = Astro.props;
+
+const Tag = href ? "a" : "div";
 ---
-<{href ? 'a' : 'div'} href={href ? url(href) : undefined} class="fest-card">
-  <div class={`fest-header ${banner}`}>
-    <h3 class="fest-title">{title}</h3>
-    {subtitle && <span class="fest-subtitle">{subtitle}</span>}
-    <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/${icon}')`}></span>
+<Tag
+  href={href ? url(href) : undefined}
+  class={`fest-card ${className}`.trim()}
+  data-tone={tone}
+>
+  <div class={`fest-header banner-${tone}`}>
+    {badge && <span style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.9;display:block;margin-bottom:.25rem">{badge}</span>}
+    <h3 class="fest-title" data-i18n={titleI18n || undefined}>{title}</h3>
+    {subtitle && <span class="fest-subtitle" data-i18n={subtitleI18n || undefined}>{subtitle}</span>}
+    {icon && <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/${icon}.svg')`} aria-hidden="true"></span>}
   </div>
-  <div class="fest-body"><slot /></div>
-</{href ? 'a' : 'div'}>
+  <div class="fest-body">
+    <slot />
+  </div>
+</Tag>

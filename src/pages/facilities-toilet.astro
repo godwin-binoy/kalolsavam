@@ -1,15 +1,21 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import { TOILET_BLOCKS } from '../data/festival';
 ---
 <BaseLayout title="Toilets | Mala Kalolsavam" active="facilities">
   <div class="main-container">
     <PageHead badge="Module 04 · Toilet" title="Toilet Blocks" intro="Washrooms across the campus, with separate blocks for boys, girls, and staff." />
     <div class="grid-3">
-      <div class="fest-card"><div class="fest-header banner-blue"><h3 class="fest-title">Block A</h3><span class="fest-subtitle">Main Block · Ground Floor</span></div><div class="fest-body"><p class="text-muted sm">Main washroom block. Separate sections for boys and girls.</p><div class="fest-action-item"><span><strong>Location:</strong> Main Block, GF, North Corridor</span></div></div></div>
-      <div class="fest-card"><div class="fest-header banner-blue"><h3 class="fest-title">Block B</h3><span class="fest-subtitle">Annex Block · 1st Floor</span></div><div class="fest-body"><p class="text-muted sm">Nearest washroom to the green rooms.</p><div class="fest-action-item"><span><strong>Location:</strong> Annex Block, 1st Floor, Next to G3</span></div></div></div>
-      <div class="fest-card"><div class="fest-header banner-blue"><h3 class="fest-title">Block C</h3><span class="fest-subtitle">Ground Wing · Near Stage 2</span></div><div class="fest-body"><p class="text-muted sm">Open-air stage side washroom.</p><div class="fest-action-item"><span><strong>Location:</strong> Ground Wing, East of Stage 2</span></div></div></div>
+      {TOILET_BLOCKS.map((t) => (
+        <Card title={t.name} subtitle={t.sub} tone="blue">
+          <p class="text-muted sm">{t.desc}</p>
+          <div class="fest-action-item">
+            <span><strong>Location:</strong> {t.loc}</span>
+          </div>
+        </Card>
+      ))}
     </div>
   </div>
 </BaseLayout>
