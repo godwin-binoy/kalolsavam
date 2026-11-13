@@ -3,7 +3,7 @@
   'use strict';
 
   var S = { onAuthLost: function () {} };
-  var DEFAULT_API_ORIGIN = 'https://apikalolsavammala.dpdns.org';
+  var DEFAULT_API_ORIGIN = '';
   var TOKEN_KEY = 'kal_token';
   var REFRESH_KEY = 'kal_refresh_token';
   var AUTH_PATHS = ['/auth/login', '/auth/refresh', '/auth/register'];
