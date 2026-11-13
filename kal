@@ -438,7 +438,10 @@ def cmd_down(args):
 def cmd_restart(args):
     banner(); ensure_docker()
     if not backend_running(): die("backend is not running — use 'kal up'.")
-    if run(get_compose() + ["restart", "backend"], capture=False).returncode != 0: die("restart failed.")
+    # 'docker compose restart' does NOT reload .env changes.
+    info("recreating backend container (picks up .env changes)…")
+    if run(get_compose() + ["up", "-d", "--force-recreate", "backend"], capture=False).returncode != 0: 
+        die("restart failed.")
     if not wait_healthy(): return 1
     ok("restarted."); return 0
 
