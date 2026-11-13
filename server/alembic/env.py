@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 import sys
 from logging.config import fileConfig
 from pathlib import Path
@@ -18,8 +19,19 @@ from server.config import Settings  # noqa: E402
 from server.database import make_engine  # noqa: E402
 
 config = context.config
-if config.config_file_name is not None:
-    fileConfig(config.config_file_name, disable_existing_loggers=False)
+
+
+def _configure_logging() -> None:
+    """Best-effort only: a bad logging section must never block a migration."""
+    if not config.config_file_name:
+        return
+    try:
+        fileConfig(config.config_file_name, disable_existing_loggers=False)
+    except Exception as exc:
+        logging.getLogger("kalolsavam").debug("Alembic logging config skipped: %s", exc)
+
+
+_configure_logging()
 
 target_metadata = SQLModel.metadata
 
