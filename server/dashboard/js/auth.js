@@ -9,6 +9,19 @@
     msgEl.className = 'msg' + (cls ? ' ' + cls : '');
   }
 
+  function buildPayload(info){
+    var roles = info.roles || [];
+    var role = (Array.isArray(roles) && roles[0] && (roles[0].name || roles[0])) || info.role || '';
+    var name = info.email || info.username || '';
+    return {
+      username: name,
+      email: name,
+      role: role,
+      roles: Array.isArray(roles) ? roles : [],
+      stages: info.stages || []
+    };
+  }
+
   async function login(username, password){
     btnEl.disabled = true;
     msg('Signing in…');
@@ -20,26 +33,14 @@
       });
       var v = await r.json().catch(function(){ return {}; });
       if (!r.ok){
-        // Backend emits {"error": "..."} (see server/errors.py) and Pydantic
-        // emits {"detail": ...}. Prefer either, fall back to the status code.
         var why = (v && (v.error || v.detail)) || ('Sign-in failed (' + r.status + ').');
         msg(typeof why === 'string' ? why : 'Sign-in failed.', 'err');
         return false;
       }
       var me = await A.api('/api/v1/auth/me');
-      var info = me.ok ? me.data : v;
-      var _roles = info.roles || [];
-      var _role = (Array.isArray(_roles) && _roles[0] && (_roles[0].name || _roles[0])) || info.role || '';
-      var _name = info.email || info.username || '';
-      var payload = {
-        username: _name,
-        email: _name,
-        role: _role,
-        roles: Array.isArray(_roles) ? _roles : [],
-        stages: info.stages || []
-      };
+      var payload = buildPayload(me.ok ? me.data : v);
       sessionStorage.setItem('kal_user', JSON.stringify(payload));
-      msg('Signed in as ' + (_name || 'user') + '.', 'ok');
+      msg('Signed in as ' + (payload.username || 'user') + '.', 'ok');
       if (window.onKalLogin) window.onKalLogin(payload);
       return true;
     } catch(e){
@@ -57,12 +58,20 @@
   }
 
   async function tryResume(){
-    var u = sessionStorage.getItem('kal_user');
-    if (!u) return false;
-    var r = await A.api('/api/v1/auth/me');
-    if (r.ok && window.onKalLogin){ window.onKalLogin(JSON.parse(u)); return true; }
-    sessionStorage.removeItem('kal_user');
-    return false;
+    try {
+      var res = await fetch('/api/v1/auth/me', { method: 'GET', credentials: 'include' });
+      if (!res.ok){
+        sessionStorage.removeItem('kal_user');
+        return false;
+      }
+      var info = await res.json();
+      var payload = buildPayload(info);
+      sessionStorage.setItem('kal_user', JSON.stringify(payload));
+      if (window.onKalLogin) window.onKalLogin(payload);
+      return true;
+    } catch(e){
+      return false;
+    }
   }
 
   window.KalAuth = {

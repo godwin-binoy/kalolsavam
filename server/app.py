@@ -82,6 +82,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         path = request.url.path
         if path.startswith(("/admin", "/stagemaster", "/dashboard")):
             resp.headers["Cache-Control"] = "no-store"
+        elif path.startswith("/assets/js/"):
+            resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
         elif path.startswith("/assets/"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         elif path.startswith("/api/v1/admin/"):
@@ -162,6 +164,13 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     @app.get("/{full_path:path}")
     async def catch_all(full_path: str):
+        clean_path = full_path.lstrip("/")
+        if (
+            clean_path in ("api", "assets", "dashboard", "pages")
+            or clean_path.startswith(("api/", "assets/", "dashboard/", "pages/"))
+        ):
+            return JSONResponse({"error": "not_found"}, status_code=404)
+
         if not dist.exists():
             gate = srv / "static" / "gate.html"
             return FileResponse(gate)

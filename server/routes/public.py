@@ -88,17 +88,23 @@ def venues(request: Request):
 
 
 @router.get("/schedule")
-def schedule(request: Request, day: str | None = None):
+def schedule(request: Request, day: str | None = None, venue_id: int | None = None):
     db = request.app.state.db
     q = ("SELECT e.id, e.code, e.title, c.name AS category, v.name AS venue, "
          " e.day, e.scheduled_time FROM events e "
          "LEFT JOIN categories c ON c.id = e.category_id "
          "LEFT JOIN venues v ON v.id = e.venue_id")
-    params: tuple = ()
+    clauses: list[str] = []
+    params: list = []
     if day:
-        q += " WHERE e.day = ?"
-        params = (day[:32],)
-    rows = db.q(q + " ORDER BY e.day, e.scheduled_time LIMIT 1000", params)
+        clauses.append("e.day = ?")
+        params.append(day[:32])
+    if venue_id is not None:
+        clauses.append("e.venue_id = ?")
+        params.append(venue_id)
+    if clauses:
+        q += " WHERE " + " AND ".join(clauses)
+    rows = db.q(q + " ORDER BY e.day, e.scheduled_time LIMIT 1000", tuple(params))
     return JSONResponse(
         {"events": [dict(r) for r in rows]},
         headers={"Cache-Control": "public, max-age=60"},

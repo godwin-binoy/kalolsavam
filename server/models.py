@@ -1,7 +1,16 @@
-"""Request DTOs."""
+"""Request DTOs with input normalization and validation."""
 from __future__ import annotations
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+
+def _require_non_blank(v: str | None) -> str | None:
+    if v is None:
+        return None
+    stripped = v.strip()
+    if not stripped:
+        raise ValueError("must not be blank")
+    return stripped
 
 
 class StateIn(BaseModel):
@@ -28,21 +37,41 @@ class VenueIn(BaseModel):
     kind: str = Field(default="stage", max_length=32)
     active: bool = True
 
+    @field_validator("name", "kind")
+    @classmethod
+    def _clean(cls, v: str) -> str:
+        return _require_non_blank(v)  # type: ignore[return-value]
+
 
 class VenueUpdateIn(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     kind: str | None = Field(default=None, max_length=32)
     active: bool | None = None
 
+    @field_validator("name", "kind")
+    @classmethod
+    def _clean(cls, v: str | None) -> str | None:
+        return _require_non_blank(v)
+
 
 class CategoryIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     group: str = Field(default="HSS GENERAL", max_length=64)
 
+    @field_validator("name", "group")
+    @classmethod
+    def _clean(cls, v: str) -> str:
+        return _require_non_blank(v)  # type: ignore[return-value]
+
 
 class CategoryUpdateIn(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     group: str | None = Field(default=None, max_length=64)
+
+    @field_validator("name", "group")
+    @classmethod
+    def _clean(cls, v: str | None) -> str | None:
+        return _require_non_blank(v)
 
 
 class EventIn(BaseModel):
@@ -53,6 +82,11 @@ class EventIn(BaseModel):
     day: str | None = Field(default=None, max_length=32)
     scheduled_time: str | None = Field(default=None, max_length=16)
 
+    @field_validator("code", "title")
+    @classmethod
+    def _clean(cls, v: str) -> str:
+        return _require_non_blank(v)  # type: ignore[return-value]
+
 
 class EventUpdateIn(BaseModel):
     code: str | None = Field(default=None, min_length=1, max_length=32)
@@ -61,6 +95,11 @@ class EventUpdateIn(BaseModel):
     venue_id: int | None = None
     day: str | None = Field(default=None, max_length=32)
     scheduled_time: str | None = Field(default=None, max_length=16)
+
+    @field_validator("code", "title")
+    @classmethod
+    def _clean(cls, v: str | None) -> str | None:
+        return _require_non_blank(v)
 
 
 class UserIn(BaseModel):
@@ -84,15 +123,25 @@ class PasswordResetIn(BaseModel):
 class AddToQueueIn(BaseModel):
     venue_id: int
     event_id: int
-    school: str = Field(max_length=200)
+    school: str = Field(min_length=1, max_length=200)
     student_name: str | None = Field(default=None, max_length=200)
     roll: str | None = Field(default=None, max_length=64)
+
+    @field_validator("school")
+    @classmethod
+    def _clean_school(cls, v: str) -> str:
+        return _require_non_blank(v)  # type: ignore[return-value]
 
 
 class QueueItemUpdateIn(BaseModel):
-    school: str | None = Field(default=None, max_length=200)
+    school: str | None = Field(default=None, min_length=1, max_length=200)
     student_name: str | None = Field(default=None, max_length=200)
     roll: str | None = Field(default=None, max_length=64)
+
+    @field_validator("school")
+    @classmethod
+    def _clean_school(cls, v: str | None) -> str | None:
+        return _require_non_blank(v)
 
 
 class QueueMoveIn(BaseModel):

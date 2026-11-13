@@ -45,20 +45,23 @@ def _broadcast_sync(request: Request, msg: dict) -> None:
         pass
 
 
+def _active_venues_for_user(db, user):
+    if has_role(user, "admin"):
+        return db.q("SELECT * FROM venues WHERE active = 1 ORDER BY id")
+    stages = get_user_stages(user)
+    if not stages:
+        return []
+    ph = ",".join("?" * len(stages))
+    return db.q(
+        f"SELECT * FROM venues WHERE active = 1 AND id IN ({ph}) ORDER BY id",
+        tuple(stages),
+    )
+
+
 @router.get("/board")
 def board(request: Request, user=Depends(require_staff)):
     db = get_db(request)
-    if has_role(user, "admin"):
-        venues = db.q("SELECT * FROM venues WHERE active = 1 ORDER BY id")
-    else:
-        stages = get_user_stages(user)
-        if not stages:
-            return {"board": []}
-        ph = ",".join("?" * len(stages))
-        venues = db.q(
-            "SELECT * FROM venues WHERE active = 1 AND id IN (" + ph + ") ORDER BY id",
-            tuple(stages),
-        )
+    venues = _active_venues_for_user(db, user)
     if not venues:
         return {"board": []}
 
@@ -71,14 +74,13 @@ def board(request: Request, user=Depends(require_staff)):
         "JOIN events e ON e.id = q.event_id "
         "LEFT JOIN categories c ON c.id = e.category_id "
         "LEFT JOIN participants p ON p.id = q.participant_id "
-        "WHERE q.venue_id IN (" + ph + ") "
+        f"WHERE q.venue_id IN ({ph}) "
         "ORDER BY q.venue_id, "
         "CASE q.status WHEN 'ON-STAGE' THEN 0 ELSE 1 END, q.position",
         tuple(vids),
     )
     states = db.q(
-        "SELECT venue_id, state, announcement FROM live_state "
-        "WHERE venue_id IN (" + ph + ")",
+        f"SELECT venue_id, state, announcement FROM live_state WHERE venue_id IN ({ph})",
         tuple(vids),
     )
     state_map = {s["venue_id"]: dict(s) for s in states}
@@ -86,14 +88,16 @@ def board(request: Request, user=Depends(require_staff)):
     for it in items:
         by_venue.setdefault(it["venue_id"], []).append(dict(it))
 
-    out = []
-    for v in venues:
-        out.append({
-            "venue": dict(v),
-            "state": state_map.get(v["id"], {"state": "IDLE", "announcement": ""}),
-            "items": by_venue.get(v["id"], []),
-        })
-    return {"board": out}
+    return {
+        "board": [
+            {
+                "venue": dict(v),
+                "state": state_map.get(v["id"], {"state": "IDLE", "announcement": ""}),
+                "items": by_venue.get(v["id"], []),
+            }
+            for v in venues
+        ]
+    }
 
 
 @router.get("/stream")
@@ -149,19 +153,20 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
     if hit:
         return {**json.loads(hit["response"]), "replayed": True}
 
-    db.ex("DELETE FROM idempotency WHERE created_at < ?", (db.now() - 86400,))
-
     frm, to = _TRANSITIONS[body.action]
     broadcasts: list[dict] = []
     resp: dict | None = None
 
     try:
         with db.transaction():
+            now = db.now()
+            db.ex("DELETE FROM idempotency WHERE created_at < ?", (now - 86400,))
+
             hit = db.one("SELECT response FROM idempotency WHERE key = ?", (idem,))
             if hit:
                 return {**json.loads(hit["response"]), "replayed": True}
 
-            # If promoting an item to stage, ensure any currently active item is cleanly completed
+            # Ensure any currently active item is cleanly completed (START_NEXT) or paused (RECALL)
             if body.action in ("START_NEXT", "RECALL"):
                 cur = db.one(
                     "SELECT * FROM queue_items WHERE venue_id = ? "
@@ -170,11 +175,12 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
                 )
                 if cur:
                     next_status = "COMPLETE" if body.action == "START_NEXT" else "PAUSED"
+                    completed_val = now if next_status == "COMPLETE" else cur["completed_at"]
                     db.ex(
                         "UPDATE queue_items SET status = ?, "
                         " version = version + 1, completed_at = ?, updated_at = ? "
                         "WHERE id = ?",
-                        (next_status, db.now(), db.now(), cur["id"]),
+                        (next_status, completed_val, now, cur["id"]),
                     )
                     broadcasts.append({
                         "entity": "queue", "venue_id": body.venue_id,
@@ -198,7 +204,6 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
             if body.version is not None and row["version"] != body.version:
                 raise HTTPException(status.HTTP_409_CONFLICT, "version_conflict")
 
-            now = db.now()
             cur_db = db.ex(
                 "UPDATE queue_items SET status = ?, version = version + 1, "
                 " updated_at = ?, started_at = COALESCE(started_at, ?), "
@@ -212,11 +217,15 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
             if cur_db.rowcount == 0:
                 raise HTTPException(status.HTTP_409_CONFLICT, "version_conflict")
 
-            resp = {"ok": True, "item_id": row["id"], "status": to,
-                    "version": row["version"] + 1}
+            resp = {
+                "ok": True,
+                "item_id": row["id"],
+                "status": to,
+                "version": row["version"] + 1,
+            }
             db.ex(
                 "INSERT INTO idempotency(key, response, created_at) VALUES (?,?,?)",
-                (idem, json.dumps(resp), db.now()),
+                (idem, json.dumps(resp), now),
             )
             broadcasts.append({
                 "entity": "queue", "venue_id": body.venue_id,
@@ -250,10 +259,15 @@ def enter_score(body: ScoreIn, request: Request, user=Depends(require_staff)):
         " entered_at = excluded.entered_at",
         (body.queue_item_id, body.judge_no, body.value, str(user.id), db.now()),
     )
-    rows = db.q("SELECT judge_no, value FROM scores WHERE queue_item_id = ? ORDER BY judge_no",
-                (body.queue_item_id,))
+    rows = db.q(
+        "SELECT judge_no, value FROM scores WHERE queue_item_id = ? ORDER BY judge_no",
+        (body.queue_item_id,),
+    )
     vals = [r["value"] for r in rows]
-    _broadcast_sync(request, {"entity": "score", "venue_id": item["venue_id"], "queue_item_id": body.queue_item_id})
+    _broadcast_sync(
+        request,
+        {"entity": "score", "venue_id": item["venue_id"], "queue_item_id": body.queue_item_id},
+    )
     return {
         "scores": [dict(r) for r in rows],
         "total": round(sum(vals), 2),

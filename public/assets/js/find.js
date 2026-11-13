@@ -1,21 +1,18 @@
 (function(){
   'use strict';
-  function apiBase(){
-    var b = document.body.getAttribute('data-base') || '/';
-    return b.replace(/\/+$/, '');
-  }
+  var rawBase = document.body.getAttribute('data-base') || '/';
+  var ASSET_BASE = rawBase.endsWith('/') ? rawBase : rawBase + '/';
+  var API_BASE = ASSET_BASE.replace(/\/+$/, '');
+
   var q = document.getElementById('q');
   var res = document.getElementById('results');
   var emp = document.getElementById('empty');
   if (!q || !res || !emp) return;
 
-  var BASE = apiBase();
   var all = [];
 
   // Embedded festival program dataset for offline & preview availability
   var FALLBACK_EVENTS = [
-    // Representative sample shown only when the backend is unreachable.
-    // The authoritative schedule comes from /api/v1/public/schedule.
     { code: "101", title: "Bharathanatyam (HS Girls)", venue: "Stage 1: Main Ground", day: "Day 1", scheduled_time: "09:30 AM", category: "HS General" },
     { code: "201", title: "Light Music Vocal (HS Boys)", venue: "Stage 2: HS Hall", day: "Day 1", scheduled_time: "10:00 AM", category: "HS General" },
     { code: "301", title: "Folk Dance (HS Boys)", venue: "Stage 3: GLPS Mala", day: "Day 1", scheduled_time: "10:30 AM", category: "HS General" },
@@ -24,14 +21,10 @@
     { code: "701", title: "Pencil Drawing (HS)", venue: "Stage 7: HSS 1st Floor", day: "Day 1", scheduled_time: "09:30 AM", category: "Off-Stage" }
   ];
 
-  fetch(BASE + '/api/v1/public/schedule')
+  fetch(API_BASE + '/api/v1/public/schedule')
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
-      if (d && d.events && d.events.length) {
-        all = d.events;
-      } else {
-        all = FALLBACK_EVENTS;
-      }
+      all = (d && d.events && d.events.length) ? d.events : FALLBACK_EVENTS;
       render('');
     })
     .catch(function(){
@@ -40,18 +33,19 @@
     });
 
   function esc(s){
-    return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
     });
   }
 
   function render(filter){
-    var f = (filter||'').trim().toLowerCase();
+    if (!document.body.contains(res)) return;
+    var f = (filter || '').trim().toLowerCase();
     var tokens = f.split(/\s+/).filter(Boolean);
 
     var matches = all.filter(function(e){
       if (!tokens.length) return true;
-      var text = (String(e.code||'') + ' ' + String(e.title||'') + ' ' + String(e.venue||'') + ' ' + String(e.category||'')).toLowerCase();
+      var text = (String(e.code || '') + ' ' + String(e.title || '') + ' ' + String(e.venue || '') + ' ' + String(e.category || '')).toLowerCase();
       return tokens.every(function(t){ return text.indexOf(t) >= 0; });
     });
 
@@ -70,13 +64,13 @@
         '<div class="fest-body">' +
           '<div class="fest-action-item">' +
             '<span class="left">' +
-              '<span class="fest-item-icon c-emerald"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/map-pin.svg\')"></span></span>' +
+              '<span class="fest-item-icon c-emerald"><span class="icn" style="--icon-url:url(\'' + ASSET_BASE + 'assets/svg/map-pin.svg\')"></span></span>' +
               '<span><strong>Venue:</strong> ' + esc(e.venue || 'TBA') + '</span>' +
             '</span>' +
           '</div>' +
           '<div class="fest-action-item">' +
             '<span class="left">' +
-              '<span class="fest-item-icon c-amber"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/bolt.svg\')"></span></span>' +
+              '<span class="fest-item-icon c-amber"><span class="icn" style="--icon-url:url(\'' + ASSET_BASE + 'assets/svg/bolt.svg\')"></span></span>' +
               '<span><strong>Schedule:</strong> ' + esc(e.day || '') + ' · ' + esc(e.scheduled_time || '') + '</span>' +
             '</span>' +
           '</div>' +
@@ -91,11 +85,16 @@
     debounceTimer = setTimeout(function(){ render(q.value); }, 120);
   });
 
-  window.addEventListener('kal:langchange', function() {
+  function onLangChange(){
     var qInput = document.getElementById('q');
-    if (qInput && typeof render === 'function') {
-      render(qInput.value);
-    }
-  });
+    if (qInput && document.body.contains(qInput)) render(qInput.value);
+  }
+  window.addEventListener('kal:langchange', onLangChange);
 
+  if (window.KalApp && typeof window.KalApp.onCleanup === 'function'){
+    window.KalApp.onCleanup(function(){
+      clearTimeout(debounceTimer);
+      window.removeEventListener('kal:langchange', onLangChange);
+    });
+  }
 })();

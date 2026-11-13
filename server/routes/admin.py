@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import logging
 import os
 import shutil
 import sqlite3
@@ -26,10 +27,11 @@ from ..models import (
 )
 
 router = APIRouter()
+log = logging.getLogger("kalolsavam")
 _ph = PasswordHasher()
 
 
-def _admin_log(db, request: Request, user: User, action: str, detail: str = ""):
+def _admin_log(db, request: Request, user: User, action: str, detail: str = "") -> None:
     try:
         db.ex(
             "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) "
@@ -37,11 +39,11 @@ def _admin_log(db, request: Request, user: User, action: str, detail: str = ""):
             (db.now(), user.email, hash_ip(client_ip(request)),
              "admin_action", f"{action}|{detail}"),
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("audit_write_failed: %s", exc)
 
 
-async def _uid(uid: str):
+def _parse_uid(uid: str):
     try:
         return _uuid.UUID(uid)
     except (ValueError, AttributeError):
@@ -49,6 +51,109 @@ async def _uid(uid: str):
             return int(uid)
         except ValueError:
             return uid
+
+
+def _validate_stage_ids(db, stages: list[int]) -> None:
+    if not stages:
+        return
+    valid = {r["id"] for r in db.q("SELECT id FROM venues")}
+    invalid = [s for s in stages if s not in valid]
+    if invalid:
+        raise HTTPException(400, f"invalid_stage_ids:{invalid}")
+
+
+def _collect_stats(db) -> dict[str, int]:
+    row = db.one("""
+        SELECT
+            (SELECT COUNT(*) FROM venues) AS venues,
+            (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
+            (SELECT COUNT(*) FROM categories) AS categories,
+            (SELECT COUNT(*) FROM events) AS events,
+            (SELECT COUNT(*) FROM participants) AS participants,
+            (SELECT COUNT(*) FROM scores) AS scores_entered,
+            COUNT(q.id) AS queue_items,
+            COALESCE(SUM(CASE WHEN q.status = 'WAITING' THEN 1 ELSE 0 END), 0) AS queue_waiting,
+            COALESCE(SUM(CASE WHEN q.status = 'ON-STAGE' THEN 1 ELSE 0 END), 0) AS queue_onstage_only,
+            COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 1 ELSE 0 END), 0) AS queue_active,
+            COALESCE(SUM(CASE WHEN q.status = 'COMPLETE' THEN 1 ELSE 0 END), 0) AS queue_complete,
+            COALESCE(SUM(CASE WHEN q.status = 'SKIPPED' THEN 1 ELSE 0 END), 0) AS queue_skipped
+        FROM queue_items q
+    """)
+    return dict(row)
+
+
+def _collect_health(db, cfg, sse_connections: int, fail_window_sec: int) -> dict[str, int | float]:
+    try:
+        db_bytes = os.stat(cfg.db_path).st_size
+    except OSError:
+        db_bytes = 0
+    try:
+        disk_free = shutil.disk_usage(cfg.db_path).free
+    except OSError:
+        disk_free = 0
+    fails = db.one(
+        "SELECT COUNT(*) c FROM auth_audit WHERE event = 'login_fail' AND ts > ?",
+        (db.now() - fail_window_sec,),
+    )["c"]
+    return {
+        "db_bytes": db_bytes,
+        "disk_free_bytes": disk_free,
+        "sse_connections": sse_connections,
+        "auth_failures": fails,
+    }
+
+
+def _compute_leaderboard(db) -> dict[str, list[dict]]:
+    rows = db.q("""
+        SELECT q.id AS queue_item_id, e.id AS event_id, e.code AS event_code,
+               e.title AS event_title, p.school,
+               COALESCE(SUM(s.value), 0) AS total_score,
+               COUNT(s.id) AS judge_count
+        FROM queue_items q
+        JOIN events e ON e.id = q.event_id
+        LEFT JOIN participants p ON p.id = q.participant_id
+        LEFT JOIN scores s ON s.queue_item_id = q.id
+        WHERE q.status IN ('COMPLETE','ON-STAGE','PAUSED')
+        GROUP BY q.id
+    """)
+    by_event = defaultdict(list)
+    for r in rows:
+        if r["judge_count"] and r["school"]:
+            by_event[r["event_id"]].append(dict(r))
+
+    points = defaultdict(lambda: {"first": 0, "second": 0, "third": 0, "total": 0})
+    per_event = []
+    for eid, items in by_event.items():
+        items.sort(key=lambda x: (x["total_score"], x["judge_count"]), reverse=True)
+        winners = []
+        for rank, it in enumerate(items[:3], start=1):
+            pts = {1: 5, 2: 3, 3: 1}[rank]
+            school = it["school"]
+            points[school]["total"] += pts
+            if rank == 1:
+                points[school]["first"] += 1
+            elif rank == 2:
+                points[school]["second"] += 1
+            else:
+                points[school]["third"] += 1
+            winners.append({
+                "rank": rank,
+                "school": school,
+                "total_score": round(it["total_score"], 2),
+                "points": pts,
+            })
+        per_event.append({
+            "event_id": eid,
+            "event_code": items[0]["event_code"],
+            "event_title": items[0]["event_title"],
+            "winners": winners,
+        })
+
+    school_totals = [
+        {"school": school, **data}
+        for school, data in sorted(points.items(), key=lambda x: -x[1]["total"])
+    ]
+    return {"schools": school_totals, "events": per_event}
 
 
 # ── Venues ────────────────────────────────────────────────────────────
@@ -61,8 +166,10 @@ def list_venues(request: Request, user=Depends(require_admin)):
 @router.post("/venues")
 def create_venue(body: VenueIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    cur = db.ex("INSERT INTO venues(name, kind, active) VALUES (?,?,?)",
-                (body.name, body.kind, int(body.active)))
+    cur = db.ex(
+        "INSERT INTO venues(name, kind, active) VALUES (?,?,?)",
+        (body.name, body.kind, int(body.active)),
+    )
     _admin_log(db, request, user, "create_venue", f"id={cur.lastrowid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (cur.lastrowid,)))
 
@@ -76,8 +183,10 @@ def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(r
     name = body.name if body.name is not None else row["name"]
     kind = body.kind if body.kind is not None else row["kind"]
     active = int(body.active) if body.active is not None else row["active"]
-    db.ex("UPDATE venues SET name = ?, kind = ?, active = ? WHERE id = ?",
-          (name, kind, active, vid))
+    db.ex(
+        "UPDATE venues SET name = ?, kind = ?, active = ? WHERE id = ?",
+        (name, kind, active, vid),
+    )
     _admin_log(db, request, user, "update_venue", f"id={vid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (vid,)))
 
@@ -145,7 +254,7 @@ def delete_category(cid: int, request: Request, user=Depends(require_admin)):
 def list_events(request: Request, venue_id: int | None = None, user=Depends(require_admin)):
     db = get_db(request)
     q = "SELECT * FROM events"
-    params = ()
+    params: tuple = ()
     if venue_id is not None:
         q += " WHERE venue_id = ?"
         params = (venue_id,)
@@ -219,7 +328,7 @@ def list_queue(request: Request, venue_id: int | None = None, user=Depends(requi
         JOIN events e ON e.id = q.event_id
         LEFT JOIN participants p ON p.id = q.participant_id
     """
-    params = ()
+    params: tuple = ()
     if venue_id is not None:
         q += " WHERE q.venue_id = ?"
         params = (venue_id,)
@@ -258,23 +367,31 @@ def get_queue_item(item_id: int, request: Request, user=Depends(require_admin)):
 @router.put("/queue/{item_id}")
 def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    row = db.one("SELECT * FROM queue_items WHERE id = ?", (item_id,))
-    if not row:
-        raise HTTPException(404, "not_found")
-    pid = row["participant_id"]
-    if not pid:
-        raise HTTPException(409, "no_participant")
     with db.transaction():
+        row = db.one("SELECT * FROM queue_items WHERE id = ?", (item_id,))
+        if not row:
+            raise HTTPException(404, "not_found")
+        pid = row["participant_id"]
+        if not pid:
+            raise HTTPException(409, "no_participant")
+        updates: list[str] = []
+        params: list = []
         if body.school is not None:
-            db.ex("UPDATE participants SET school = ? WHERE id = ?", (body.school.strip(), pid))
+            updates.append("school = ?")
+            params.append(body.school)
         if body.student_name is not None:
-            v = body.student_name.strip() or None
-            db.ex("UPDATE participants SET student_name = ? WHERE id = ?", (v, pid))
+            updates.append("student_name = ?")
+            params.append(body.student_name.strip() or None)
         if body.roll is not None:
-            v = body.roll.strip() or None
-            db.ex("UPDATE participants SET roll = ? WHERE id = ?", (v, pid))
-        db.ex("UPDATE queue_items SET version = version + 1, updated_at = ? WHERE id = ?",
-              (db.now(), item_id))
+            updates.append("roll = ?")
+            params.append(body.roll.strip() or None)
+        if updates:
+            params.append(pid)
+            db.ex(f"UPDATE participants SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        db.ex(
+            "UPDATE queue_items SET version = version + 1, updated_at = ? WHERE id = ?",
+            (db.now(), item_id),
+        )
     _admin_log(db, request, user, "queue_edit", f"id={item_id}")
     return {"ok": True}
 
@@ -305,27 +422,24 @@ def move_queue_item(item_id: int, body: QueueMoveIn, request: Request, user=Depe
         venue_id = item["venue_id"]
         cur_pos = item["position"]
 
-        if body.direction == "up":
-            neighbor = db.one(
-                "SELECT * FROM queue_items WHERE venue_id = ? AND position < ? "
-                "ORDER BY position DESC LIMIT 1",
-                (venue_id, cur_pos),
-            )
-        else:
-            neighbor = db.one(
-                "SELECT * FROM queue_items WHERE venue_id = ? AND position > ? "
-                "ORDER BY position ASC LIMIT 1",
-                (venue_id, cur_pos),
-            )
-
+        op, order = ("<", "DESC") if body.direction == "up" else (">", "ASC")
+        neighbor = db.one(
+            f"SELECT * FROM queue_items WHERE venue_id = ? AND position {op} ? "
+            f"ORDER BY position {order} LIMIT 1",
+            (venue_id, cur_pos),
+        )
         if not neighbor:
             return {"ok": True, "moved": False}
 
         now = db.now()
-        db.ex("UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
-              (neighbor["position"], now, item_id))
-        db.ex("UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
-              (cur_pos, now, neighbor["id"]))
+        db.ex(
+            "UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
+            (neighbor["position"], now, item_id),
+        )
+        db.ex(
+            "UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
+            (cur_pos, now, neighbor["id"]),
+        )
     _admin_log(db, request, user, "queue_move", f"id={item_id},dir={body.direction}")
     return {"ok": True, "moved": True}
 
@@ -339,11 +453,13 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
         if not db.one("SELECT id FROM events WHERE id = ?", (body.event_id,)):
             raise HTTPException(404, "event_not_found")
         cur_p = db.ex(
-            "INSERT INTO participants(event_id, school, student_name, roll) "
-            "VALUES (?,?,?,?)",
-            (body.event_id, body.school.strip(),
-             (body.student_name or "").strip() or None,
-             (body.roll or "").strip() or None),
+            "INSERT INTO participants(event_id, school, student_name, roll) VALUES (?,?,?,?)",
+            (
+                body.event_id,
+                body.school,
+                (body.student_name or "").strip() or None,
+                (body.roll or "").strip() or None,
+            ),
         )
         pid = cur_p.lastrowid
         row = db.one(
@@ -363,36 +479,41 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
 @router.get("/users")
 async def list_users(request: Request, user=Depends(require_admin)):
     async with request.app.state.auth_session_maker() as session:
-        result = await session.execute(select(User))
+        result = await session.execute(select(User).order_by(User.email))
         users = result.scalars().all()
-        return {"users": [{
-            "id": str(u.id), "email": u.email, "stages": u.stages,
-            "roles": [r.name for r in u.roles], "disabled": not u.is_active,
-        } for u in users]}
+        return {
+            "users": [
+                {
+                    "id": str(u.id),
+                    "email": u.email,
+                    "stages": u.stages,
+                    "roles": [r.name for r in u.roles],
+                    "disabled": not u.is_active,
+                }
+                for u in users
+            ]
+        }
 
 
 @router.post("/users")
 async def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
+    _validate_stage_ids(get_db(request), body.stages)
     async with request.app.state.auth_session_maker() as session:
-        existing = (await session.execute(
-            select(User).where(User.email == body.email)
-        )).scalar_one_or_none()
+        existing = (
+            await session.execute(select(User).where(User.email == body.email))
+        ).scalar_one_or_none()
         if existing:
             raise HTTPException(409, "email_taken")
-        role = (await session.execute(
-            select(Role).where(Role.name == body.role)
-        )).scalar_one_or_none()
+        role = (
+            await session.execute(select(Role).where(Role.name == body.role))
+        ).scalar_one_or_none()
         if not role:
             raise HTTPException(400, "role_missing")
-        if body.stages:
-            valid = {r["id"] for r in get_db(request).q("SELECT id FROM venues")}
-            invalid = [s for s in body.stages if s not in valid]
-            if invalid:
-                raise HTTPException(400, f"invalid_stage_ids:{invalid}")
         u = User(
             email=body.email,
             hashed_password=_ph.hash(body.password),
-            is_active=True, is_verified=True,
+            is_active=True,
+            is_verified=True,
             stages=json.dumps(body.stages),
         )
         u.roles.append(role)
@@ -403,29 +524,27 @@ async def create_user(body: UserIn, request: Request, user=Depends(require_admin
 
 @router.put("/users/{uid}")
 async def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
+    if body.stages is not None:
+        _validate_stage_ids(get_db(request), body.stages)
     async with request.app.state.auth_session_maker() as session:
-        target = await session.get(User, await _uid(uid))
+        target = await session.get(User, _parse_uid(uid))
         if not target:
             raise HTTPException(404, "not_found")
         if body.email is not None and body.email != target.email:
-            dup = (await session.execute(
-                select(User).where(User.email == body.email)
-            )).scalar_one_or_none()
+            dup = (
+                await session.execute(select(User).where(User.email == body.email))
+            ).scalar_one_or_none()
             if dup:
                 raise HTTPException(409, "email_taken")
             target.email = body.email
         if body.stages is not None:
-            valid = {r["id"] for r in get_db(request).q("SELECT id FROM venues")}
-            invalid = [s for s in body.stages if s not in valid]
-            if invalid:
-                raise HTTPException(400, f"invalid_stage_ids:{invalid}")
             target.stages = json.dumps(body.stages)
         if body.is_active is not None:
             target.is_active = body.is_active
         if body.role is not None:
-            new_role = (await session.execute(
-                select(Role).where(Role.name == body.role)
-            )).scalar_one_or_none()
+            new_role = (
+                await session.execute(select(Role).where(Role.name == body.role))
+            ).scalar_one_or_none()
             if not new_role:
                 raise HTTPException(400, "role_missing")
             target.roles.clear()
@@ -438,7 +557,7 @@ async def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depen
 @router.post("/users/{uid}/disable")
 async def disable_user(uid: str, request: Request, user=Depends(require_admin)):
     async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, await _uid(uid))
+        u = await session.get(User, _parse_uid(uid))
         if not u:
             raise HTTPException(404, "not_found")
         u.is_active = False
@@ -450,7 +569,7 @@ async def disable_user(uid: str, request: Request, user=Depends(require_admin)):
 @router.post("/users/{uid}/enable")
 async def enable_user(uid: str, request: Request, user=Depends(require_admin)):
     async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, await _uid(uid))
+        u = await session.get(User, _parse_uid(uid))
         if not u:
             raise HTTPException(404, "not_found")
         u.is_active = True
@@ -462,7 +581,7 @@ async def enable_user(uid: str, request: Request, user=Depends(require_admin)):
 @router.post("/users/{uid}/reset-password")
 async def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
     async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, await _uid(uid))
+        u = await session.get(User, _parse_uid(uid))
         if not u:
             raise HTTPException(404, "not_found")
         u.hashed_password = _ph.hash(body.password)
@@ -482,42 +601,30 @@ def list_audit(request: Request, limit: int = 100, offset: int = 0, user=Depends
 
 @router.get("/stats")
 def stats(request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-
-    def count(sql: str, params: tuple = ()) -> int:
-        return db.one(sql, params)["c"]
-
+    s = _collect_stats(get_db(request))
     return {
-        "venues": count("SELECT COUNT(*) c FROM venues"),
-        "categories": count("SELECT COUNT(*) c FROM categories"),
-        "events": count("SELECT COUNT(*) c FROM events"),
-        "participants": count("SELECT COUNT(*) c FROM participants"),
-        "queue_items": count("SELECT COUNT(*) c FROM queue_items"),
-        "queue_waiting": count("SELECT COUNT(*) c FROM queue_items WHERE status='WAITING'"),
-        "queue_onstage": count("SELECT COUNT(*) c FROM queue_items WHERE status='ON-STAGE'"),
-        "queue_complete": count("SELECT COUNT(*) c FROM queue_items WHERE status='COMPLETE'"),
-        "scores_entered": count("SELECT COUNT(*) c FROM scores"),
+        "venues": s["venues"],
+        "categories": s["categories"],
+        "events": s["events"],
+        "participants": s["participants"],
+        "queue_items": s["queue_items"],
+        "queue_waiting": s["queue_waiting"],
+        "queue_onstage": s["queue_onstage_only"],
+        "queue_complete": s["queue_complete"],
+        "scores_entered": s["scores_entered"],
     }
 
 
 @router.get("/health")
 def health(request: Request, user=Depends(require_admin)):
     db, cfg = get_db(request), get_cfg(request)
-    stat = os.stat(cfg.db_path)
-    try:
-        disk_free = shutil.disk_usage(cfg.db_path).free
-    except OSError:
-        disk_free = 0
-    fails = db.one(
-        "SELECT COUNT(*) c FROM auth_audit WHERE event = 'login_fail' AND ts > ?",
-        (db.now() - 3600,),
-    )["c"]
+    h = _collect_health(db, cfg, len(request.app.state.subscribers), 3600)
     return {
         "time": db.now(),
-        "db_bytes": stat.st_size,
-        "sse_connections": len(request.app.state.subscribers),
-        "disk_free_bytes": disk_free,
-        "recent_auth_failures": fails,
+        "db_bytes": h["db_bytes"],
+        "sse_connections": h["sse_connections"],
+        "disk_free_bytes": h["disk_free_bytes"],
+        "recent_auth_failures": h["auth_failures"],
     }
 
 
@@ -540,99 +647,46 @@ def backup(request: Request, user=Depends(require_admin)):
         dst = dst_dir / f"{src.stem}-{ts}.db"
         src_con = sqlite3.connect(str(src))
         dst_con = sqlite3.connect(str(dst))
-        src_con.backup(dst_con)
-        dst_con.close()
-        src_con.close()
+        try:
+            src_con.backup(dst_con)
+        finally:
+            dst_con.close()
+            src_con.close()
         backed_up.append(str(dst))
 
-    for old in sorted(dst_dir.glob("*.db"))[:-48]:
-        try:
-            old.unlink()
-        except OSError:
-            pass
+        # Keep the 24 newest backups per database stem.
+        existing = sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)
+        for old in existing[:-24]:
+            try:
+                old.unlink()
+            except OSError:
+                pass
     return {"ok": True, "backups": backed_up}
 
 
-# ── Leaderboard / Exports ────────────────────────────────────────────
+# ── Leaderboard / Dashboard / Exports ─────────────────────────────────
 @router.get("/leaderboard")
 def leaderboard(request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    rows = db.q("""
-        SELECT q.id AS queue_item_id, e.id AS event_id, e.code AS event_code,
-               e.title AS event_title, p.school,
-               COALESCE(SUM(s.value), 0) AS total_score,
-               COUNT(s.id) AS judge_count
-        FROM queue_items q
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
-        LEFT JOIN scores s ON s.queue_item_id = q.id
-        WHERE q.status IN ('COMPLETE','ON-STAGE','PAUSED')
-        GROUP BY q.id
-    """)
-    by_event = defaultdict(list)
-    for r in rows:
-        if r["judge_count"] and r["school"]:
-            by_event[r["event_id"]].append(dict(r))
-
-    points = defaultdict(lambda: {"first": 0, "second": 0, "third": 0, "total": 0})
-    per_event = []
-    for eid, items in by_event.items():
-        items.sort(key=lambda x: (x["total_score"], x["judge_count"]), reverse=True)
-        winners = []
-        for rank, it in enumerate(items[:3], start=1):
-            pts = {1: 5, 2: 3, 3: 1}[rank]
-            school = it["school"]
-            points[school]["total"] += pts
-            if rank == 1:
-                points[school]["first"] += 1
-            elif rank == 2:
-                points[school]["second"] += 1
-            else:
-                points[school]["third"] += 1
-            winners.append({
-                "rank": rank,
-                "school": school,
-                "total_score": round(it["total_score"], 2),
-                "points": pts,
-            })
-        per_event.append({
-            "event_id": eid,
-            "event_code": items[0]["event_code"],
-            "event_title": items[0]["event_title"],
-            "winners": winners,
-        })
-
-    school_totals = [
-        {"school": school, **data}
-        for school, data in sorted(points.items(), key=lambda x: -x[1]["total"])
-    ]
-    return {"schools": school_totals, "events": per_event}
+    return _compute_leaderboard(get_db(request))
 
 
 @router.get("/dashboard")
 def dashboard(request: Request, user=Depends(require_admin)):
-    """Aggregated stats for the /dashboard/ statistics page.
-
-    Returns KPIs, per-venue breakdown, leaderboard, recent activity, and
-    system health in one round-trip. Admin-only.
-    """
+    """Aggregated stats for the /dashboard/ statistics page."""
     db, cfg = get_db(request), get_cfg(request)
-
-    def count(sql, params=()):
-        return db.one(sql, params)["c"]
-
+    s = _collect_stats(db)
     overall = {
-        "venues": count("SELECT COUNT(*) c FROM venues"),
-        "active_venues": count("SELECT COUNT(*) c FROM venues WHERE active=1"),
-        "categories": count("SELECT COUNT(*) c FROM categories"),
-        "events": count("SELECT COUNT(*) c FROM events"),
-        "participants": count("SELECT COUNT(*) c FROM participants"),
-        "queue_items": count("SELECT COUNT(*) c FROM queue_items"),
-        "queue_waiting": count("SELECT COUNT(*) c FROM queue_items WHERE status='WAITING'"),
-        "queue_onstage": count("SELECT COUNT(*) c FROM queue_items WHERE status IN ('ON-STAGE','PAUSED')"),
-        "queue_complete": count("SELECT COUNT(*) c FROM queue_items WHERE status='COMPLETE'"),
-        "queue_skipped": count("SELECT COUNT(*) c FROM queue_items WHERE status='SKIPPED'"),
-        "scores_entered": count("SELECT COUNT(*) c FROM scores"),
+        "venues": s["venues"],
+        "active_venues": s["active_venues"],
+        "categories": s["categories"],
+        "events": s["events"],
+        "participants": s["participants"],
+        "queue_items": s["queue_items"],
+        "queue_waiting": s["queue_waiting"],
+        "queue_onstage": s["queue_active"],
+        "queue_complete": s["queue_complete"],
+        "queue_skipped": s["queue_skipped"],
+        "scores_entered": s["scores_entered"],
     }
 
     per_venue = [
@@ -650,11 +704,7 @@ def dashboard(request: Request, user=Depends(require_admin)):
         """)
     ]
 
-    # Reuse the existing leaderboard logic directly (Depends is bypassed on
-    # direct calls, so we supply the already-resolved `user` explicitly).
-    lb = leaderboard(request, user=user)
-    top_schools = lb["schools"][:10]
-
+    lb = _compute_leaderboard(db)
     recent_scores = [
         dict(r) for r in db.q("""
             SELECT s.queue_item_id, s.judge_no, s.value, s.entered_at,
@@ -667,7 +717,6 @@ def dashboard(request: Request, user=Depends(require_admin)):
             ORDER BY s.entered_at DESC LIMIT 20
         """)
     ]
-
     recent_completed = [
         dict(r) for r in db.q("""
             SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
@@ -679,33 +728,20 @@ def dashboard(request: Request, user=Depends(require_admin)):
             ORDER BY q.completed_at DESC LIMIT 20
         """)
     ]
-
-    try:
-        db_size = os.stat(cfg.db_path).st_size
-    except OSError:
-        db_size = 0
-    try:
-        disk_free = shutil.disk_usage(cfg.db_path).free
-    except OSError:
-        disk_free = 0
-
-    auth_fails_24h = count(
-        "SELECT COUNT(*) c FROM auth_audit WHERE event='login_fail' AND ts > ?",
-        (db.now() - 86400,),
-    )
+    health_data = _collect_health(db, cfg, len(request.app.state.subscribers), 86400)
 
     return {
         "updated_at": db.now(),
         "overall": overall,
         "per_venue": per_venue,
-        "top_schools": top_schools,
+        "top_schools": lb["schools"][:10],
         "recent_scores": recent_scores,
         "recent_completed": recent_completed,
         "health": {
-            "db_bytes": db_size,
-            "disk_free_bytes": disk_free,
-            "sse_connections": len(request.app.state.subscribers),
-            "auth_failures_24h": auth_fails_24h,
+            "db_bytes": health_data["db_bytes"],
+            "disk_free_bytes": health_data["disk_free_bytes"],
+            "sse_connections": health_data["sse_connections"],
+            "auth_failures_24h": health_data["auth_failures"],
         },
     }
 

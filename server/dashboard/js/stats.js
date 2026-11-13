@@ -1,14 +1,11 @@
 (function(){
   'use strict';
   var A = window.KalAPI;
+  var esc = A.esc;
   var REFRESH_MS = 30000;
   var timer = null;
+  var loading = false;
 
-  function esc(s){
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
-      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
-    });
-  }
   function fmtBytes(n){
     if (!n || n < 0) return '—';
     if (n < 1024) return n + ' B';
@@ -133,19 +130,25 @@
   }
 
   async function load(){
-    var r = await A.api('/api/v1/admin/dashboard');
-    if (!r.ok){
-      if (r.status === 401 || r.status === 403) return;
-      document.getElementById('kpi-grid').innerHTML =
-        '<div class="panel"><p class="muted">Failed to load stats (' + r.status + ').</p></div>';
-      return;
+    if (loading) return;
+    loading = true;
+    try {
+      var r = await A.api('/api/v1/admin/dashboard');
+      if (!r.ok){
+        if (r.status === 401 || r.status === 403) return;
+        document.getElementById('kpi-grid').innerHTML =
+          '<div class="panel"><p class="muted">Failed to load stats (' + r.status + ').</p></div>';
+        return;
+      }
+      renderKPIs(r.data);
+      renderVenues(r.data);
+      renderLeaderboard(r.data);
+      renderHealth(r.data);
+      renderRecentScores(r.data);
+      renderRecentCompleted(r.data);
+    } finally {
+      loading = false;
     }
-    renderKPIs(r.data);
-    renderVenues(r.data);
-    renderLeaderboard(r.data);
-    renderHealth(r.data);
-    renderRecentScores(r.data);
-    renderRecentCompleted(r.data);
   }
 
   function startAutoRefresh(){

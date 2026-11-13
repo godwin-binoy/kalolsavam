@@ -1,15 +1,10 @@
 (function(){
   'use strict';
   var A = window.KalAPI;
+  var esc = A.esc;
   var boardsEl, connEl, whoEl;
   var feed = null;
   var lastAction = {};
-
-  function esc(s){
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
-      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
-    });
-  }
 
   async function loadBoard(){
     var r = await A.api('/api/v1/live/board');
@@ -36,27 +31,24 @@
     p.className = 'panel';
     p.dataset.venue = venue.id;
 
-    var cur = items.filter(function(i){ return i.status === 'ON-STAGE'; })[0];
+    var cur = items.filter(function(i){ return i.status === 'ON-STAGE' || i.status === 'PAUSED'; })[0];
     var next = items.filter(function(i){ return i.status === 'WAITING'; })[0];
     var rows = items.map(function(i){
-      var tr = document.createElement('tr');
-      if (i.status === 'ON-STAGE') tr.className = 'onstage';
-      tr.dataset.status = i.status;
-      tr.dataset.ver = i.version;
-      tr.innerHTML =
+      var rowClass = i.status === 'ON-STAGE' ? ' class="onstage"' : '';
+      var actions = '';
+      if (['ON-STAGE', 'PAUSED', 'COMPLETE'].indexOf(i.status) >= 0){
+        actions += '<button data-act="score" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Score</button>';
+      }
+      if (i.status === 'COMPLETE'){
+        actions += ' <button data-act="recall" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Recall</button>';
+      }
+      return '<tr' + rowClass + ' data-status="' + esc(i.status) + '" data-ver="' + esc(i.version) + '">' +
         '<td>' + (i.position + 1) + '</td>' +
         '<td>' + esc(i.event || '') + '<br><span class="muted small">' + esc(i.category || '') + '</span></td>' +
         '<td>' + esc(i.school || '—') + '<br><span class="muted small">' + esc(i.student_name || '') + '</span></td>' +
         '<td><span class="status ' + esc(i.status) + '">' + esc(i.status) + '</span></td>' +
-        '<td>' +
-          (['ON-STAGE','PAUSED','COMPLETE'].indexOf(i.status) >= 0
-            ? '<button data-act="score" data-id="' + i.id + '" data-ver="' + i.version + '">Score</button>'
-            : '') +
-          (i.status === 'COMPLETE'
-            ? ' <button data-act="recall" data-id="' + i.id + '" data-ver="' + i.version + '">Recall</button>'
-            : '') +
-        '</td>';
-      return tr;
+        '<td>' + actions + '</td>' +
+      '</tr>';
     }).join('');
 
     p.innerHTML =
@@ -67,8 +59,8 @@
       '<div class="row" style="margin:.6rem 0">' +
         '<button data-act="START_NEXT" class="primary"' + (next ? '' : ' disabled') + '>▶ Start next' +
           (next ? ' (' + esc(next.student_name || next.event || '') + ')' : '') + '</button>' +
-        '<button data-act="COMPLETE_CURRENT"' + (cur ? '' : ' disabled') + '>✔ Complete</button>' +
-        '<button data-act="PAUSE"' + (cur ? '' : ' disabled') + '>⏸ Pause</button>' +
+        '<button data-act="COMPLETE_CURRENT"' + (cur && cur.status === 'ON-STAGE' ? '' : ' disabled') + '>✔ Complete</button>' +
+        '<button data-act="PAUSE"' + (cur && cur.status === 'ON-STAGE' ? '' : ' disabled') + '>⏸ Pause</button>' +
         '<button data-act="RESUME"' + (cur && cur.status === 'PAUSED' ? '' : ' disabled') + '>⏵ Resume</button>' +
         '<button data-act="SKIP"' + (next ? '' : ' disabled') + '>⏭ Skip next</button>' +
       '</div>' +
@@ -83,7 +75,7 @@
         '<button data-act="pushstate">Post</button>' +
       '</div>' +
       '<table><thead><tr><th>#</th><th>Event</th><th>Performer</th><th>Status</th><th></th></tr></thead>' +
-      '<tbody>' + rows + '</tbody></table>';
+      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">No items queued.</td></tr>') + '</tbody></table>';
 
     p.addEventListener('click', function(ev){
       var b = ev.target.closest('button[data-act]');
@@ -115,8 +107,12 @@
     lastAction[venueId] = Date.now();
 
     var panel = document.querySelector('.panel[data-venue="' + venueId + '"]');
+    var prevStates = [];
     if (panel) {
-      panel.querySelectorAll('button').forEach(function(b){ b.disabled = true; });
+      panel.querySelectorAll('button').forEach(function(b){
+        prevStates.push([b, b.disabled]);
+        b.disabled = true;
+      });
     }
 
     var version = (typeof itemVersion === 'number') ? itemVersion : null;
@@ -140,16 +136,15 @@
       if (!r.ok){
         if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state'){
           A.toast('Board changed — re-syncing.'); await loadBoard();
-        } else A.toast('Action failed: ' + (r.detail || r.status), true);
+        } else {
+          A.toast('Action failed: ' + (r.detail || r.status), true);
+        }
         return;
       }
       await loadBoard();
     } finally {
-      // If the panel still exists in the DOM, loadBoard() did NOT replace it
-      // (e.g. network blip / 5xx). Unlock the buttons so the operator can
-      // retry instead of being stuck on a frozen board.
       if (panel && document.body.contains(panel)){
-        panel.querySelectorAll('button').forEach(function(b){ b.disabled = false; });
+        prevStates.forEach(function(pair){ pair[0].disabled = pair[1]; });
       }
     }
   }

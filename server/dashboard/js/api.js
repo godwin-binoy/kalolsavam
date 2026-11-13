@@ -2,6 +2,12 @@
   'use strict';
   var S = { onAuthLost: function(){} };
 
+  function esc(s){
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+    });
+  }
+
   async function raw(path, opts){
     opts = opts || {};
     opts.headers = opts.headers || {};
@@ -17,7 +23,7 @@
     var data = null;
     var ct = res.headers.get('content-type') || '';
     if (ct.indexOf('json') >= 0){ try { data = await res.json(); } catch(e){} }
-    return { ok: res.ok, status: res.status, data: data, detail: data && data.error };
+    return { ok: res.ok, status: res.status, data: data, detail: data && (data.error || data.detail) };
   }
 
   async function api(path, opts){
@@ -77,6 +83,7 @@
 
   window.KalAPI = {
     state: S,
+    esc: esc,
     api: api,
     stream: stream,
     toast: function(text, isErr){

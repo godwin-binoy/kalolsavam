@@ -1,5 +1,11 @@
 (function(){
   'use strict';
+  window.__kalCleanups = window.__kalCleanups || [];
+  window.KalApp = {
+    onCleanup: function(fn){
+      if (typeof fn === 'function') window.__kalCleanups.push(fn);
+    }
+  };
   var html = document.documentElement;
   var KEY = 'kal_theme';
   var toggles = document.querySelectorAll('#theme, #theme-m');
@@ -268,12 +274,13 @@
         var mainEl = document.getElementById('main');
         mainEl.innerHTML = newMain.innerHTML;
 
-        // Re-execute inline scripts
+        // Re-execute inline and page-scoped scripts in order
         mainEl.querySelectorAll('script').forEach(function(oldScript){
           var newScript = document.createElement('script');
           Array.from(oldScript.attributes).forEach(function(attr){
             newScript.setAttribute(attr.name, attr.value);
           });
+          newScript.async = false;
           newScript.appendChild(document.createTextNode(oldScript.innerHTML));
           oldScript.parentNode.replaceChild(newScript, oldScript);
         });
@@ -283,6 +290,10 @@
           if (navLink.getAttribute('data-active') === activeNav) navLink.classList.add('active');
           else navLink.classList.remove('active');
         });
+
+        if (window.KalI18n && typeof window.KalI18n.apply === 'function') {
+          window.KalI18n.apply();
+        }
       }
 
       if ('startViewTransition' in document){
@@ -291,7 +302,6 @@
         }).ready;
       } else {
         renderNewPage();
-        if (window.KalI18n && typeof window.KalI18n.apply === 'function') window.KalI18n.apply();
       }
 
       var scrollPos = isBack && scrollPositions.has(normUrl) ? scrollPositions.get(normUrl) : 0;

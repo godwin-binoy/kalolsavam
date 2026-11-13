@@ -143,7 +143,12 @@
   });
 
   // SPA router cleanup hook
-  window.__kalCleanup = function(){
+  var cleanupFn = function(){
     if (timer){ clearInterval(timer); timer = null; }
   };
+  if (window.KalApp && typeof window.KalApp.onCleanup === 'function') {
+    window.KalApp.onCleanup(cleanupFn);
+  } else {
+    window.__kalCleanup = cleanupFn;
+  }
 })();

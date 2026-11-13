@@ -1,20 +1,16 @@
 (function(){
   'use strict';
   var A = window.KalAPI;
+  var esc = A.esc;
   var viewEl;
   var cache = { venues: [], categories: [], events: [], users: [], queueItems: [] };
-
-  function esc(s){
-    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
-      return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
-    });
-  }
 
   async function adminCall(path, opts){
     return await A.api('/api/v1/admin' + path, opts);
   }
 
   var VIEWS = {};
+  var MOUNTS = {};
 
   function show(tab){
     document.querySelectorAll('.tab').forEach(function(b){
@@ -23,8 +19,7 @@
     viewEl.innerHTML = '<div class="panel"><p class="muted">Loading…</p></div>';
     return VIEWS[tab]().then(function(html){
       viewEl.innerHTML = html;
-      // Wire per-render handlers AFTER the DOM is in place. No magic timeouts.
-      if (tab === 'ops') wireOpsHandlers();
+      if (typeof MOUNTS[tab] === 'function') MOUNTS[tab]();
     });
   }
 
@@ -50,7 +45,7 @@
       '</tr>';
     }).join('');
 
-    var html =
+    return (
       '<div class="panel"><h2>Venues (' + vs.length + ')</h2>' +
         '<table><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>Active</th><th></th></tr></thead>' +
         '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table>' +
@@ -61,50 +56,49 @@
           '<select id="v-kind"><option>stage</option><option>room</option><option>hall</option><option>ground</option></select>' +
           '<button class="primary" type="submit">Add</button>' +
         '</form>' +
-      '</div>';
+      '</div>'
+    );
+  };
 
-    setTimeout(function(){
-      var form = document.getElementById('venue-form');
-      if (form) form.addEventListener('submit', async function(ev){
-        ev.preventDefault();
-        var r = await adminCall('/venues', { method: 'POST', body: {
-          name: document.getElementById('v-name').value.trim(),
-          kind: document.getElementById('v-kind').value, active: true,
-        } });
-        if (r.ok){ A.toast('Venue created.'); show('venues'); }
+  MOUNTS.venues = function(){
+    var form = document.getElementById('venue-form');
+    if (form) form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var r = await adminCall('/venues', { method: 'POST', body: {
+        name: document.getElementById('v-name').value.trim(),
+        kind: document.getElementById('v-kind').value, active: true,
+      } });
+      if (r.ok){ A.toast('Venue created.'); show('venues'); }
+      else A.toast('Failed: ' + (r.detail || ''), true);
+    });
+
+    viewEl.querySelectorAll('[data-edit-v]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        var id = Number(b.dataset.editV);
+        var v = cache.venues.filter(function(x){ return x.id === id; })[0];
+        if (!v) return;
+        var name = prompt('Venue name:', v.name);
+        if (name == null) return;
+        var kind = prompt('Kind (stage/room/hall/ground):', v.kind);
+        if (kind == null) return;
+        var active = confirm('Active? (OK = active, Cancel = disabled)');
+        var r = await adminCall('/venues/' + id, {
+          method: 'PUT',
+          body: { name: name.trim(), kind: kind.trim(), active: active },
+        });
+        if (r.ok){ A.toast('Updated.'); show('venues'); }
         else A.toast('Failed: ' + (r.detail || ''), true);
       });
+    });
 
-      viewEl.querySelectorAll('[data-edit-v]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          var id = Number(b.dataset.editV);
-          var v = cache.venues.filter(function(x){ return x.id === id; })[0];
-          if (!v) return;
-          var name = prompt('Venue name:', v.name);
-          if (name == null) return;
-          var kind = prompt('Kind (stage/room/hall/ground):', v.kind);
-          if (kind == null) return;
-          var active = confirm('Active? (OK = active, Cancel = disabled)');
-          var r = await adminCall('/venues/' + id, {
-            method: 'PUT',
-            body: { name: name.trim(), kind: kind.trim(), active: active },
-          });
-          if (r.ok){ A.toast('Updated.'); show('venues'); }
-          else A.toast('Failed: ' + (r.detail || ''), true);
-        });
+    viewEl.querySelectorAll('[data-del-v]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        if (!confirm('Delete this venue? This cannot be undone.')) return;
+        var r = await adminCall('/venues/' + b.dataset.delV, { method: 'DELETE' });
+        if (r.ok){ A.toast('Deleted.'); show('venues'); }
+        else A.toast('Failed: ' + (r.detail || ''), true);
       });
-
-      viewEl.querySelectorAll('[data-del-v]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          if (!confirm('Delete this venue? This cannot be undone.')) return;
-          var r = await adminCall('/venues/' + b.dataset.delV, { method: 'DELETE' });
-          if (r.ok){ A.toast('Deleted.'); show('venues'); }
-          else A.toast('Failed: ' + (r.detail || ''), true);
-        });
-      });
-    }, 0);
-
-    return html;
+    });
   };
 
   // ── Categories ─────────────────────────────────────────────────────────
@@ -123,7 +117,7 @@
       '</tr>';
     }).join('');
 
-    var html =
+    return (
       '<div class="panel"><h2>Categories (' + cache.categories.length + ')</h2>' +
         '<table><thead><tr><th>ID</th><th>Name</th><th>Group</th><th></th></tr></thead>' +
         '<tbody>' + (rows || '<tr><td colspan="4" class="muted">none</td></tr>') + '</tbody></table>' +
@@ -134,49 +128,48 @@
           '<input id="c-group" placeholder="Group (e.g. HS GENERAL)" maxlength="64" style="flex:1" value="HSS GENERAL">' +
           '<button class="primary" type="submit">Add</button>' +
         '</form>' +
-      '</div>';
+      '</div>'
+    );
+  };
 
-    setTimeout(function(){
-      var form = document.getElementById('cat-form');
-      if (form) form.addEventListener('submit', async function(ev){
-        ev.preventDefault();
-        var r2 = await adminCall('/categories', { method: 'POST', body: {
-          name: document.getElementById('c-name').value.trim(),
-          group: document.getElementById('c-group').value.trim() || 'HSS GENERAL',
-        } });
-        if (r2.ok){ A.toast('Category created.'); show('categories'); }
+  MOUNTS.categories = function(){
+    var form = document.getElementById('cat-form');
+    if (form) form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var r2 = await adminCall('/categories', { method: 'POST', body: {
+        name: document.getElementById('c-name').value.trim(),
+        group: document.getElementById('c-group').value.trim() || 'HSS GENERAL',
+      } });
+      if (r2.ok){ A.toast('Category created.'); show('categories'); }
+      else A.toast('Failed: ' + (r2.detail || ''), true);
+    });
+
+    viewEl.querySelectorAll('[data-edit-c]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        var id = Number(b.dataset.editC);
+        var c = cache.categories.filter(function(x){ return x.id === id; })[0];
+        if (!c) return;
+        var name = prompt('Category name:', c.name);
+        if (name == null) return;
+        var group = prompt('Group:', c.grp);
+        if (group == null) return;
+        var r2 = await adminCall('/categories/' + id, {
+          method: 'PUT',
+          body: { name: name.trim(), group: group.trim() },
+        });
+        if (r2.ok){ A.toast('Updated.'); show('categories'); }
         else A.toast('Failed: ' + (r2.detail || ''), true);
       });
+    });
 
-      viewEl.querySelectorAll('[data-edit-c]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          var id = Number(b.dataset.editC);
-          var c = cache.categories.filter(function(x){ return x.id === id; })[0];
-          if (!c) return;
-          var name = prompt('Category name:', c.name);
-          if (name == null) return;
-          var group = prompt('Group:', c.grp);
-          if (group == null) return;
-          var r2 = await adminCall('/categories/' + id, {
-            method: 'PUT',
-            body: { name: name.trim(), group: group.trim() },
-          });
-          if (r2.ok){ A.toast('Updated.'); show('categories'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
-        });
+    viewEl.querySelectorAll('[data-del-c]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        if (!confirm('Delete this category?')) return;
+        var r2 = await adminCall('/categories/' + b.dataset.delC, { method: 'DELETE' });
+        if (r2.ok){ A.toast('Deleted.'); show('categories'); }
+        else A.toast('Failed: ' + (r2.detail || ''), true);
       });
-
-      viewEl.querySelectorAll('[data-del-c]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          if (!confirm('Delete this category?')) return;
-          var r2 = await adminCall('/categories/' + b.dataset.delC, { method: 'DELETE' });
-          if (r2.ok){ A.toast('Deleted.'); show('categories'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
-        });
-      });
-    }, 0);
-
-    return html;
+    });
   };
 
   // ── Events ─────────────────────────────────────────────────────────────
@@ -202,7 +195,7 @@
       '</tr>';
     }).join('');
 
-    var html =
+    return (
       '<div class="panel"><h2>Events (' + cache.events.length + ')</h2>' +
         '<table><thead><tr><th>Code</th><th>Title</th><th>Category</th><th>Venue</th><th>When</th><th></th></tr></thead>' +
         '<tbody>' + (rows || '<tr><td colspan="6" class="muted">none</td></tr>') + '</tbody></table>' +
@@ -221,58 +214,57 @@
           '<input id="e-time" placeholder="09:00" style="width:6rem">' +
           '<button class="primary" type="submit">Add</button>' +
         '</form>' +
-      '</div>';
+      '</div>'
+    );
+  };
 
-    setTimeout(function(){
-      var form = document.getElementById('event-form');
-      if (form) form.addEventListener('submit', async function(ev){
-        ev.preventDefault();
-        var r = await adminCall('/events', { method: 'POST', body: {
-          code: document.getElementById('e-code').value.trim(),
-          title: document.getElementById('e-title').value.trim(),
-          category_id: Number(document.getElementById('e-cat').value) || null,
-          venue_id: Number(document.getElementById('e-venue').value) || null,
-          day: document.getElementById('e-day').value.trim() || null,
-          scheduled_time: document.getElementById('e-time').value.trim() || null,
-        } });
-        if (r.ok){ A.toast('Event created.'); show('events'); }
-        else A.toast('Failed: ' + (r.detail || ''), true);
-      });
+  MOUNTS.events = function(){
+    var form = document.getElementById('event-form');
+    if (form) form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var r = await adminCall('/events', { method: 'POST', body: {
+        code: document.getElementById('e-code').value.trim(),
+        title: document.getElementById('e-title').value.trim(),
+        category_id: Number(document.getElementById('e-cat').value) || null,
+        venue_id: Number(document.getElementById('e-venue').value) || null,
+        day: document.getElementById('e-day').value.trim() || null,
+        scheduled_time: document.getElementById('e-time').value.trim() || null,
+      } });
+      if (r.ok){ A.toast('Event created.'); show('events'); }
+      else A.toast('Failed: ' + (r.detail || ''), true);
+    });
 
-      viewEl.querySelectorAll('[data-edit-e]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          var id = Number(b.dataset.editE);
-          var e = cache.events.filter(function(x){ return x.id === id; })[0];
-          if (!e) return;
-          var code = prompt('Code:', e.code); if (code == null) return;
-          var title = prompt('Title:', e.title); if (title == null) return;
-          var day = prompt('Day (blank = none):', e.day || ''); if (day == null) return;
-          var time = prompt('Time (blank = none):', e.scheduled_time || ''); if (time == null) return;
-          var r2 = await adminCall('/events/' + id, {
-            method: 'PUT',
-            body: {
-              code: code.trim(),
-              title: title.trim(),
-              day: day.trim() || null,
-              scheduled_time: time.trim() || null,
-            },
-          });
-          if (r2.ok){ A.toast('Updated.'); show('events'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
+    viewEl.querySelectorAll('[data-edit-e]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        var id = Number(b.dataset.editE);
+        var e = cache.events.filter(function(x){ return x.id === id; })[0];
+        if (!e) return;
+        var code = prompt('Code:', e.code); if (code == null) return;
+        var title = prompt('Title:', e.title); if (title == null) return;
+        var day = prompt('Day (blank = none):', e.day || ''); if (day == null) return;
+        var time = prompt('Time (blank = none):', e.scheduled_time || ''); if (time == null) return;
+        var r2 = await adminCall('/events/' + id, {
+          method: 'PUT',
+          body: {
+            code: code.trim(),
+            title: title.trim(),
+            day: day.trim() || null,
+            scheduled_time: time.trim() || null,
+          },
         });
+        if (r2.ok){ A.toast('Updated.'); show('events'); }
+        else A.toast('Failed: ' + (r2.detail || ''), true);
       });
+    });
 
-      viewEl.querySelectorAll('[data-del-e]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          if (!confirm('Delete this event? All its participants must be removed first.')) return;
-          var r2 = await adminCall('/events/' + b.dataset.delE, { method: 'DELETE' });
-          if (r2.ok){ A.toast('Deleted.'); show('events'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
-        });
+    viewEl.querySelectorAll('[data-del-e]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        if (!confirm('Delete this event? All its participants must be removed first.')) return;
+        var r2 = await adminCall('/events/' + b.dataset.delE, { method: 'DELETE' });
+        if (r2.ok){ A.toast('Deleted.'); show('events'); }
+        else A.toast('Failed: ' + (r2.detail || ''), true);
       });
-    }, 0);
-
-    return html;
+    });
   };
 
   // ── Queue ──────────────────────────────────────────────────────────────
@@ -290,7 +282,7 @@
       return '<option value="' + e.id + '">' + esc(e.code) + ' · ' + esc(e.title) + '</option>';
     }).join('');
 
-    var html =
+    return (
       '<div class="panel"><h2>Add to Queue</h2>' +
         '<form id="queue-add" class="row">' +
           '<select id="q-venue" required style="flex:1">' + venueOpts + '</select>' +
@@ -311,125 +303,125 @@
           '<button id="q-refresh">Refresh</button>' +
         '</div>' +
         '<div id="queue-list"><p class="muted">Loading…</p></div>' +
-      '</div>';
+      '</div>'
+    );
+  };
 
-    setTimeout(async function(){
-      var itemMap = {};
+  MOUNTS.queue = function(){
+    var itemMap = {};
 
-      async function loadList(venueId){
-        var q = venueId ? ('?venue_id=' + venueId) : '';
-        var r = await adminCall('/queue' + q);
-        var listEl = document.getElementById('queue-list');
-        if (!r.ok){ listEl.innerHTML = '<p class="muted">Failed.</p>'; return; }
-        cache.queueItems = r.data.items;
-        itemMap = {};
-        cache.queueItems.forEach(function(it){ itemMap[it.id] = it; });
+    async function loadList(venueId){
+      var q = venueId ? ('?venue_id=' + venueId) : '';
+      var r = await adminCall('/queue' + q);
+      var listEl = document.getElementById('queue-list');
+      if (!listEl) return;
+      if (!r.ok){ listEl.innerHTML = '<p class="muted">Failed.</p>'; return; }
+      cache.queueItems = r.data.items;
+      itemMap = {};
+      cache.queueItems.forEach(function(it){ itemMap[it.id] = it; });
 
-        if (!r.data.items.length){
-          listEl.innerHTML = '<p class="muted">Empty.</p>';
-          return;
-        }
-
-        var showMoves = !!venueId;
-        var rows = r.data.items.map(function(i){
-          return '<tr>' +
-            '<td>' + (i.position + 1) + '</td>' +
-            '<td>' + esc(i.event_code) + ' · ' + esc(i.event_title) + '</td>' +
-            '<td>' + esc(i.school || '—') +
-              '<br><span class="muted small">' + esc(i.student_name || '') + ' ' +
-              (i.roll ? '· #' + esc(i.roll) : '') + '</span></td>' +
-            '<td><span class="status ' + esc(i.status) + '">' + esc(i.status) + '</span></td>' +
-            '<td>' +
-              (['WAITING','COMPLETE'].indexOf(i.status) >= 0
-                ? '<button data-edit-q="' + i.id + '">Edit</button> ' : '') +
-              (i.status === 'WAITING'
-                ? '<button class="danger" data-del="' + i.id + '">Delete</button>' : '') +
-              (showMoves && i.status === 'WAITING'
-                ? ' <button data-move="up" data-id="' + i.id + '" title="Move up">↑</button>' +
-                  ' <button data-move="down" data-id="' + i.id + '" title="Move down">↓</button>'
-                : '') +
-            '</td>' +
-          '</tr>';
-        }).join('');
-
-        listEl.innerHTML =
-          '<table><thead><tr><th>#</th><th>Event</th><th>Participant</th><th>Status</th><th></th></tr></thead>' +
-          '<tbody>' + rows + '</tbody></table>';
-
-        listEl.querySelectorAll('button[data-del]').forEach(function(b){
-          b.addEventListener('click', async function(){
-            if (!confirm('Delete this item?')) return;
-            var res = await adminCall('/queue/' + b.dataset.del, { method: 'DELETE' });
-            if (res.ok){ A.toast('Deleted.'); loadList(document.getElementById('q-filter').value); }
-            else A.toast('Failed: ' + (res.detail || ''), true);
-          });
-        });
-
-        listEl.querySelectorAll('button[data-move]').forEach(function(b){
-          b.addEventListener('click', async function(){
-            var res = await adminCall('/queue/' + b.dataset.id + '/move', {
-              method: 'POST',
-              body: { direction: b.dataset.move },
-            });
-            if (res.ok) loadList(document.getElementById('q-filter').value);
-            else A.toast('Failed: ' + (res.detail || ''), true);
-          });
-        });
-
-        listEl.querySelectorAll('button[data-edit-q]').forEach(function(b){
-          b.addEventListener('click', async function(){
-            var id = Number(b.dataset.editQ);
-            var it = itemMap[id];
-            if (!it) return;
-            var school = prompt('School:', it.school || '');
-            if (school == null) return;
-            var name = prompt('Student name:', it.student_name || '');
-            if (name == null) return;
-            var roll = prompt('Roll number:', it.roll || '');
-            if (roll == null) return;
-            var res = await adminCall('/queue/' + id, {
-              method: 'PUT',
-              body: {
-                school: school.trim(),
-                student_name: name.trim() || null,
-                roll: roll.trim() || null,
-              },
-            });
-            if (res.ok){ A.toast('Saved.'); loadList(document.getElementById('q-filter').value); }
-            else A.toast('Failed: ' + (res.detail || ''), true);
-          });
-        });
+      if (!r.data.items.length){
+        listEl.innerHTML = '<p class="muted">Empty.</p>';
+        return;
       }
 
-      document.getElementById('queue-add').addEventListener('submit', async function(ev){
-        ev.preventDefault();
-        var r2 = await adminCall('/queue', { method: 'POST', body: {
-          venue_id: Number(document.getElementById('q-venue').value),
-          event_id: Number(document.getElementById('q-event').value),
-          school: document.getElementById('q-school').value.trim(),
-          student_name: document.getElementById('q-name').value.trim() || null,
-          roll: document.getElementById('q-roll').value.trim() || null,
-        } });
-        if (r2.ok){
-          A.toast('Added.');
-          document.getElementById('q-school').value = '';
-          document.getElementById('q-name').value = '';
-          document.getElementById('q-roll').value = '';
-          loadList(document.getElementById('q-filter').value);
-        } else A.toast('Failed: ' + (r2.detail || ''), true);
+      var showMoves = !!venueId;
+      var rows = r.data.items.map(function(i){
+        return '<tr>' +
+          '<td>' + (i.position + 1) + '</td>' +
+          '<td>' + esc(i.event_code) + ' · ' + esc(i.event_title) + '</td>' +
+          '<td>' + esc(i.school || '—') +
+            '<br><span class="muted small">' + esc(i.student_name || '') + ' ' +
+            (i.roll ? '· #' + esc(i.roll) : '') + '</span></td>' +
+          '<td><span class="status ' + esc(i.status) + '">' + esc(i.status) + '</span></td>' +
+          '<td>' +
+            (['WAITING','COMPLETE'].indexOf(i.status) >= 0
+              ? '<button data-edit-q="' + i.id + '">Edit</button> ' : '') +
+            (i.status === 'WAITING'
+              ? '<button class="danger" data-del="' + i.id + '">Delete</button>' : '') +
+            (showMoves && i.status === 'WAITING'
+              ? ' <button data-move="up" data-id="' + i.id + '" title="Move up">↑</button>' +
+                ' <button data-move="down" data-id="' + i.id + '" title="Move down">↓</button>'
+              : '') +
+          '</td>' +
+        '</tr>';
+      }).join('');
+
+      listEl.innerHTML =
+        '<table><thead><tr><th>#</th><th>Event</th><th>Participant</th><th>Status</th><th></th></tr></thead>' +
+        '<tbody>' + rows + '</tbody></table>';
+
+      listEl.querySelectorAll('button[data-del]').forEach(function(b){
+        b.addEventListener('click', async function(){
+          if (!confirm('Delete this item?')) return;
+          var res = await adminCall('/queue/' + b.dataset.del, { method: 'DELETE' });
+          if (res.ok){ A.toast('Deleted.'); loadList(document.getElementById('q-filter').value); }
+          else A.toast('Failed: ' + (res.detail || ''), true);
+        });
       });
 
-      document.getElementById('q-filter').addEventListener('change', function(ev){
-        loadList(ev.target.value);
+      listEl.querySelectorAll('button[data-move]').forEach(function(b){
+        b.addEventListener('click', async function(){
+          var res = await adminCall('/queue/' + b.dataset.id + '/move', {
+            method: 'POST',
+            body: { direction: b.dataset.move },
+          });
+          if (res.ok) loadList(document.getElementById('q-filter').value);
+          else A.toast('Failed: ' + (res.detail || ''), true);
+        });
       });
-      document.getElementById('q-refresh').addEventListener('click', function(){
+
+      listEl.querySelectorAll('button[data-edit-q]').forEach(function(b){
+        b.addEventListener('click', async function(){
+          var id = Number(b.dataset.editQ);
+          var it = itemMap[id];
+          if (!it) return;
+          var school = prompt('School:', it.school || '');
+          if (school == null) return;
+          var name = prompt('Student name:', it.student_name || '');
+          if (name == null) return;
+          var roll = prompt('Roll number:', it.roll || '');
+          if (roll == null) return;
+          var res = await adminCall('/queue/' + id, {
+            method: 'PUT',
+            body: {
+              school: school.trim(),
+              student_name: name.trim() || null,
+              roll: roll.trim() || null,
+            },
+          });
+          if (res.ok){ A.toast('Saved.'); loadList(document.getElementById('q-filter').value); }
+          else A.toast('Failed: ' + (res.detail || ''), true);
+        });
+      });
+    }
+
+    document.getElementById('queue-add').addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var r2 = await adminCall('/queue', { method: 'POST', body: {
+        venue_id: Number(document.getElementById('q-venue').value),
+        event_id: Number(document.getElementById('q-event').value),
+        school: document.getElementById('q-school').value.trim(),
+        student_name: document.getElementById('q-name').value.trim() || null,
+        roll: document.getElementById('q-roll').value.trim() || null,
+      } });
+      if (r2.ok){
+        A.toast('Added.');
+        document.getElementById('q-school').value = '';
+        document.getElementById('q-name').value = '';
+        document.getElementById('q-roll').value = '';
         loadList(document.getElementById('q-filter').value);
-      });
+      } else A.toast('Failed: ' + (r2.detail || ''), true);
+    });
 
-      loadList('');
-    }, 0);
+    document.getElementById('q-filter').addEventListener('change', function(ev){
+      loadList(ev.target.value);
+    });
+    document.getElementById('q-refresh').addEventListener('click', function(){
+      loadList(document.getElementById('q-filter').value);
+    });
 
-    return html;
+    loadList('');
   };
 
   // ── Users ──────────────────────────────────────────────────────────────
@@ -468,7 +460,7 @@
       '</label>';
     }).join('');
 
-    var html =
+    return (
       '<div class="panel"><h2>Staff accounts (' + cache.users.length + ')</h2>' +
         '<table><thead><tr><th>Email</th><th>Role</th><th>Stages</th><th>Status</th><th></th></tr></thead>' +
         '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table>' +
@@ -482,52 +474,51 @@
         '</form>' +
         '<p class="small muted" style="margin-top:.8rem">Assign stages:</p>' +
         '<div class="row">' + stageOpts + '</div>' +
-      '</div>';
+      '</div>'
+    );
+  };
 
-    setTimeout(function(){
-      var form = document.getElementById('user-form');
-      if (form) form.addEventListener('submit', async function(ev){
-        ev.preventDefault();
-        var stages = Array.prototype.map.call(
-          viewEl.querySelectorAll('.u-stage:checked'),
-          function(x){ return Number(x.value); }
-        );
-        var email = document.getElementById('u-email').value.trim().toLowerCase();
-        var r2 = await adminCall('/users', { method: 'POST', body: {
-          email: email,
-          role: document.getElementById('u-role').value,
-          stages: stages,
-          password: document.getElementById('u-pass').value,
-        } });
-        if (r2.ok){ A.toast('Created.'); show('users'); }
+  MOUNTS.users = function(){
+    var form = document.getElementById('user-form');
+    if (form) form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var stages = Array.prototype.map.call(
+        viewEl.querySelectorAll('.u-stage:checked'),
+        function(x){ return Number(x.value); }
+      );
+      var email = document.getElementById('u-email').value.trim().toLowerCase();
+      var r2 = await adminCall('/users', { method: 'POST', body: {
+        email: email,
+        role: document.getElementById('u-role').value,
+        stages: stages,
+        password: document.getElementById('u-pass').value,
+      } });
+      if (r2.ok){ A.toast('Created.'); show('users'); }
+      else A.toast('Failed: ' + (r2.detail || ''), true);
+    });
+
+    viewEl.querySelectorAll('[data-dis]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        if (!confirm('Disable this account?')) return;
+        var r2 = await adminCall('/users/' + b.dataset.dis + '/disable', { method: 'POST' });
+        if (r2.ok){ A.toast('Disabled.'); show('users'); }
         else A.toast('Failed: ' + (r2.detail || ''), true);
       });
+    });
 
-      viewEl.querySelectorAll('[data-dis]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          if (!confirm('Disable this account?')) return;
-          var r2 = await adminCall('/users/' + b.dataset.dis + '/disable', { method: 'POST' });
-          if (r2.ok){ A.toast('Disabled.'); show('users'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
-        });
+    viewEl.querySelectorAll('[data-enable-u]').forEach(function(b){
+      b.addEventListener('click', async function(){
+        var r2 = await adminCall('/users/' + b.dataset.enableU + '/enable', { method: 'POST' });
+        if (r2.ok){ A.toast('Enabled.'); show('users'); }
+        else A.toast('Failed: ' + (r2.detail || ''), true);
       });
+    });
 
-      viewEl.querySelectorAll('[data-enable-u]').forEach(function(b){
-        b.addEventListener('click', async function(){
-          var r2 = await adminCall('/users/' + b.dataset.enableU + '/enable', { method: 'POST' });
-          if (r2.ok){ A.toast('Enabled.'); show('users'); }
-          else A.toast('Failed: ' + (r2.detail || ''), true);
-        });
+    viewEl.querySelectorAll('[data-edit-u]').forEach(function(b){
+      b.addEventListener('click', function(){
+        openUserDialog(b.dataset.editU);
       });
-
-      viewEl.querySelectorAll('[data-edit-u]').forEach(function(b){
-        b.addEventListener('click', function(){
-          openUserDialog(b.dataset.editU);
-        });
-      });
-    }, 0);
-
-    return html;
+    });
   };
 
   // ── User edit dialog helpers ───────────────────────────────────────────
@@ -696,14 +687,19 @@
     );
   };
 
-  function wireOpsHandlers(){
+  MOUNTS.ops = function(){
     var backupBtn = document.getElementById('op-backup');
     if (backupBtn) backupBtn.addEventListener('click', async function(){
-      var r = await adminCall('/backup', { method: 'POST' });
-      if (r.ok) A.toast('Backup saved.');
-      else A.toast('Backup failed', true);
+      backupBtn.disabled = true;
+      try {
+        var r = await adminCall('/backup', { method: 'POST' });
+        if (r.ok) A.toast('Backup saved.');
+        else A.toast('Backup failed', true);
+      } finally {
+        backupBtn.disabled = false;
+      }
     });
-  }
+  };
 
   // ── Login handler ──────────────────────────────────────────────────────
   window.onKalLogin = function(info){
@@ -730,7 +726,6 @@
       if (t) show(t.dataset.tab);
     });
 
-    // Wire up dialogs and global buttons
     wireUserDialog();
     window.KalAuth.init();
   });
