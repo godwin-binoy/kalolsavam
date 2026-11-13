@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Admin Console · Kalolsavam</title>
+<link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/dashboard/css/dashboard.css">
 </head>
 <body class="login-body">
@@ -23,6 +24,7 @@
     <h1 class="brand">Kalolsavam <span>Admin</span></h1>
     <span id="who" class="badge"></span>
     <span class="spacer"></span>
+    <button id="change-pass-btn" class="small">🔑 Password</button>
     <a href="/dashboard/" class="btn-link">&#x1F4CA; Dashboard</a>
     <button id="logout-btn">Sign out</button>
   </header>
@@ -40,6 +42,7 @@
     <section id="view"></section>
   </main>
 </div>
+
 <dialog id="user-dialog">
   <h3 style="margin-top:0">Edit user</h3>
   <form id="user-edit-form">
@@ -72,8 +75,22 @@
     </div>
   </form>
 </dialog>
+
+<dialog id="self-password-dialog">
+  <h3 style="margin-top:0">Change My Password</h3>
+  <form id="self-password-form">
+    <label>Current password<input id="self-old-pass" type="password" required autocomplete="current-password"></label>
+    <label>New password (12+ characters)<input id="self-new-pass" type="password" minlength="12" required autocomplete="new-password"></label>
+    <div class="row" style="margin-top:.9rem">
+      <button class="primary" type="submit">Update Password</button>
+      <button type="button" data-cancel-self-pass>Cancel</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="/dashboard/js/api.js"></script>
 <script src="/dashboard/js/auth.js"></script>
+<script src="/dashboard/js/ui.js"></script>
 <script src="/dashboard/js/admin.js"></script>
 </body>
 </html>

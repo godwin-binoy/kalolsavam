@@ -1,3 +1,5 @@
+@import "../../public/assets/css/tokens.css";
+
 /* Design Tokens & Theme */
 :root{
   --bg:#FAFAF7; --bg-alt:#F3F1EC; --surface:#FFFFFF; --surface-2:#F6F4EE;
@@ -387,3 +389,12 @@ html.dark .stage-blueprint{border-color:var(--border);background:#141A17}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
   .live-dot{animation:none!important}
 }
+
+/* Parameterized Tone Utility Contract */
+.banner-blue, [data-tone="blue"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #2563EB), var(--tone-to, #1D4ED8)); }
+.banner-purple, [data-tone="purple"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #6D28D9), var(--tone-to, #4C1D95)); }
+.banner-indigo, [data-tone="indigo"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #4F46E5), var(--tone-to, #3730A3)); }
+.banner-pink, [data-tone="pink"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #E11D48), var(--tone-to, #BE123C)); }
+.banner-teal, [data-tone="teal"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #0D9488), var(--tone-to, #0F766E)); }
+.banner-orange, [data-tone="orange"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #EA580C), var(--tone-to, #C2410C)); }
+.banner-rose, [data-tone="rose"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #E11D48), var(--tone-to, #9F1239)); }

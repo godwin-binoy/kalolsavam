@@ -3,6 +3,7 @@
   var S = { onAuthLost: function(){} };
   var DEFAULT_API_ORIGIN = 'https://apikalolsavammala.dpdns.org';
   var TOKEN_KEY = 'kal_token';
+  var REFRESH_KEY = 'kal_refresh_token';
 
   function resolveApiOrigin(){
     if (typeof window.KAL_API_BASE === 'string') return window.KAL_API_BASE.replace(/\/+$/, '');
@@ -28,12 +29,54 @@
       else sessionStorage.removeItem(TOKEN_KEY);
     } catch(e){}
   }
-  function clearToken(){ setToken(''); }
+  function getRefreshToken(){
+    try { return sessionStorage.getItem(REFRESH_KEY) || ''; } catch(e){ return ''; }
+  }
+  function setRefreshToken(t){
+    try {
+      if (t) sessionStorage.setItem(REFRESH_KEY, t);
+      else sessionStorage.removeItem(REFRESH_KEY);
+    } catch(e){}
+  }
+  function clearTokens(){
+    setToken('');
+    setRefreshToken('');
+  }
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
     });
+  }
+
+  var isRefreshing = false;
+  var refreshSubscribers = [];
+
+  function onRefreshed(newToken){
+    refreshSubscribers.forEach(function(cb){ cb(newToken); });
+    refreshSubscribers = [];
+  }
+
+  async function tryRefreshToken(){
+    var rf = getRefreshToken();
+    if (!rf) return null;
+    try {
+      var res = await fetch(apiUrl('/api/v1/auth/refresh'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: rf })
+      });
+      if (!res.ok) return null;
+      var data = await res.json();
+      if (data && data.access_token){
+        setToken(data.access_token);
+        if (data.refresh_token) setRefreshToken(data.refresh_token);
+        return data.access_token;
+      }
+      return null;
+    } catch(e){
+      return null;
+    }
   }
 
   async function raw(path, opts){
@@ -60,11 +103,55 @@
 
   async function api(path, opts){
     var r = await raw(path, opts);
+    if (r.status === 401 && getRefreshToken() && path.indexOf('/auth/login') < 0 && path.indexOf('/auth/refresh') < 0){
+      if (!isRefreshing){
+        isRefreshing = true;
+        var newToken = await tryRefreshToken();
+        isRefreshing = false;
+        if (newToken){
+          onRefreshed(newToken);
+          return await raw(path, opts);
+        } else {
+          clearTokens();
+          S.onAuthLost();
+          return r;
+        }
+      } else {
+        return new Promise(function(resolve){
+          refreshSubscribers.push(async function(){
+            resolve(await raw(path, opts));
+          });
+        });
+      }
+    }
+
     if (r.status === 401){
-      clearToken();
+      clearTokens();
       S.onAuthLost();
     }
     return r;
+  }
+
+  async function downloadBlob(path, filename){
+    var hdrs = {};
+    var token = getToken();
+    if (token) hdrs['Authorization'] = 'Bearer ' + token;
+    try {
+      var res = await fetch(apiUrl(path), { method: 'GET', headers: hdrs, credentials: 'include' });
+      if (!res.ok) throw new Error('Status ' + res.status);
+      var blob = await res.blob();
+      var u = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = u;
+      a.download = filename || 'download.csv';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){ a.remove(); URL.revokeObjectURL(u); }, 1500);
+      return true;
+    } catch(e){
+      window.KalAPI.toast('Download failed: ' + e.message, true);
+      return false;
+    }
   }
 
   function stream(path, handlers){
@@ -81,7 +168,7 @@
           var res = await fetch(apiUrl(path), { method: 'GET', credentials: 'include', headers: hdrs });
           if (res.status === 401) {
             stopped = true;
-            clearToken();
+            clearTokens();
             if (S.onAuthLost) S.onAuthLost();
             if (handlers.onmissed) handlers.onmissed();
             return;
@@ -126,9 +213,12 @@
     url: apiUrl,
     getToken: getToken,
     setToken: setToken,
-    clearToken: clearToken,
+    getRefreshToken: getRefreshToken,
+    setRefreshToken: setRefreshToken,
+    clearTokens: clearTokens,
     esc: esc,
     api: api,
+    downloadBlob: downloadBlob,
     stream: stream,
     toast: function(text, isErr){
       var stack = document.querySelector('.toast-stack');

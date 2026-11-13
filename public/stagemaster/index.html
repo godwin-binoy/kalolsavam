@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Stage Control · Kalolsavam</title>
+<link rel="stylesheet" href="/assets/css/tokens.css">
 <link rel="stylesheet" href="/dashboard/css/dashboard.css">
 </head>
 <body class="login-body">
@@ -24,6 +25,7 @@
     <span id="who" class="badge"></span>
     <span id="conn" class="badge">connecting…</span>
     <span class="spacer"></span>
+    <button id="change-pass-btn" class="small">🔑 Password</button>
     <button id="sync-btn">↻ Sync</button>
     <button id="logout-btn">Sign out</button>
   </header>
@@ -31,6 +33,7 @@
     <div id="boards" class="grid"></div>
   </main>
 </div>
+
 <dialog id="score-dialog">
   <h3>Enter score</h3>
   <p class="muted small" id="score-who"></p>
@@ -43,8 +46,22 @@
     </div>
   </form>
 </dialog>
+
+<dialog id="self-password-dialog">
+  <h3 style="margin-top:0">Change My Password</h3>
+  <form id="self-password-form">
+    <label>Current password<input id="self-old-pass" type="password" required autocomplete="current-password"></label>
+    <label>New password (12+ characters)<input id="self-new-pass" type="password" minlength="12" required autocomplete="new-password"></label>
+    <div class="row" style="margin-top:.9rem">
+      <button class="primary" type="submit">Update Password</button>
+      <button type="button" data-cancel-self-pass>Cancel</button>
+    </div>
+  </form>
+</dialog>
+
 <script src="/dashboard/js/api.js"></script>
 <script src="/dashboard/js/auth.js"></script>
+<script src="/dashboard/js/ui.js"></script>
 <script src="/dashboard/js/board.js"></script>
 </body>
 </html>

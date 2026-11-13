@@ -37,7 +37,9 @@
         msg(typeof why === 'string' ? why : 'Sign-in failed.', 'err');
         return false;
       }
-      if (v && v.access_token && A.setToken) A.setToken(v.access_token);
+      if (v && v.access_token) A.setToken(v.access_token);
+      if (v && v.refresh_token) A.setRefreshToken(v.refresh_token);
+
       var me = await A.api('/api/v1/auth/me');
       var payload = buildPayload(me.ok ? me.data : (v.user || v));
       sessionStorage.setItem('kal_user', JSON.stringify(payload));
@@ -54,19 +56,26 @@
 
   async function logout(){
     try { await A.api('/api/v1/auth/logout', { method: 'POST' }); } catch(e){}
-    if (A.clearToken) A.clearToken();
+    A.clearTokens();
     sessionStorage.removeItem('kal_user');
     location.reload();
+  }
+
+  async function changePassword(oldPassword, newPassword){
+    return await A.api('/api/v1/auth/change-password', {
+      method: 'POST',
+      body: { old_password: oldPassword, new_password: newPassword }
+    });
   }
 
   async function tryResume(){
     try {
       var hdrs = {};
-      var token = A.getToken ? A.getToken() : '';
+      var token = A.getToken();
       if (token) hdrs['Authorization'] = 'Bearer ' + token;
       var res = await fetch(A.url('/api/v1/auth/me'), { method: 'GET', credentials: 'include', headers: hdrs });
       if (!res.ok){
-        if (A.clearToken) A.clearToken();
+        A.clearTokens();
         sessionStorage.removeItem('kal_user');
         return false;
       }
@@ -86,7 +95,7 @@
       msgEl = document.getElementById('login-msg');
       btnEl = document.getElementById('login-btn');
       A.state.onAuthLost = function(){
-        if (A.clearToken) A.clearToken();
+        A.clearTokens();
         if (sessionStorage.getItem('kal_user')){
           sessionStorage.removeItem('kal_user');
           location.reload();
@@ -101,6 +110,7 @@
       tryResume();
     },
     login: login,
-    logout: logout
+    logout: logout,
+    changePassword: changePassword
   };
 })();

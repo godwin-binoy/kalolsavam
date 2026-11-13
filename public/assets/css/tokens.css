@@ -1,0 +1,170 @@
+/* ==========================================================================
+   Kalolsavam Unified Design Tokens
+   Shared between Public Web Desk and Staff Portals
+   ========================================================================== */
+:root {
+  /* Surfaces & Backgrounds */
+  --bg: #FAFAF7;
+  --bg-alt: #F3F1EC;
+  --surface: #FFFFFF;
+  --surface-2: #F6F4EE;
+  --panel: #FFFFFF;
+  --panel-2: #F1F5F9;
+  --panel-3: #E6ECF2;
+
+  /* Typography Colors */
+  --text: #242D27;
+  --text-heading: #111814;
+  --muted: #5A6B60;
+  --subtle: #829587;
+
+  /* Borders & Accents */
+  --border: #E5EBE3;
+  --border-strong: #CBD5E1;
+  --brand: #1B2E20;
+  --brand-2: #283E2F;
+  --on-brand: #FFFFFF;
+  --accent: #D97706;
+  --accent-2: #B45309;
+  --accent-fg: #FFFFFF;
+  --accent-bg: rgba(217, 119, 6, 0.1);
+
+  /* Status Colors */
+  --ok: #10B981;
+  --ok-bg: rgba(16, 185, 129, 0.12);
+  --warn: #EAB308;
+  --warn-bg: rgba(234, 179, 8, 0.12);
+  --err: #EF4444;
+  --err-bg: rgba(239, 68, 68, 0.12);
+  --info: #3B82F6;
+  --info-bg: rgba(59, 130, 246, 0.12);
+
+  /* Badges & Action Items */
+  --badge-gov-bg: #E2ECE0;
+  --badge-gov-text: #16261B;
+  --badge-gov-border: #CEDCCD;
+  --badge-live-text: #065F46;
+  --badge-live-bg: #D1FAE5;
+  --badge-live-border: #6EE7B7;
+  --dot-live: #059669;
+  --badge-emergency-text: #9F1239;
+  --badge-emergency-bg: #FFE4E6;
+  --badge-emergency-border: #FECDD3;
+  --action-item-bg: rgba(255, 255, 255, 0.95);
+  --action-item-border: rgba(229, 235, 227, 0.9);
+  --action-item-hover-bg: #FFFFFF;
+  --action-item-hover-border: #CBD5E1;
+  --action-item-icon-bg: #F0F4EF;
+  --card-bg: rgba(255, 255, 255, 0.98);
+  --footer-bg: #0C120F;
+  --footer-fg: #E2E8F0;
+
+  /* Radii & Shadows */
+  --radius-pill: 9999px;
+  --radius-card: 1.25rem;
+  --radius-inner: 1rem;
+  --radius-sm: 8px;
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-card: 0 10px 30px -10px rgba(17, 24, 20, 0.07), 0 1px 3px rgba(17, 24, 20, 0.03);
+  --shadow-card-hover: 0 20px 40px -12px rgba(17, 24, 20, 0.14), 0 4px 12px rgba(17, 24, 20, 0.06);
+  --shadow-md: 0 8px 24px -8px rgba(15, 23, 42, 0.15);
+
+  /* Motion */
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.25, 0.64, 1);
+  --dur-fast: 140ms;
+  --dur-mid: 220ms;
+  --dot-grid-color: rgba(27, 46, 32, 0.05);
+
+  color-scheme: light;
+}
+
+html.dark {
+  --bg: #0A0F0D;
+  --bg-alt: #101713;
+  --surface: #141D17;
+  --surface-2: #1A2520;
+  --panel: #111821;
+  --panel-2: #19222F;
+  --panel-3: #232D3D;
+
+  --text: #E2E8DF;
+  --text-heading: #F8FAFC;
+  --muted: #94A3B8;
+  --subtle: #64748B;
+
+  --border: #223028;
+  --border-strong: #374557;
+  --brand: #D4E2CD;
+  --brand-2: #A3B59D;
+  --on-brand: #0A0F0D;
+  --accent: #F59E0B;
+  --accent-2: #D97706;
+  --accent-fg: #0A0F15;
+  --accent-bg: rgba(245, 158, 11, 0.12);
+
+  --shadow-card: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+  --shadow-md: 0 6px 20px -4px rgba(0, 0, 0, 0.5);
+
+  --badge-gov-bg: #1E2B23;
+  --badge-gov-text: #D4E2CD;
+  --badge-gov-border: #2A3B31;
+  --badge-live-text: #6EE7B7;
+  --badge-live-bg: rgba(6, 78, 59, 0.4);
+  --badge-live-border: rgba(52, 211, 153, 0.3);
+  --badge-emergency-text: #FDA4AF;
+  --badge-emergency-bg: rgba(159, 18, 57, 0.35);
+  --badge-emergency-border: rgba(244, 63, 94, 0.3);
+  --action-item-bg: rgba(255, 255, 255, 0.03);
+  --action-item-border: rgba(255, 255, 255, 0.06);
+  --action-item-hover-bg: rgba(255, 255, 255, 0.07);
+  --action-item-hover-border: rgba(255, 255, 255, 0.12);
+  --action-item-icon-bg: rgba(255, 255, 255, 0.06);
+  --card-bg: rgba(18, 24, 20, 0.95);
+  --footer-bg: #050706;
+  --footer-fg: #94A3B8;
+  --dot-grid-color: rgba(255, 255, 255, 0.03);
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Parameterized Tone Tokens
+   ========================================================================== */
+:root, [data-tone="blue"] {
+  --tone-from: #2563EB;
+  --tone-to: #1D4ED8;
+  --tone-accent: #2563EB;
+}
+[data-tone="teal"] {
+  --tone-from: #0D9488;
+  --tone-to: #0F766E;
+  --tone-accent: #0D9488;
+}
+[data-tone="purple"] {
+  --tone-from: #6D28D9;
+  --tone-to: #4C1D95;
+  --tone-accent: #6D28D9;
+}
+[data-tone="orange"] {
+  --tone-from: #EA580C;
+  --tone-to: #C2410C;
+  --tone-accent: #EA580C;
+}
+[data-tone="pink"] {
+  --tone-from: #E11D48;
+  --tone-to: #BE123C;
+  --tone-accent: #E11D48;
+}
+[data-tone="rose"] {
+  --tone-from: #E11D48;
+  --tone-to: #9F1239;
+  --tone-accent: #E11D48;
+}
+[data-tone="indigo"] {
+  --tone-from: #4F46E5;
+  --tone-to: #3730A3;
+  --tone-accent: #4F46E5;
+}
