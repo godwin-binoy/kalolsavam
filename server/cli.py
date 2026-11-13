@@ -239,6 +239,189 @@ def check() -> None:
     typer.echo(f"Users registered: {user_count}")
 
 
+# ── User management (invoked by ./kal admin *) ────────────────────────────
+async def _async_list_users():
+    from sqlmodel import select
+
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+    from .models import User
+
+    cfg = Settings()
+    engine = make_engine(cfg.db_path)
+    session_maker = make_session_maker(engine)
+    try:
+        async with session_maker() as session:
+            users = (
+                await session.execute(select(User).order_by(User.email))
+            ).scalars().all()
+            return [
+                {
+                    "id": str(u.id),
+                    "email": u.email,
+                    "active": u.is_active,
+                    "roles": [r.name for r in u.roles],
+                    "stages": u.stages,
+                }
+                for u in users
+            ]
+    finally:
+        await engine.dispose()
+
+
+@app.command()
+def user_list(
+    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
+) -> None:
+    """List all users."""
+    users = asyncio.run(_async_list_users())
+    if json_output:
+        typer.echo(json.dumps(users, indent=2))
+        return
+    if not users:
+        typer.echo("No users.")
+        return
+    for u in users:
+        status = "active" if u["active"] else "disabled"
+        roles = ",".join(u["roles"]) or "-"
+        typer.echo(f"{u['email']:<40} {roles:<20} {status}")
+
+
+async def _async_reset_password(email: str, password: str | None):
+    from argon2 import PasswordHasher
+    from sqlmodel import select
+
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+    from .models import User
+
+    cfg = Settings()
+    engine = make_engine(cfg.db_path)
+    session_maker = make_session_maker(engine)
+    ph = PasswordHasher()
+    used = password or secrets.token_urlsafe(16)
+    try:
+        async with session_maker() as session:
+            u = (
+                await session.execute(
+                    select(User).where(User.email == email.strip().lower())
+                )
+            ).scalar_one_or_none()
+            if not u:
+                return False, "not_found", None
+            u.hashed_password = ph.hash(used)
+            session.add(u)
+            await session.commit()
+            return True, None, used
+    finally:
+        await engine.dispose()
+
+
+@app.command()
+def user_reset_password(
+    email: str = typer.Option(..., "--email", "-e"),
+    password: str | None = typer.Option(None, "--password", "-p"),
+) -> None:
+    """Reset a user's password."""
+    ok, err_msg, used = asyncio.run(_async_reset_password(email, password))
+    if not ok:
+        typer.echo(f"Failed: {err_msg}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"Password reset for {email}.")
+    if not password:
+        typer.echo(f"New password: {used}")
+
+
+async def _async_set_active(email: str, active: bool):
+    from sqlmodel import select
+
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+    from .models import User
+
+    cfg = Settings()
+    engine = make_engine(cfg.db_path)
+    session_maker = make_session_maker(engine)
+    try:
+        async with session_maker() as session:
+            u = (
+                await session.execute(
+                    select(User).where(User.email == email.strip().lower())
+                )
+            ).scalar_one_or_none()
+            if not u:
+                return False, "not_found"
+            u.is_active = active
+            session.add(u)
+            await session.commit()
+            return True, None
+    finally:
+        await engine.dispose()
+
+
+@app.command()
+def user_enable(email: str = typer.Option(..., "--email", "-e")) -> None:
+    """Enable a user."""
+    ok, err_msg = asyncio.run(_async_set_active(email, True))
+    if not ok:
+        typer.echo(f"Failed: {err_msg}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"User {email} enabled.")
+
+
+@app.command()
+def user_disable(email: str = typer.Option(..., "--email", "-e")) -> None:
+    """Disable a user."""
+    ok, err_msg = asyncio.run(_async_set_active(email, False))
+    if not ok:
+        typer.echo(f"Failed: {err_msg}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"User {email} disabled.")
+
+
+async def _async_delete_user(email: str):
+    from sqlmodel import select
+
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+    from .models import User
+
+    cfg = Settings()
+    engine = make_engine(cfg.db_path)
+    session_maker = make_session_maker(engine)
+    try:
+        async with session_maker() as session:
+            u = (
+                await session.execute(
+                    select(User).where(User.email == email.strip().lower())
+                )
+            ).scalar_one_or_none()
+            if not u:
+                return False, "not_found"
+            await session.delete(u)
+            await session.commit()
+            return True, None
+    finally:
+        await engine.dispose()
+
+
+@app.command()
+def user_delete(
+    email: str = typer.Option(..., "--email", "-e"),
+    yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation"),
+) -> None:
+    """Delete a user."""
+    if not yes:
+        if not typer.confirm(f"Delete user {email}?"):
+            typer.echo("Cancelled.")
+            raise typer.Exit(0)
+    ok, err_msg = asyncio.run(_async_delete_user(email))
+    if not ok:
+        typer.echo(f"Failed: {err_msg}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"User {email} deleted.")
+
+
 @app.callback(invoke_without_command=True)
 def default_main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is None:

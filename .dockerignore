@@ -21,3 +21,5 @@ requirements-dev.txt
 pyproject.toml
 Makefile
 scripts/setup-backend.sh
+kal
+.kal.lock

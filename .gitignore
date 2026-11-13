@@ -40,3 +40,4 @@ Thumbs.db
 
 # Added by repo cleanup
 *.pyc
+.kal.lock

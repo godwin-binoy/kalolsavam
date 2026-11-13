@@ -1,0 +1,978 @@
+#!/usr/bin/env python3
+"""kal — Kalolsavam deployment & operations CLI.
+
+Single entry point for setup, server lifecycle, Cloudflare Tunnel tokens,
+admin users, database operations, and diagnostics. All state lives in .env
+and inside the Docker container — this CLI is a thin, safe wrapper.
+"""
+import argparse
+import getpass
+import json
+import os
+import re
+import secrets
+import shutil
+import subprocess
+import sys
+import time
+import urllib.request
+from pathlib import Path
+
+# ---------------------------------------------------------------------------
+# Project discovery
+# ---------------------------------------------------------------------------
+ROOT = Path(__file__).resolve().parent
+while not (ROOT / "docker-compose.yml").exists() and ROOT != ROOT.parent:
+    ROOT = ROOT.parent
+if not (ROOT / "docker-compose.yml").exists():
+    print("kal: cannot find docker-compose.yml — run from within the project.",
+          file=sys.stderr)
+    sys.exit(2)
+
+ENV_FILE = ROOT / ".env"
+ENV_EXAMPLE = ROOT / ".env.example"
+DEPLOYMENT_DIR = ROOT / "deployment"
+LOCK_PATH = ROOT / ".kal.lock"
+HEALTH_URL = "http://127.0.0.1:8000/healthz"
+READY_URL = "http://127.0.0.1:8000/readyz"
+
+STATE_MODIFYING = {
+    "init", "up", "down", "restart", "deploy", "rebuild",
+    "token", "admin", "db", "clean", "reset", "env",
+}
+
+# ---------------------------------------------------------------------------
+# Pretty printing
+# ---------------------------------------------------------------------------
+def _tty():
+    return sys.stdout.isatty() and sys.stderr.isatty()
+
+def c(code, text):
+    return f"\033[{code}m{text}\033[0m" if _tty() else text
+
+def red(t):     return c("31", t)
+def green(t):   return c("32", t)
+def yellow(t):  return c("33", t)
+def blue(t):    return c("34", t)
+def cyan(t):    return c("36", t)
+def bold(t):    return c("1", t)
+def dim(t):     return c("2", t)
+
+def info(msg):  print(f"{blue('•')} {msg}")
+def ok(msg):    print(f"{green('✓')} {msg}")
+def warn(msg):  print(f"{yellow('!')} {msg}", file=sys.stderr)
+def err(msg):   print(f"{red('✗')} {msg}", file=sys.stderr)
+
+def die(msg, code=1):
+    err(msg)
+    sys.exit(code)
+
+def banner():
+    print(bold(cyan("Kalolsavam")) + dim(" · deployment CLI"))
+
+def section(title):
+    print()
+    print(bold(title))
+    print(dim("─" * len(title)))
+
+# ---------------------------------------------------------------------------
+# .env file (order-preserving, comment-safe)
+# ---------------------------------------------------------------------------
+class EnvFile:
+    def __init__(self, path):
+        self.path = path
+        self.lines = path.read_text().splitlines() if path.exists() else []
+
+    def get(self, key, default=None):
+        for line in self.lines:
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, _, v = s.partition("=")
+            if k.strip() == key:
+                v = v.strip()
+                if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+                    v = v[1:-1]
+                return v
+        return default
+
+    def set(self, key, value):
+        out, found = [], False
+        for line in self.lines:
+            s = line.strip()
+            if s and not s.startswith("#") and "=" in s:
+                if s.split("=", 1)[0].strip() == key:
+                    out.append(f"{key}={_quote(value)}")
+                    found = True
+                    continue
+            out.append(line)
+        if not found:
+            out.append(f"{key}={_quote(value)}")
+        self.lines = out
+        self._save()
+
+    def unset(self, key):
+        self.lines = [
+            l for l in self.lines
+            if not (l.strip() and not l.strip().startswith("#")
+                    and "=" in l and l.split("=", 1)[0].strip() == key)
+        ]
+        self._save()
+
+    def all(self):
+        out = {}
+        for line in self.lines:
+            s = line.strip()
+            if not s or s.startswith("#") or "=" not in s:
+                continue
+            k, _, v = s.partition("=")
+            v = v.strip()
+            if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+                v = v[1:-1]
+            out[k.strip()] = v
+        return out
+
+    def _save(self):
+        self.path.write_text("\n".join(self.lines) + "\n")
+
+def _quote(v):
+    if not v:
+        return ""
+    if any(ch in v for ch in ' \t#"\'\\$'):
+        return '"' + v.replace('\\', '\\\\').replace('"', '\\"').replace('$', '\\$') + '"'
+    return v
+
+# ---------------------------------------------------------------------------
+# Subprocess helpers
+# ---------------------------------------------------------------------------
+def run(cmd, capture=False, timeout=None, cwd=None, env=None):
+    try:
+        return subprocess.run(
+            cmd, capture_output=capture, text=True,
+            timeout=timeout, cwd=cwd, env=env, check=False,
+        )
+    except FileNotFoundError:
+        die(f"command not found: {cmd[0]}")
+    except subprocess.TimeoutExpired:
+        die(f"command timed out: {' '.join(cmd)}")
+
+def exec_replace(cmd):
+    try:
+        os.execvp(cmd[0], cmd)
+    except FileNotFoundError:
+        die(f"command not found: {cmd[0]}")
+
+# ---------------------------------------------------------------------------
+# Lock (only state-modifying commands)
+# ---------------------------------------------------------------------------
+def acquire_lock():
+    try:
+        import fcntl
+    except ImportError:
+        return None
+    f = open(LOCK_PATH, "w")
+    try:
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return f
+    except BlockingIOError:
+        f.close()
+        die("another 'kal' process is running — wait for it to finish.")
+
+# ---------------------------------------------------------------------------
+# Docker primitives
+# ---------------------------------------------------------------------------
+def ensure_docker():
+    if not shutil.which("docker"):
+        die("Docker is not installed. See https://docs.docker.com/get-docker/")
+    r = run(["docker", "info"], capture=True)
+    if r.returncode != 0:
+        die("Docker daemon is not running or not accessible.\n" + (r.stderr or "").strip())
+
+def get_compose():
+    r = run(["docker", "compose", "version"], capture=True)
+    if r.returncode == 0:
+        return ["docker", "compose"]
+    if shutil.which("docker-compose"):
+        r = run(["docker-compose", "version"], capture=True)
+        if r.returncode == 0:
+            return ["docker-compose"]
+    die("Docker Compose not available. Install Docker Desktop or docker-compose-plugin.")
+
+def backend_running():
+    r = run(get_compose() + ["ps", "--format", "json"], capture=True)
+    if r.returncode != 0:
+        return False
+    for line in r.stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            svc = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if svc.get("Service") == "backend":
+            return (svc.get("State") or "").lower() == "running"
+    return False
+
+def compose_up(tunnel=False, build=True):
+    ensure_docker()
+    compose = get_compose()
+    if tunnel:
+        cmd = compose + ["--profile", "tunnel", "up", "-d"]
+    else:
+        cmd = compose + ["up", "-d"]
+    if build:
+        cmd.append("--build")
+    info(f"$ {' '.join(cmd)}")
+    r = run(cmd, capture=False)
+    if r.returncode != 0:
+        die("docker compose up failed — see output above.")
+
+def compose_down(remove_images=False, remove_volumes=False):
+    ensure_docker()
+    compose = get_compose()
+    cmd = compose + ["down"]
+    if remove_volumes:
+        cmd.append("-v")
+    if remove_images:
+        cmd += ["--rmi", "local"]
+    run(cmd, capture=False)
+
+# ---------------------------------------------------------------------------
+# HTTP helpers
+# ---------------------------------------------------------------------------
+def check_health(url=HEALTH_URL, timeout=3):
+    try:
+        with urllib.request.urlopen(url, timeout=timeout) as r:
+            return r.status == 200
+    except Exception:
+        return False
+
+def wait_healthy(max_seconds=180):
+    info("waiting for backend to become healthy…")
+    start = time.time()
+    next_log = 0
+    while time.time() - start < max_seconds:
+        if check_health():
+            ok(f"backend healthy after {int(time.time() - start)}s")
+            return True
+        time.sleep(2)
+        elapsed = int(time.time() - start)
+        if elapsed >= next_log + 15:
+            print(dim(f"  … {elapsed}s elapsed"))
+            next_log = elapsed
+    warn(f"backend did not become healthy within {max_seconds}s")
+    print(dim("  hint: run 'kal logs' to inspect."))
+    return False
+
+# ---------------------------------------------------------------------------
+# Container exec helper
+# ---------------------------------------------------------------------------
+def in_container(args, interactive=False):
+    if not backend_running():
+        die("backend container is not running — start it with 'kal up' first.")
+    compose = get_compose()
+    cmd = compose + ["exec"]
+    if not interactive:
+        cmd.append("-T")
+    cmd += ["backend"] + args
+    if interactive:
+        exec_replace(cmd)
+    return run(cmd, capture=True)
+
+def ensure_backend_running():
+    if backend_running():
+        return
+    warn("backend is not running.")
+    if confirm("start it now?", default=True):
+        cmd_up(argparse.Namespace(tunnel=False, no_build=False))
+        if not backend_running():
+            die("failed to start backend.")
+    else:
+        die("backend must be running for this operation.")
+
+# ---------------------------------------------------------------------------
+# Prompts & validators
+# ---------------------------------------------------------------------------
+def prompt(text, default=None, secret=False, allow_empty=False, validate=None):
+    suffix = f" [{default}]" if default not in (None, "") else ""
+    while True:
+        try:
+            if secret:
+                val = getpass.getpass(f"{text}{suffix}: ").strip()
+            else:
+                val = input(f"{text}{suffix}: ").strip()
+        except EOFError:
+            die("aborted.")
+        if not val:
+            if default is not None:
+                return default
+            if allow_empty:
+                return ""
+            warn("a value is required.")
+            continue
+        if validate:
+            good, msg = validate(val)
+            if not good:
+                warn(msg)
+                continue
+        return val
+
+def confirm(text, default=False):
+    suffix = " [Y/n]" if default else " [y/N]"
+    try:
+        val = input(f"{text}{suffix}: ").strip().lower()
+    except EOFError:
+        return default
+    if not val:
+        return default
+    return val in ("y", "yes")
+
+def validate_email(v):
+    if re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", v):
+        return True, ""
+    return False, "not a valid email."
+
+def validate_password(v):
+    if len(v) < 12:
+        return False, "password must be at least 12 characters."
+    return True, ""
+
+def validate_token(v):
+    if len(v) < 50:
+        return False, "cloudflare tunnel token looks too short (<50 chars)."
+    if " " in v:
+        return False, "token must not contain spaces."
+    if not re.match(r"^[A-Za-z0-9._+/=-]+$", v):
+        return False, "token contains unexpected characters."
+    return True, ""
+
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+def _mask(v, visible=4):
+    if not v:
+        return ""
+    if len(v) <= visible * 2:
+        return "***"
+    return v[:visible] + "…" + v[-visible:]
+
+def _is_secret(k):
+    return any(w in k.upper() for w in ("SECRET", "PASSWORD", "TOKEN", "KEY"))
+
+def _fmt_bytes(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024:
+            return f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+# ---------------------------------------------------------------------------
+# .env / secret bootstrap
+# ---------------------------------------------------------------------------
+def _ensure_env():
+    if ENV_FILE.exists():
+        return
+    if not ENV_EXAMPLE.exists():
+        die(f"neither {ENV_FILE.name} nor {ENV_EXAMPLE.name} exists.")
+    ENV_FILE.write_text(ENV_EXAMPLE.read_text())
+    info(f"created {ENV_FILE.name} from {ENV_EXAMPLE.name}")
+
+def _ensure_secret():
+    env = EnvFile(ENV_FILE)
+    if env.get("SECRET_KEY", "").strip():
+        return
+    if (DEPLOYMENT_DIR / "secret.key").exists():
+        return
+    env.set("SECRET_KEY", secrets.token_urlsafe(48))
+    ok("generated SECRET_KEY in .env")
+
+def _print_urls():
+    env = EnvFile(ENV_FILE)
+    origin = env.get("PUBLIC_ORIGIN", "http://localhost:8000").rstrip("/")
+    print()
+    ok(f"site:         {origin}/")
+    ok(f"admin:        {origin}/admin/")
+    ok(f"stagemaster:  {origin}/stagemaster/")
+    ok(f"dashboard:    {origin}/dashboard/")
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+def cmd_init(args):
+    banner()
+    ensure_docker()
+    print("This wizard configures .env and starts the stack.\n")
+
+    if ENV_FILE.exists() and not args.force:
+        warn(f"{ENV_FILE.name} already exists.")
+        if not confirm("overwrite it?", default=False):
+            info("keeping existing .env — running 'kal up' instead.")
+            return cmd_up(argparse.Namespace(tunnel=False, no_build=False))
+
+    if not ENV_EXAMPLE.exists():
+        die(f"{ENV_EXAMPLE.name} missing — cannot initialize.")
+    ENV_FILE.write_text(ENV_EXAMPLE.read_text())
+    env = EnvFile(ENV_FILE)
+
+    section("1. Public origin")
+    origin = prompt("public origin (protocol + host)",
+                    default="http://localhost:8000")
+    if not origin.startswith(("http://", "https://")):
+        die("origin must start with http:// or https://")
+    env.set("PUBLIC_ORIGIN", origin)
+
+    section("2. Secret key")
+    env.set("SECRET_KEY", secrets.token_urlsafe(48))
+    ok("generated SECRET_KEY.")
+
+    section("3. Administrator")
+    admin_email = prompt("admin email",
+                         default="admin@kalolsavam.example.com",
+                         validate=validate_email)
+    env.set("ADMIN_EMAIL", admin_email)
+    set_pass = confirm("set an admin password now?", default=True)
+    if set_pass:
+        while True:
+            p1 = prompt("admin password (12+ chars)", secret=True,
+                        validate=validate_password)
+            p2 = prompt("confirm password", secret=True)
+            if p1 != p2:
+                warn("passwords do not match.")
+                continue
+            env.set("ADMIN_PASSWORD", p1)
+            ok("admin password stored in .env.")
+            break
+    else:
+        info("no password set — one will be generated on first boot; run 'kal logs backend' to read it.")
+
+    section("4. Cloudflare Tunnel (optional)")
+    use_tunnel = False
+    if confirm("configure Cloudflare Tunnel now?", default=False):
+        while True:
+            tok = prompt("tunnel token (paste from Zero Trust dashboard)",
+                         secret=True, validate=validate_token)
+            env.set("CLOUDFLARE_TUNNEL_TOKEN", tok)
+            ok("tunnel token saved.")
+            use_tunnel = True
+            break
+
+    section("5. Starting stack")
+    compose_up(tunnel=use_tunnel, build=True)
+    if not wait_healthy():
+        die("setup failed — backend never became healthy. see 'kal logs'.")
+
+    section("done")
+    _print_urls()
+    if not set_pass:
+        warn("admin password was auto-generated — see 'kal logs backend' on first boot.")
+    return 0
+
+def cmd_up(args):
+    banner()
+    ensure_docker()
+    _ensure_env()
+    _ensure_secret()
+    tunnel = getattr(args, "tunnel", False)
+    build  = not getattr(args, "no_build", False)
+    compose_up(tunnel=tunnel, build=build)
+    if not wait_healthy():
+        return 1
+    _print_urls()
+    return 0
+
+def cmd_down(args):
+    banner()
+    compose_down()
+    ok("stopped.")
+    return 0
+
+def cmd_restart(args):
+    banner()
+    ensure_docker()
+    if not backend_running():
+        die("backend is not running — use 'kal up'.")
+    r = run(get_compose() + ["restart", "backend"], capture=False)
+    if r.returncode != 0:
+        die("restart failed.")
+    if not wait_healthy():
+        return 1
+    ok("restarted.")
+    return 0
+
+def cmd_status(args):
+    banner()
+    ensure_docker()
+    run(get_compose() + ["ps"], capture=False)
+    print()
+    if check_health():
+        ok("healthz: OK")
+    else:
+        warn("healthz: unreachable")
+    if check_health(READY_URL):
+        ok("readyz: OK")
+    else:
+        warn("readyz: not ready")
+    db = DEPLOYMENT_DIR / "kalolsavam.db"
+    if db.exists():
+        print(f"{blue('•')} db: {db.name} ({_fmt_bytes(db.stat().st_size)})")
+    return 0
+
+def cmd_logs(args):
+    ensure_docker()
+    cmd = get_compose() + ["logs", "--tail", "200"]
+    if args.follow:
+        cmd.append("-f")
+    cmd.append(args.service)
+    exec_replace(cmd)
+
+def cmd_shell(args):
+    ensure_docker()
+    exec_replace(get_compose() + ["exec", "backend", "bash"])
+
+def cmd_token(args):
+    banner()
+    _ensure_env()
+    env = EnvFile(ENV_FILE)
+    action = args.token_action or "get"
+    if action == "get":
+        tok = env.get("CLOUDFLARE_TUNNEL_TOKEN", "").strip()
+        if not tok:
+            info("no tunnel token configured.")
+            return 0
+        print(f"token:  {_mask(tok)}")
+        print(f"length: {len(tok)}")
+        return 0
+    if action == "set":
+        val = args.value
+        if not val:
+            val = prompt("tunnel token", secret=True, validate=validate_token)
+        else:
+            good, why = validate_token(val)
+            if not good:
+                die(why)
+        env.set("CLOUDFLARE_TUNNEL_TOKEN", val)
+        ok("token saved. run 'kal up --tunnel' or 'kal deploy --tunnel'.")
+        return 0
+    if action == "clear":
+        env.unset("CLOUDFLARE_TUNNEL_TOKEN")
+        ok("token removed.")
+        return 0
+    die(f"unknown token action: {action}")
+
+def cmd_admin(args):
+    banner()
+    ensure_backend_running()
+    action = args.admin_action or "list"
+    if action == "list":
+        r = in_container(["python", "-m", "server", "user-list"])
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "create":
+        pwd = args.password
+        if not pwd:
+            pwd = prompt(f"password for {args.email}", secret=True,
+                         validate=validate_password)
+        cmd = ["python", "-m", "server", "seed-admin", "--email", args.email,
+               "--password", pwd]
+        r = in_container(cmd)
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "password":
+        pwd = args.password
+        if not pwd:
+            pwd = prompt(f"new password for {args.email}", secret=True,
+                         validate=validate_password)
+        r = in_container(["python", "-m", "server", "user-reset-password",
+                          "--email", args.email, "--password", pwd])
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "delete":
+        if not args.yes and not confirm(f"delete {args.email}?", default=False):
+            info("cancelled.")
+            return 0
+        r = in_container(["python", "-m", "server", "user-delete",
+                          "--email", args.email, "--yes"])
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "enable":
+        r = in_container(["python", "-m", "server", "user-enable",
+                          "--email", args.email])
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "disable":
+        r = in_container(["python", "-m", "server", "user-disable",
+                          "--email", args.email])
+        print(r.stdout or r.stderr)
+        return 0
+    die(f"unknown admin action: {action}")
+
+def cmd_db(args):
+    banner()
+    ensure_backend_running()
+    action = args.db_action or "check"
+    if action in ("migrate", "seed-stages", "backup", "check"):
+        r = in_container(["python", "-m", "server", action])
+        print(r.stdout or r.stderr)
+        return 0
+    if action == "restore":
+        _db_restore(args.file, args.yes)
+        return 0
+    if action == "shell":
+        ensure_docker()
+        exec_replace(get_compose() + ["exec", "backend",
+                                      "sqlite3", "-header",
+                                      "/app/deployment/kalolsavam.db"])
+    if action == "reset":
+        _db_reset(args.yes)
+        return 0
+    die(f"unknown db action: {action}")
+
+def cmd_health(args):
+    banner()
+    if check_health():
+        ok("healthz: OK")
+    else:
+        err("healthz: FAILED")
+        return 1
+    try:
+        with urllib.request.urlopen(READY_URL, timeout=3) as r:
+            body = r.read().decode()
+        ok(f"readyz: OK ({body})")
+    except Exception as e:
+        warn(f"readyz: {e}")
+    return 0
+
+def cmd_doctor(args):
+    banner()
+    failures = 0
+    def chk(label, fn):
+        nonlocal failures
+        try:
+            res = fn()
+            if res is True:
+                ok(label)
+            elif res is False:
+                err(label)
+                failures += 1
+            else:
+                warn(f"{label}: {res}")
+        except Exception as e:
+            err(f"{label}: {e}")
+            failures += 1
+
+    print(bold("environment checks") + "\n")
+    chk("docker installed",           lambda: bool(shutil.which("docker")))
+    chk("docker daemon running",      lambda: run(["docker", "info"], capture=True).returncode == 0)
+    chk("docker compose available",   lambda: get_compose() is not None)
+    chk(".env exists",                lambda: ENV_FILE.exists())
+
+    def _secret_ok():
+        if not ENV_FILE.exists():
+            return False
+        return (bool(EnvFile(ENV_FILE).get("SECRET_KEY", "").strip())
+                or (DEPLOYMENT_DIR / "secret.key").exists())
+    chk("SECRET_KEY configured",      _secret_ok)
+
+    def _admin_email_ok():
+        if not ENV_FILE.exists():
+            return False
+        return bool(EnvFile(ENV_FILE).get("ADMIN_EMAIL", "").strip())
+    chk("ADMIN_EMAIL set",            _admin_email_ok)
+
+    def _origin_ok():
+        if not ENV_FILE.exists():
+            return False
+        o = EnvFile(ENV_FILE).get("PUBLIC_ORIGIN", "")
+        return o.startswith(("http://", "https://")) or f"invalid PUBLIC_ORIGIN: {o!r}"
+    chk("PUBLIC_ORIGIN valid",        _origin_ok)
+
+    chk("deployment/ dir exists",     lambda: DEPLOYMENT_DIR.exists())
+    chk("backend container running",  lambda: backend_running())
+    chk("backend /healthz OK",        lambda: check_health())
+
+    def _port_check():
+        import socket
+        s = socket.socket()
+        s.settimeout(1)
+        try:
+            rc = s.connect_ex(("127.0.0.1", 8000))
+        finally:
+            s.close()
+        if rc != 0:
+            return "port 8000 is free"
+        return True if backend_running() else "port 8000 used by another process"
+    chk("port 8000",                  _port_check)
+
+    try:
+        du = shutil.disk_usage(str(DEPLOYMENT_DIR))
+        free_gb = du.free / (1024 ** 3)
+        (ok if free_gb > 1 else warn)(f"disk free: {free_gb:.1f} GB")
+    except Exception:
+        pass
+
+    print()
+    if failures == 0:
+        ok("all checks passed.")
+        return 0
+    warn(f"{failures} check(s) failed.")
+    return 1
+
+def cmd_version(args):
+    banner()
+    print("kal CLI:      1.0.0")
+    try:
+        print(f"package.json: {json.loads((ROOT / 'package.json').read_text()).get('version','?')}")
+    except Exception:
+        pass
+    try:
+        m = re.search(r'__version__\s*=\s*"([^"]+)"',
+                      (ROOT / "server" / "__init__.py").read_text())
+        if m:
+            print(f"server:       {m.group(1)}")
+    except Exception:
+        pass
+    r = run(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"], capture=True)
+    if r.returncode == 0:
+        print(f"git HEAD:     {r.stdout.strip()}")
+        if run(["git", "-C", str(ROOT), "status", "--porcelain"],
+               capture=True).stdout.strip():
+            warn("working tree has uncommitted changes")
+    return 0
+
+def cmd_env(args):
+    banner()
+    _ensure_env()
+    env = EnvFile(ENV_FILE)
+    action = args.env_action or "show"
+    if action == "show":
+        for k, v in env.all().items():
+            print(f"{k}={_mask(v) if _is_secret(k) else v}")
+        return 0
+    if action == "set":
+        if len(args.pair) == 1:
+            kv = args.pair[0]
+            if "=" not in kv:
+                die("expected KEY=VALUE")
+            k, _, v = kv.partition("=")
+        elif len(args.pair) == 2:
+            k, v = args.pair
+        else:
+            die("expected KEY=VALUE or KEY VALUE")
+        env.set(k.strip(), v)
+        ok(f"set {k.strip()} — restart to apply.")
+        return 0
+    if action == "unset":
+        env.unset(args.key)
+        ok(f"unset {args.key}.")
+        return 0
+    die(f"unknown env action: {action}")
+
+def cmd_deploy(args):
+    banner()
+    ensure_docker()
+    _ensure_env()
+    _ensure_secret()
+    tunnel = getattr(args, "tunnel", False)
+    compose_up(tunnel=tunnel, build=True)
+    if not wait_healthy():
+        return 1
+    _print_urls()
+    return 0
+
+def cmd_rebuild(args):
+    banner()
+    ensure_docker()
+    if run(get_compose() + ["build"], capture=False).returncode != 0:
+        die("build failed.")
+    ok("image rebuilt.")
+    return 0
+
+def cmd_clean(args):
+    banner()
+    ensure_docker()
+    compose_down(remove_images=args.images, remove_volumes=args.volumes)
+    ok("cleaned.")
+    if args.volumes:
+        warn("volumes removed — data will not be persisted.")
+    return 0
+
+def cmd_reset(args):
+    banner()
+    if not args.yes_i_mean_it:
+        die("this will delete ALL data. pass --yes-i-mean-it to proceed.")
+    if not confirm("really wipe everything?", default=False):
+        info("cancelled.")
+        return 0
+    ensure_docker()
+    compose_down(remove_images=True, remove_volumes=True)
+    for f in list(DEPLOYMENT_DIR.glob("kalolsavam*.db*")):
+        try: f.unlink()
+        except OSError: pass
+    for f in list(DEPLOYMENT_DIR.glob("secret.key")):
+        try: f.unlink()
+        except OSError: pass
+    ok("reset complete.")
+    return 0
+
+# ---------------------------------------------------------------------------
+# Restore & reset
+# ---------------------------------------------------------------------------
+def _db_restore(file_path, skip_confirm):
+    src = Path(file_path).expanduser().resolve()
+    if not src.is_file():
+        die(f"backup not found or not a file: {src}")
+    target = DEPLOYMENT_DIR / "kalolsavam.db"
+    if not skip_confirm and target.exists():
+        if not confirm(f"overwrite {target.name}?", default=False):
+            info("cancelled.")
+            return
+    compose = get_compose()
+    info("stopping backend…")
+    run(compose + ["stop", "backend"], capture=False)
+    if target.exists():
+        ts = time.strftime("%Y%m%d-%H%M%S")
+        bak = target.with_name(f"{target.stem}-pre-restore-{ts}.db")
+        shutil.copy2(target, bak)
+        info(f"snapshot: {bak.name}")
+    shutil.copy2(src, target)
+    ok("database restored.")
+    info("restarting backend…")
+    run(compose + ["start", "backend"], capture=False)
+    wait_healthy()
+
+def _db_reset(skip_confirm):
+    target = DEPLOYMENT_DIR / "kalolsavam.db"
+    if not target.exists():
+        info("no database to reset.")
+        return
+    if not skip_confirm:
+        warn(f"this will DELETE {target}")
+        if not confirm("proceed?", default=False):
+            info("cancelled.")
+            return
+    compose = get_compose()
+    info("stopping backend…")
+    run(compose + ["stop", "backend"], capture=False)
+    for suffix in ("", "-wal", "-shm"):
+        p = target.with_name(target.name + suffix)
+        try: p.unlink()
+        except FileNotFoundError: pass
+    ok("database deleted.")
+    info("recreating schema on restart…")
+    run(compose + ["start", "backend"], capture=False)
+    wait_healthy()
+
+# ---------------------------------------------------------------------------
+# Argument parsing & dispatch
+# ---------------------------------------------------------------------------
+def build_parser():
+    p = argparse.ArgumentParser(prog="kal",
+                                description="Kalolsavam deployment & operations CLI")
+    sub = p.add_subparsers(dest="command")
+
+    p_init = sub.add_parser("init", help="first-time setup wizard")
+    p_init.add_argument("--force", action="store_true", help="overwrite .env without asking")
+
+    p_up = sub.add_parser("up", help="start the stack")
+    p_up.add_argument("--tunnel", action="store_true", help="include Cloudflare Tunnel")
+    p_up.add_argument("--no-build", action="store_true", help="skip image rebuild")
+
+    sub.add_parser("down", help="stop the stack")
+    sub.add_parser("restart", help="restart backend container")
+    sub.add_parser("status", help="show service & health status")
+
+    p_logs = sub.add_parser("logs", help="show container logs")
+    p_logs.add_argument("service", nargs="?", default="backend")
+    p_logs.add_argument("-f", "--follow", action="store_true")
+
+    sub.add_parser("shell", help="open a bash shell in the backend container")
+
+    p_tok = sub.add_parser("token", help="manage Cloudflare Tunnel token")
+    tok = p_tok.add_subparsers(dest="token_action")
+    tok_set = tok.add_parser("set"); tok_set.add_argument("value", nargs="?")
+    tok.add_parser("get")
+    tok.add_parser("clear")
+
+    p_admin = sub.add_parser("admin", help="manage admin accounts")
+    adm = p_admin.add_subparsers(dest="admin_action")
+    adm.add_parser("list")
+    a_create = adm.add_parser("create")
+    a_create.add_argument("email")
+    a_create.add_argument("--password", "-p")
+    a_create.add_argument("--role", default="admin", choices=["admin", "stagemaster"])
+    a_pass = adm.add_parser("password")
+    a_pass.add_argument("email")
+    a_pass.add_argument("--password", "-p")
+    a_del = adm.add_parser("delete")
+    a_del.add_argument("email")
+    a_del.add_argument("--yes", "-y", action="store_true")
+    a_ena = adm.add_parser("enable"); a_ena.add_argument("email")
+    a_dis = adm.add_parser("disable"); a_dis.add_argument("email")
+
+    p_db = sub.add_parser("db", help="database operations")
+    db = p_db.add_subparsers(dest="db_action")
+    for name in ("migrate", "seed-stages", "backup", "check", "shell"):
+        db.add_parser(name)
+    d_restore = db.add_parser("restore")
+    d_restore.add_argument("file")
+    d_restore.add_argument("--yes", "-y", action="store_true")
+    d_reset = db.add_parser("reset")
+    d_reset.add_argument("--yes", "-y", action="store_true")
+
+    p_dep = sub.add_parser("deploy", help="rebuild + restart full stack")
+    p_dep.add_argument("--tunnel", action="store_true")
+    sub.add_parser("rebuild", help="rebuild image only")
+    sub.add_parser("health", help="quick health check")
+    sub.add_parser("doctor", help="diagnose common issues")
+    sub.add_parser("version", help="show version info")
+
+    p_env = sub.add_parser("env", help="manage .env")
+    env = p_env.add_subparsers(dest="env_action")
+    env.add_parser("show")
+    e_set = env.add_parser("set"); e_set.add_argument("pair", nargs="+")
+    e_unset = env.add_parser("unset"); e_unset.add_argument("key")
+
+    p_clean = sub.add_parser("clean", help="stop & remove containers")
+    p_clean.add_argument("--images", action="store_true")
+    p_clean.add_argument("--volumes", action="store_true")
+
+    p_reset = sub.add_parser("reset", help="DANGER: wipe everything")
+    p_reset.add_argument("--yes-i-mean-it", action="store_true", dest="yes_i_mean_it")
+
+    return p
+
+HANDLERS = {
+    "init": cmd_init, "up": cmd_up, "down": cmd_down, "restart": cmd_restart,
+    "status": cmd_status, "logs": cmd_logs, "shell": cmd_shell,
+    "token": cmd_token, "admin": cmd_admin, "db": cmd_db,
+    "deploy": cmd_deploy, "rebuild": cmd_rebuild,
+    "health": cmd_health, "doctor": cmd_doctor, "version": cmd_version,
+    "env": cmd_env, "clean": cmd_clean, "reset": cmd_reset,
+}
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+    if not args.command:
+        parser.print_help()
+        return 0
+
+    handler = HANDLERS.get(args.command)
+    if not handler:
+        die(f"unknown command: {args.command}")
+
+    lock = acquire_lock() if args.command in STATE_MODIFYING else None
+    try:
+        return handler(args) or 0
+    except KeyboardInterrupt:
+        print()
+        warn("interrupted.")
+        return 130
+    finally:
+        if lock:
+            try: lock.close()
+            except Exception: pass
+
+if __name__ == "__main__":
+    sys.exit(main())
