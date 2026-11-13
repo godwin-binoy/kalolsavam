@@ -17,7 +17,7 @@ async def _seed_user(db_path: str, email: str, password: str, role_name: str, st
     ph = PasswordHasher()
     try:
         async with session_maker() as session:
-            role = (await session.execute(select(Role).where(Role.name == role_name))).scalar_one_or_none()
+            role = (await session.exec(select(Role).where(Role.name == role_name))).first()
             if not role:
                 role = Role(name=role_name)
                 session.add(role)
@@ -144,11 +144,11 @@ def test_full_admin_workflow_and_security(client):
     ).json()
 
     # CSV injection string neutralization
-    client.post(
+    q1 = client.post(
         "/api/v1/admin/queue",
         json={"venue_id": v["id"], "event_id": e["id"], "school": "=CMD()", "student_name": "+Asha", "roll": "101"},
         headers=headers,
-    )
+    ).json()
     csv_res = client.get("/api/v1/admin/export/participants.csv", headers=headers)
     assert csv_res.status_code == 200
     assert "'=CMD()" in csv_res.text and "'+Asha" in csv_res.text

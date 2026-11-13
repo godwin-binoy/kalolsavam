@@ -52,7 +52,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     app.state.subscribers = {}
 
     fullauth, auth_engine, auth_session_maker = create_auth(cfg)
-    fullauth.init_app(app)
+    fullauth.init_app(app, include_routers=["auth", "profile", "sessions"])
     app.state.fullauth = fullauth
     app.state.auth_engine = auth_engine
     app.state.auth_session_maker = auth_session_maker
