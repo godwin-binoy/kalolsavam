@@ -6,7 +6,7 @@ import threading
 import time
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Iterator, Any
+from typing import Any, Iterator
 
 
 class Database:
@@ -14,18 +14,24 @@ class Database:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.path = str(path)
         self._local = threading.local()
-        conn = self._new_conn()
+        self._conns_lock = threading.Lock()
+        self._conns: set[sqlite3.Connection] = set()
+        conn = self._new_conn(track=False)
         try:
             self._migrate(conn)
         finally:
             conn.close()
 
-    def _new_conn(self) -> sqlite3.Connection:
+    def _new_conn(self, track: bool = True) -> sqlite3.Connection:
         c = sqlite3.connect(self.path, check_same_thread=False, isolation_level=None)
         c.row_factory = sqlite3.Row
         c.execute("PRAGMA journal_mode=WAL")
+        c.execute("PRAGMA synchronous=NORMAL")
         c.execute("PRAGMA foreign_keys=ON")
         c.execute("PRAGMA busy_timeout=5000")
+        if track:
+            with self._conns_lock:
+                self._conns.add(c)
         return c
 
     def _conn(self) -> sqlite3.Connection:
@@ -34,6 +40,16 @@ class Database:
             c = self._new_conn()
             self._local.conn = c
         return c
+
+    def close_all(self) -> None:
+        with self._conns_lock:
+            conns = list(self._conns)
+            self._conns.clear()
+        for c in conns:
+            try:
+                c.close()
+            except Exception:
+                pass
 
     def _migrate(self, conn: sqlite3.Connection) -> None:
         conn.execute(

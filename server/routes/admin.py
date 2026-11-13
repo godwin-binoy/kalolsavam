@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
 from ..auth import AuthUser, hash_password
 from ..deps import client_ip, get_cfg, get_db, hash_ip, require_admin
+from .public import invalidate_public_cache
 from ..models import (
     AddToQueueIn, CategoryIn, CategoryUpdateIn, EventIn, EventUpdateIn,
     PasswordResetIn, QueueItemUpdateIn, QueueMoveIn, UserIn, UserUpdateIn,
@@ -37,6 +38,14 @@ def _admin_log(db, request: Request, user: AuthUser, action: str, detail: str = 
         )
     except Exception as exc:
         log.warning("audit_write_failed: %s", exc)
+
+
+def _csv_cell(val: object) -> str:
+    s = "" if val is None else str(val)
+    stripped = s.lstrip()
+    if stripped and stripped[0] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + s
+    return s
 
 
 def _parse_uid(uid: str) -> int:
@@ -159,10 +168,14 @@ def list_venues(request: Request, user=Depends(require_admin)):
 @router.post("/venues")
 def create_venue(body: VenueIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    cur = db.ex(
-        "INSERT INTO venues(name, kind, active) VALUES (?,?,?)",
-        (body.name, body.kind, int(body.active)),
-    )
+    try:
+        cur = db.ex(
+            "INSERT INTO venues(name, kind, slug, active) VALUES (?,?,?,?)",
+            (body.name, body.kind, body.slug, int(body.active)),
+        )
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "duplicate_slug")
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "create_venue", f"id={cur.lastrowid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (cur.lastrowid,)))
 
@@ -175,11 +188,16 @@ def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(r
         raise HTTPException(404, "venue_not_found")
     name = body.name if body.name is not None else row["name"]
     kind = body.kind if body.kind is not None else row["kind"]
+    slug = body.slug if "slug" in body.model_fields_set else row["slug"]
     active = int(body.active) if body.active is not None else row["active"]
-    db.ex(
-        "UPDATE venues SET name = ?, kind = ?, active = ? WHERE id = ?",
-        (name, kind, active, vid),
-    )
+    try:
+        db.ex(
+            "UPDATE venues SET name = ?, kind = ?, slug = ?, active = ? WHERE id = ?",
+            (name, kind, slug, active, vid),
+        )
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "duplicate_slug")
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "update_venue", f"id={vid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (vid,)))
 
@@ -197,6 +215,7 @@ def delete_venue(vid: int, request: Request, user=Depends(require_admin)):
     with db.transaction():
         db.ex("DELETE FROM live_state WHERE venue_id = ?", (vid,))
         db.ex("DELETE FROM venues WHERE id = ?", (vid,))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "delete_venue", f"id={vid}")
     return {"ok": True}
 
@@ -225,6 +244,7 @@ def update_category(cid: int, body: CategoryUpdateIn, request: Request, user=Dep
     name = body.name if body.name is not None else row["name"]
     group = body.group if body.group is not None else row["grp"]
     db.ex("UPDATE categories SET name = ?, grp = ? WHERE id = ?", (name, group, cid))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "update_category", f"id={cid}")
     return dict(db.one("SELECT * FROM categories WHERE id = ?", (cid,)))
 
@@ -265,6 +285,7 @@ def create_event(body: EventIn, request: Request, user=Depends(require_admin)):
         )
     except sqlite3.IntegrityError:
         raise HTTPException(409, "duplicate_or_fk")
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "create_event", f"id={cur.lastrowid},code={body.code}")
     return {"id": cur.lastrowid}
 
@@ -289,6 +310,7 @@ def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(r
         )
     except sqlite3.IntegrityError:
         raise HTTPException(409, "duplicate_code_or_fk")
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "update_event", f"id={eid}")
     return dict(db.one("SELECT * FROM events WHERE id = ?", (eid,)))
 
@@ -304,6 +326,7 @@ def delete_event(eid: int, request: Request, user=Depends(require_admin)):
     with db.transaction():
         db.ex("DELETE FROM participants WHERE event_id = ?", (eid,))
         db.ex("DELETE FROM events WHERE id = ?", (eid,))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "delete_event", f"id={eid}")
     return {"ok": True}
 
@@ -367,24 +390,21 @@ def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, u
         pid = row["participant_id"]
         if not pid:
             raise HTTPException(409, "no_participant")
-        updates: list[str] = []
-        params: list = []
-        if body.school is not None:
-            updates.append("school = ?")
-            params.append(body.school)
-        if body.student_name is not None:
-            updates.append("student_name = ?")
-            params.append(body.student_name.strip() or None)
-        if body.roll is not None:
-            updates.append("roll = ?")
-            params.append(body.roll.strip() or None)
-        if updates:
-            params.append(pid)
-            db.ex(f"UPDATE participants SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        part = db.one("SELECT school, student_name, roll FROM participants WHERE id = ?", (pid,))
+        if not part:
+            raise HTTPException(409, "no_participant")
+        new_school = body.school if body.school is not None else part["school"]
+        new_name = (body.student_name.strip() or None) if body.student_name is not None else part["student_name"]
+        new_roll = (body.roll.strip() or None) if body.roll is not None else part["roll"]
+        db.ex(
+            "UPDATE participants SET school = ?, student_name = ?, roll = ? WHERE id = ?",
+            (new_school, new_name, new_roll, pid),
+        )
         db.ex(
             "UPDATE queue_items SET version = version + 1, updated_at = ? WHERE id = ?",
             (db.now(), item_id),
         )
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "queue_edit", f"id={item_id}")
     return {"ok": True}
 
@@ -401,6 +421,7 @@ def delete_queue_item(item_id: int, request: Request, user=Depends(require_admin
         db.ex("DELETE FROM queue_items WHERE id = ?", (item_id,))
         if row["participant_id"]:
             db.ex("DELETE FROM participants WHERE id = ?", (row["participant_id"],))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "queue_delete", f"id={item_id}")
     return {"ok": True}
 
@@ -415,12 +436,18 @@ def move_queue_item(item_id: int, body: QueueMoveIn, request: Request, user=Depe
         venue_id = item["venue_id"]
         cur_pos = item["position"]
 
-        op, order = ("<", "DESC") if body.direction == "up" else (">", "ASC")
-        neighbor = db.one(
-            f"SELECT * FROM queue_items WHERE venue_id = ? AND position {op} ? "
-            f"ORDER BY position {order} LIMIT 1",
-            (venue_id, cur_pos),
-        )
+        if body.direction == "up":
+            neighbor = db.one(
+                "SELECT * FROM queue_items WHERE venue_id = ? AND position < ? "
+                "ORDER BY position DESC LIMIT 1",
+                (venue_id, cur_pos),
+            )
+        else:
+            neighbor = db.one(
+                "SELECT * FROM queue_items WHERE venue_id = ? AND position > ? "
+                "ORDER BY position ASC LIMIT 1",
+                (venue_id, cur_pos),
+            )
         if not neighbor:
             return {"ok": True, "moved": False}
 
@@ -433,6 +460,7 @@ def move_queue_item(item_id: int, body: QueueMoveIn, request: Request, user=Depe
             "UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
             (cur_pos, now, neighbor["id"]),
         )
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "queue_move", f"id={item_id},dir={body.direction}")
     return {"ok": True, "moved": True}
 
@@ -464,6 +492,7 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
             " position, version, updated_at) VALUES (?,?,?, 'WAITING', ?, 1, ?)",
             (body.venue_id, body.event_id, pid, row["p"], db.now()),
         )
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "queue_add", f"venue={body.venue_id},event={body.event_id}")
     return {"id": cur_q.lastrowid, "participant_id": pid}
 
@@ -749,9 +778,17 @@ def export_participants(request: Request, user=Depends(require_admin)):
     w.writerow(["id", "venue", "event_code", "event", "school",
                 "student_name", "roll", "status", "position"])
     for r in rows:
-        w.writerow([r["id"], r["venue"], r["event_code"], r["event"],
-                    r["school"] or "", r["student_name"] or "", r["roll"] or "",
-                    r["status"], r["position"]])
+        w.writerow([
+            r["id"],
+            _csv_cell(r["venue"]),
+            _csv_cell(r["event_code"]),
+            _csv_cell(r["event"]),
+            _csv_cell(r["school"]),
+            _csv_cell(r["student_name"]),
+            _csv_cell(r["roll"]),
+            r["status"],
+            r["position"],
+        ])
     return Response(
         content=out.getvalue(),
         media_type="text/csv",
@@ -782,10 +819,18 @@ def export_results(request: Request, user=Depends(require_admin)):
     w.writerow(["queue_item_id", "venue", "event_code", "event", "school",
                 "student_name", "roll", "judges", "total", "average"])
     for r in rows:
-        w.writerow([r["queue_item_id"], r["venue"], r["event_code"], r["event"],
-                    r["school"] or "", r["student_name"] or "", r["roll"] or "",
-                    r["judges"], round(r["total"], 2),
-                    round(r["average"], 2) if r["average"] is not None else ""])
+        w.writerow([
+            r["queue_item_id"],
+            _csv_cell(r["venue"]),
+            _csv_cell(r["event_code"]),
+            _csv_cell(r["event"]),
+            _csv_cell(r["school"]),
+            _csv_cell(r["student_name"]),
+            _csv_cell(r["roll"]),
+            r["judges"],
+            round(r["total"], 2),
+            round(r["average"], 2) if r["average"] is not None else "",
+        ])
     return Response(
         content=out.getvalue(),
         media_type="text/csv",

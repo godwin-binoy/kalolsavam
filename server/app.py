@@ -12,7 +12,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 
 from .auth import router as auth_router
@@ -35,6 +35,7 @@ SEC_HEADERS = {
 async def lifespan(app: FastAPI):
     app.state.loop = asyncio.get_running_loop()
     yield
+    app.state.db.close_all()
 
 
 def create_app(cfg: Settings, db: Database) -> FastAPI:
@@ -126,8 +127,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     if (dist / "assets").exists():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
-    if (dist / "pages").exists():
-        app.mount("/pages", StaticFiles(directory=dist / "pages"), name="pages")
     dashboard_dir = dist / "dashboard" if (dist / "dashboard").exists() else srv / "dashboard"
     if dashboard_dir.exists():
         app.mount("/dashboard", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
@@ -180,57 +179,32 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     @app.get("/{full_path:path}")
     async def catch_all(full_path: str):
         clean_path = full_path.lstrip("/")
+        if clean_path == "favicon.ico":
+            return Response(status_code=204)
         if (
-            clean_path in ("api", "assets", "dashboard", "pages")
-            or clean_path.startswith(("api/", "assets/", "dashboard/", "pages/"))
+            clean_path in ("api", "assets", "dashboard")
+            or clean_path.startswith(("api/", "assets/", "dashboard/"))
         ):
             return JSONResponse({"error": "not_found"}, status_code=404)
 
         if clean_path in ("admin/", "admin/index.html"):
-            admin_html = dist / "admin" / "index.html"
-            if admin_html.is_file():
-                return FileResponse(admin_html)
-            pub_admin = pub / "admin" / "index.html"
-            if pub_admin.is_file():
-                return FileResponse(pub_admin)
+            for candidate in (dist / "admin" / "index.html", pub / "admin" / "index.html"):
+                if candidate.is_file():
+                    return FileResponse(candidate)
 
         if clean_path in ("stagemaster/", "stagemaster/index.html"):
-            sm_html = dist / "stagemaster" / "index.html"
-            if sm_html.is_file():
-                return FileResponse(sm_html)
-            pub_sm = pub / "stagemaster" / "index.html"
-            if pub_sm.is_file():
-                return FileResponse(pub_sm)
+            for candidate in (dist / "stagemaster" / "index.html", pub / "stagemaster" / "index.html"):
+                if candidate.is_file():
+                    return FileResponse(candidate)
 
-        if not dist.exists():
+        if not clean_path:
+            if (dist / "index.html").is_file():
+                return FileResponse(dist / "index.html")
             gate = srv / "static" / "gate.html"
-            return FileResponse(gate)
+            if gate.is_file():
+                return FileResponse(gate)
 
-        dist_root = dist.resolve()
-
-        def _safe(p: Path) -> bool:
-            try:
-                p.resolve().relative_to(dist_root)
-                return True
-            except ValueError:
-                return False
-
-        target = dist / full_path
-        if _safe(target) and target.is_file():
-            return FileResponse(target)
-
-        target_html = dist / full_path / "index.html"
-        if _safe(target_html) and target_html.is_file():
-            return FileResponse(target_html)
-
-        target_ext = dist / f"{full_path}.html"
-        if _safe(target_ext) and target_ext.is_file():
-            return FileResponse(target_ext)
-
-        index = dist / "index.html"
-        if index.exists():
-            return FileResponse(index)
-        return JSONResponse({"detail": "Not Found"}, status_code=404)
+        return JSONResponse({"error": "not_found"}, status_code=404)
 
     app.add_middleware(
         CORSMiddleware,

@@ -294,3 +294,63 @@ def test_cors_and_cross_origin_cookies(tmp_path, monkeypatch):
         cookies = " ".join(ok.headers.get_list("set-cookie")).lower()
         assert "samesite=none" in cookies
         assert "secure" in cookies
+
+
+def test_hardening_slugs_paused_pinning_csv_and_idempotency(client):
+    db = client.app.state.db
+    _seed_user(db, "admin@example.com", "StrongPass1234!", "admin", [])
+    _seed_user(db, "staff2@example.com", "StaffPass1234!", "stagemaster", [1, 2])
+    _login(client, "admin@example.com", "StrongPass1234!")
+
+    # Nonexistent venue in set_state returns 404 (not 500)
+    assert client.post(
+        "/api/v1/live/state",
+        json={"venue_id": 999, "state": "RUNNING", "announcement": ""},
+    ).status_code == 404
+
+    # Slug creation + duplicate slug 409
+    v1 = client.post(
+        "/api/v1/admin/venues",
+        json={"name": "Stage 1", "kind": "stage", "slug": "Stage-1", "active": True},
+    )
+    assert v1.status_code == 200 and v1.json()["slug"] == "stage-1"
+    dup = client.post(
+        "/api/v1/admin/venues",
+        json={"name": "Other", "kind": "stage", "slug": "stage-1", "active": True},
+    )
+    assert dup.status_code == 409
+
+    # Slugs exposed on public endpoints
+    pub_v = client.get("/api/v1/public/venues").json()["venues"]
+    assert pub_v[0]["slug"] == "stage-1"
+
+    # CSV formula injection neutralization
+    c = client.post("/api/v1/admin/categories", json={"name": "HS", "group": "HS"}).json()
+    e = client.post(
+        "/api/v1/admin/events",
+        json={"code": "101", "title": "Dance", "category_id": c["id"], "venue_id": v1.json()["id"]},
+    ).json()
+    client.post(
+        "/api/v1/admin/queue",
+        json={"venue_id": v1.json()["id"], "event_id": e["id"], "school": "=CMD()", "student_name": "+Asha", "roll": "1"},
+    )
+    csv_res = client.get("/api/v1/admin/export/participants.csv")
+    assert csv_res.status_code == 200
+    assert "'=CMD()" in csv_res.text and "'+Asha" in csv_res.text
+
+    # Pause pins item at top of board and scoped idempotency avoids cross-user collision
+    r_start = client.post(
+        "/api/v1/live/advance",
+        json={"venue_id": v1.json()["id"], "action": "START_NEXT"},
+        headers={"Idempotency-Key": "shared-key"},
+    )
+    assert r_start.status_code == 200
+    r_pause = client.post(
+        "/api/v1/live/advance",
+        json={"venue_id": v1.json()["id"], "action": "PAUSE"},
+        headers={"Idempotency-Key": "shared-key"},
+    )
+    assert r_pause.status_code == 200 and r_pause.json()["status"] == "PAUSED"
+
+    board_items = client.get("/api/v1/live/board").json()["board"][0]["items"]
+    assert board_items[0]["status"] == "PAUSED"

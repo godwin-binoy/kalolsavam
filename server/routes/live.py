@@ -11,9 +11,11 @@ from fastapi.responses import StreamingResponse
 from ..auth import get_user_stages, has_role
 from ..deps import check_stage, get_db, require_staff
 from ..models import AdvanceIn, ScoreIn, StateIn
+from .public import invalidate_public_cache
 
 router = APIRouter()
 
+_MAX_SSE_SUBSCRIBERS = 200
 _TRANSITIONS = {
     "START_NEXT":       ("WAITING",   "ON-STAGE"),
     "COMPLETE_CURRENT": ("ON-STAGE",  "COMPLETE"),
@@ -58,6 +60,15 @@ def _active_venues_for_user(db, user):
     )
 
 
+def _require_active_venue(db, venue_id: int):
+    v = db.one("SELECT id, active FROM venues WHERE id = ?", (venue_id,))
+    if not v:
+        raise HTTPException(404, "venue_not_found")
+    if not v["active"]:
+        raise HTTPException(409, "venue_inactive")
+    return v
+
+
 @router.get("/board")
 def board(request: Request, user=Depends(require_staff)):
     db = get_db(request)
@@ -76,7 +87,7 @@ def board(request: Request, user=Depends(require_staff)):
         "LEFT JOIN participants p ON p.id = q.participant_id "
         f"WHERE q.venue_id IN ({ph}) "
         "ORDER BY q.venue_id, "
-        "CASE q.status WHEN 'ON-STAGE' THEN 0 ELSE 1 END, q.position",
+        "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position",
         tuple(vids),
     )
     states = db.q(
@@ -102,6 +113,9 @@ def board(request: Request, user=Depends(require_staff)):
 
 @router.get("/stream")
 async def stream(request: Request, user=Depends(require_staff)):
+    if len(request.app.state.subscribers) >= _MAX_SSE_SUBSCRIBERS:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "too_many_streams")
+
     async def gen():
         q: asyncio.Queue = asyncio.Queue(maxsize=128)
         venues = None if has_role(user, "admin") else set(get_user_stages(user))
@@ -121,7 +135,7 @@ async def stream(request: Request, user=Depends(require_staff)):
 
     return StreamingResponse(
         gen(), media_type="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+        headers={"Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"},
     )
 
 
@@ -129,6 +143,7 @@ async def stream(request: Request, user=Depends(require_staff)):
 def set_state(body: StateIn, request: Request, user=Depends(require_staff)):
     check_stage(user, body.venue_id)
     db = get_db(request)
+    _require_active_venue(db, body.venue_id)
     db.ex(
         "INSERT INTO live_state(venue_id, state, announcement, updated_at) "
         "VALUES (?,?,?,?) ON CONFLICT(venue_id) DO UPDATE SET "
@@ -136,6 +151,7 @@ def set_state(body: StateIn, request: Request, user=Depends(require_staff)):
         " updated_at = excluded.updated_at",
         (body.venue_id, body.state, body.announcement, db.now()),
     )
+    invalidate_public_cache(request.app)
     _broadcast_sync(request, {"entity": "state", "venue_id": body.venue_id})
     return {"ok": True}
 
@@ -144,12 +160,14 @@ def set_state(body: StateIn, request: Request, user=Depends(require_staff)):
 def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
     check_stage(user, body.venue_id)
     db = get_db(request)
+    _require_active_venue(db, body.venue_id)
 
-    idem = request.headers.get("idempotency-key", "")[:96]
-    if not idem:
+    raw_idem = request.headers.get("idempotency-key", "").strip()[:96]
+    if not raw_idem:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "idempotency_required")
+    scoped_key = f"{user.id}:{body.venue_id}:{body.action}:{raw_idem}"
 
-    hit = db.one("SELECT response FROM idempotency WHERE key = ?", (idem,))
+    hit = db.one("SELECT response FROM idempotency WHERE key = ?", (scoped_key,))
     if hit:
         return {**json.loads(hit["response"]), "replayed": True}
 
@@ -162,11 +180,10 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
             now = db.now()
             db.ex("DELETE FROM idempotency WHERE created_at < ?", (now - 86400,))
 
-            hit = db.one("SELECT response FROM idempotency WHERE key = ?", (idem,))
+            hit = db.one("SELECT response FROM idempotency WHERE key = ?", (scoped_key,))
             if hit:
                 return {**json.loads(hit["response"]), "replayed": True}
 
-            # Ensure any currently active item is cleanly completed (START_NEXT) or paused (RECALL)
             if body.action in ("START_NEXT", "RECALL"):
                 cur = db.one(
                     "SELECT * FROM queue_items WHERE venue_id = ? "
@@ -225,18 +242,19 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
             }
             db.ex(
                 "INSERT INTO idempotency(key, response, created_at) VALUES (?,?,?)",
-                (idem, json.dumps(resp), now),
+                (scoped_key, json.dumps(resp), now),
             )
             broadcasts.append({
                 "entity": "queue", "venue_id": body.venue_id,
                 "item_id": row["id"], "status": to,
             })
     except sqlite3.IntegrityError:
-        hit = db.one("SELECT response FROM idempotency WHERE key = ?", (idem,))
+        hit = db.one("SELECT response FROM idempotency WHERE key = ?", (scoped_key,))
         if hit:
             return {**json.loads(hit["response"]), "replayed": True}
         raise
 
+    invalidate_public_cache(request.app)
     for msg in broadcasts:
         _broadcast_sync(request, msg)
     assert resp is not None

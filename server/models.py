@@ -13,6 +13,13 @@ def _require_non_blank(v: str | None) -> str | None:
     return stripped
 
 
+def _optional_slug(v: str | None) -> str | None:
+    if v is None:
+        return None
+    s = v.strip().lower()
+    return s or None
+
+
 class StateIn(BaseModel):
     venue_id: int
     state: str = Field(pattern=r"^(IDLE|RUNNING|PAUSED|BREAK|FINISHED)$")
@@ -35,7 +42,13 @@ class ScoreIn(BaseModel):
 class VenueIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     kind: str = Field(default="stage", max_length=32)
+    slug: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
     active: bool = True
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def _clean_slug(cls, v: str | None) -> str | None:
+        return _optional_slug(v)
 
     @field_validator("name", "kind")
     @classmethod
@@ -46,7 +59,13 @@ class VenueIn(BaseModel):
 class VenueUpdateIn(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=120)
     kind: str | None = Field(default=None, max_length=32)
+    slug: str | None = Field(default=None, max_length=64, pattern=r"^[a-z0-9-]+$")
     active: bool | None = None
+
+    @field_validator("slug", mode="before")
+    @classmethod
+    def _clean_slug(cls, v: str | None) -> str | None:
+        return _optional_slug(v)
 
     @field_validator("name", "kind")
     @classmethod

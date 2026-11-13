@@ -1,0 +1,2 @@
+ALTER TABLE venues ADD COLUMN slug TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_venues_slug ON venues(slug) WHERE slug IS NOT NULL;
