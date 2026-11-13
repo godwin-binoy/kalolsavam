@@ -286,7 +286,7 @@ class UserIn(BaseModel):
 class UserUpdateIn(BaseModel):
     email: EmailStr | None = None
     role: str | None = Field(default=None, pattern=r"^(stagemaster|admin)$")
-    stages: Optional[list[int]] = None
+    stages: list[int] | None = None
     is_active: bool | None = None
 
 
