@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 VENV_DIR="${VENV_DIR:-.venv}"
-ADMIN_EMAIL="${ADMIN_EMAIL:-admin@kalolsavam.local}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@kalolsavam.example.com}"
 
 if ! command -v "$PYTHON_BIN" >/dev/null 2>&1; then
   echo "Error: $PYTHON_BIN not found. Install Python 3.11+ first."

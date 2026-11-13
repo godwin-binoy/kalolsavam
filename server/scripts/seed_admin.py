@@ -28,7 +28,7 @@ async def main() -> None:
                 session.add(Role(name=name))
         await session.commit()
 
-        email = (sys.argv[1] if len(sys.argv) > 1 else "admin@kalolsavam.local").lower()
+        email = (sys.argv[1] if len(sys.argv) > 1 else "admin@kalolsavam.example.com").lower()
         existing = (await session.execute(select(User).where(User.email == email))).scalar_one_or_none()
         if existing:
             raise SystemExit(f"user '{email}' already exists")

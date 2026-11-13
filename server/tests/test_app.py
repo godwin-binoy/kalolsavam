@@ -156,8 +156,8 @@ def test_dashboard_assets_served(client):
 def test_full_admin_and_stage_workflow(client):
     cfg = client.app.state.cfg
     db = client.app.state.db
-    asyncio.run(_seed_user(cfg.auth_db_path, "admin@test.local", "StrongPass1234!", "admin", []))
-    _login(client, "admin@test.local", "StrongPass1234!")
+    asyncio.run(_seed_user(cfg.auth_db_path, "admin@example.com", "StrongPass1234!", "admin", []))
+    _login(client, "admin@example.com", "StrongPass1234!")
 
     # Reject blank venue name
     r = client.post("/api/v1/admin/venues", json={"name": "   ", "kind": "stage", "active": True})
