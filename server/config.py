@@ -22,7 +22,6 @@ class Settings(BaseSettings):
     cookie_samesite: str = Field(default="")
     session_ttl_min: int = Field(default=480, ge=1, le=10080)
     secret_key: str = Field(default="")
-    auth_db_path: str = Field(default=str(ROOT / "deployment" / "fullauth.db"))
     db_path: str = Field(default=str(ROOT / "deployment" / "kalolsavam.db"))
     results_url: str = "https://kalolsavam.kerala.gov.in/"
     server_host: str = "127.0.0.1"

@@ -9,16 +9,12 @@ import os
 import shutil
 import sqlite3
 import time as _t
-import uuid as _uuid
 from collections import defaultdict
 from pathlib import Path
 
-from argon2 import PasswordHasher
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from sqlmodel import select
-
-from ..auth import Role, User
+from ..auth import AuthUser, hash_password
 from ..deps import client_ip, get_cfg, get_db, hash_ip, require_admin
 from ..models import (
     AddToQueueIn, CategoryIn, CategoryUpdateIn, EventIn, EventUpdateIn,
@@ -28,29 +24,26 @@ from ..models import (
 
 router = APIRouter()
 log = logging.getLogger("kalolsavam")
-_ph = PasswordHasher()
 
 
-def _admin_log(db, request: Request, user: User, action: str, detail: str = "") -> None:
+def _admin_log(db, request: Request, user: AuthUser, action: str, detail: str = "") -> None:
     try:
+        secret = get_cfg(request).secret_key
         db.ex(
             "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) "
             "VALUES (?,?,?,?,?)",
-            (db.now(), user.email, hash_ip(client_ip(request)),
+            (db.now(), user.email, hash_ip(client_ip(request), secret),
              "admin_action", f"{action}|{detail}"),
         )
     except Exception as exc:
         log.warning("audit_write_failed: %s", exc)
 
 
-def _parse_uid(uid: str):
+def _parse_uid(uid: str) -> int:
     try:
-        return _uuid.UUID(uid)
-    except (ValueError, AttributeError):
-        try:
-            return int(uid)
-        except ValueError:
-            return uid
+        return int(uid)
+    except ValueError:
+        raise HTTPException(404, "not_found")
 
 
 def _validate_stage_ids(db, stages: list[int]) -> None:
@@ -477,117 +470,113 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
 
 # ── Users ─────────────────────────────────────────────────────────────
 @router.get("/users")
-async def list_users(request: Request, user=Depends(require_admin)):
-    async with request.app.state.auth_session_maker() as session:
-        result = await session.execute(select(User).order_by(User.email))
-        users = result.scalars().all()
-        return {
-            "users": [
-                {
-                    "id": str(u.id),
-                    "email": u.email,
-                    "stages": u.stages,
-                    "roles": [r.name for r in u.roles],
-                    "disabled": not u.is_active,
-                }
-                for u in users
-            ]
-        }
+def list_users(request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    rows = db.q("SELECT id, email, role, stages, is_active FROM users ORDER BY email")
+    return {
+        "users": [
+            {
+                "id": str(r["id"]),
+                "email": r["email"],
+                "stages": r["stages"],
+                "roles": [r["role"]],
+                "disabled": not bool(r["is_active"]),
+            }
+            for r in rows
+        ]
+    }
 
 
 @router.post("/users")
-async def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
-    _validate_stage_ids(get_db(request), body.stages)
-    async with request.app.state.auth_session_maker() as session:
-        existing = (
-            await session.execute(select(User).where(User.email == body.email))
-        ).scalar_one_or_none()
-        if existing:
-            raise HTTPException(409, "email_taken")
-        role = (
-            await session.execute(select(Role).where(Role.name == body.role))
-        ).scalar_one_or_none()
-        if not role:
-            raise HTTPException(400, "role_missing")
-        u = User(
-            email=body.email,
-            hashed_password=_ph.hash(body.password),
-            is_active=True,
-            is_verified=True,
-            stages=json.dumps(body.stages),
-        )
-        u.roles.append(role)
-        session.add(u)
-        await session.commit()
-        return {"id": str(u.id), "email": u.email, "role": body.role}
+def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    email = body.email.strip().lower()
+    _validate_stage_ids(db, body.stages)
+    if db.one("SELECT id FROM users WHERE email = ?", (email,)):
+        raise HTTPException(409, "email_taken")
+    now = db.now()
+    cur = db.ex(
+        "INSERT INTO users(email, password_hash, role, stages, is_active, created_at, updated_at) "
+        "VALUES (?,?,?,?,1,?,?)",
+        (email, hash_password(body.password), body.role, json.dumps(body.stages), now, now),
+    )
+    _admin_log(db, request, user, "create_user", f"id={cur.lastrowid},role={body.role}")
+    return {"id": str(cur.lastrowid), "email": email, "role": body.role}
 
 
 @router.put("/users/{uid}")
-async def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
+def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    target_id = _parse_uid(uid)
     if body.stages is not None:
-        _validate_stage_ids(get_db(request), body.stages)
-    async with request.app.state.auth_session_maker() as session:
-        target = await session.get(User, _parse_uid(uid))
+        _validate_stage_ids(db, body.stages)
+
+    with db.transaction():
+        target = db.one("SELECT * FROM users WHERE id = ?", (target_id,))
         if not target:
             raise HTTPException(404, "not_found")
-        if body.email is not None and body.email != target.email:
-            dup = (
-                await session.execute(select(User).where(User.email == body.email))
-            ).scalar_one_or_none()
-            if dup:
+        if target_id == user.id and (body.is_active is False or (body.role is not None and body.role != "admin")):
+            raise HTTPException(400, "cannot_modify_own_access")
+
+        new_email = body.email.strip().lower() if body.email is not None else target["email"]
+        if new_email != target["email"]:
+            if db.one("SELECT id FROM users WHERE email = ? AND id != ?", (new_email, target_id)):
                 raise HTTPException(409, "email_taken")
-            target.email = body.email
-        if body.stages is not None:
-            target.stages = json.dumps(body.stages)
-        if body.is_active is not None:
-            target.is_active = body.is_active
-        if body.role is not None:
-            new_role = (
-                await session.execute(select(Role).where(Role.name == body.role))
-            ).scalar_one_or_none()
-            if not new_role:
-                raise HTTPException(400, "role_missing")
-            target.roles.clear()
-            target.roles.append(new_role)
-        session.add(target)
-        await session.commit()
-        return {"ok": True}
+
+        new_role = body.role if body.role is not None else target["role"]
+        new_stages = json.dumps(body.stages) if body.stages is not None else target["stages"]
+        new_active = int(body.is_active) if body.is_active is not None else target["is_active"]
+
+        db.ex(
+            "UPDATE users SET email = ?, role = ?, stages = ?, is_active = ?, updated_at = ? WHERE id = ?",
+            (new_email, new_role, new_stages, new_active, db.now(), target_id),
+        )
+        if not new_active or new_role != target["role"]:
+            db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
+    _admin_log(db, request, user, "update_user", f"id={target_id}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/disable")
-async def disable_user(uid: str, request: Request, user=Depends(require_admin)):
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
+def disable_user(uid: str, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    target_id = _parse_uid(uid)
+    if target_id == user.id:
+        raise HTTPException(400, "cannot_disable_self")
+    with db.transaction():
+        if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
             raise HTTPException(404, "not_found")
-        u.is_active = False
-        session.add(u)
-        await session.commit()
-        return {"ok": True}
+        db.ex("UPDATE users SET is_active = 0, updated_at = ? WHERE id = ?", (db.now(), target_id))
+        db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
+    _admin_log(db, request, user, "disable_user", f"id={target_id}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/enable")
-async def enable_user(uid: str, request: Request, user=Depends(require_admin)):
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
-            raise HTTPException(404, "not_found")
-        u.is_active = True
-        session.add(u)
-        await session.commit()
-        return {"ok": True}
+def enable_user(uid: str, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    target_id = _parse_uid(uid)
+    if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
+        raise HTTPException(404, "not_found")
+    db.ex("UPDATE users SET is_active = 1, updated_at = ? WHERE id = ?", (db.now(), target_id))
+    _admin_log(db, request, user, "enable_user", f"id={target_id}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/reset-password")
-async def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
+def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    target_id = _parse_uid(uid)
+    with db.transaction():
+        if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
             raise HTTPException(404, "not_found")
-        u.hashed_password = _ph.hash(body.password)
-        session.add(u)
-        await session.commit()
-        return {"ok": True}
+        db.ex(
+            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
+            (hash_password(body.password), db.now(), target_id),
+        )
+        db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
+    _admin_log(db, request, user, "reset_password", f"id={target_id}")
+    return {"ok": True}
 
 
 # ── Audit / Stats / Health ────────────────────────────────────────────
@@ -635,12 +624,8 @@ def backup(request: Request, user=Depends(require_admin)):
     dst_dir.mkdir(parents=True, exist_ok=True)
     ts = _t.strftime("%Y%m%d-%H%M%S")
 
-    paths = [cfg.db_path]
-    if cfg.auth_db_path and cfg.auth_db_path != cfg.db_path:
-        paths.append(cfg.auth_db_path)
-
     backed_up = []
-    for p in paths:
+    for p in (cfg.db_path,):
         src = Path(p)
         if not src.exists():
             continue
@@ -661,6 +646,7 @@ def backup(request: Request, user=Depends(require_admin)):
                 old.unlink()
             except OSError:
                 pass
+    _admin_log(get_db(request), request, user, "backup", f"count={len(backed_up)}")
     return {"ok": True, "backups": backed_up}
 
 

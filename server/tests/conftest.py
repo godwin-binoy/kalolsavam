@@ -1,4 +1,4 @@
-"""Test fixtures: isolated DBs per test run, sync TestClient."""
+"""Test fixtures: isolated SQLite DB per test run, sync TestClient."""
 from __future__ import annotations
 
 import pytest
@@ -10,13 +10,6 @@ from server.db import Database
 
 
 def _write_stub_dist(dist_root):
-    """Create minimal dist/admin + dist/stagemaster index.html files.
-
-    In production these come from `npm run build` (Astro builds them from
-    src/pages/admin/index.astro etc). Backend CI does not run the frontend
-    build, so we stub them here so routing tests can assert content +
-    content-type without pulling in the whole node toolchain.
-    """
     (dist_root / "admin").mkdir(parents=True, exist_ok=True)
     (dist_root / "admin" / "index.html").write_text(
         '<!doctype html><html><head><title>Admin</title></head>'
@@ -38,13 +31,11 @@ def _write_stub_dist(dist_root):
 @pytest.fixture
 def client(tmp_path, monkeypatch):
     db_path = tmp_path / "test_kalolsavam.db"
-    auth_db_path = tmp_path / "test_fullauth.db"
     dist_path = tmp_path / "dist"
     dist_path.mkdir()
     _write_stub_dist(dist_path)
 
     monkeypatch.setenv("DB_PATH", str(db_path))
-    monkeypatch.setenv("AUTH_DB_PATH", str(auth_db_path))
     monkeypatch.setenv("PUBLIC_ORIGIN", "http://testserver")
     monkeypatch.setenv("SESSION_TTL_MIN", "60")
     monkeypatch.setenv("SECRET_KEY", "super-secret-test-key-01234567890123456789")

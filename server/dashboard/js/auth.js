@@ -37,8 +37,9 @@
         msg(typeof why === 'string' ? why : 'Sign-in failed.', 'err');
         return false;
       }
+      if (v && v.access_token && A.setToken) A.setToken(v.access_token);
       var me = await A.api('/api/v1/auth/me');
-      var payload = buildPayload(me.ok ? me.data : v);
+      var payload = buildPayload(me.ok ? me.data : (v.user || v));
       sessionStorage.setItem('kal_user', JSON.stringify(payload));
       msg('Signed in as ' + (payload.username || 'user') + '.', 'ok');
       if (window.onKalLogin) window.onKalLogin(payload);
@@ -53,14 +54,19 @@
 
   async function logout(){
     try { await A.api('/api/v1/auth/logout', { method: 'POST' }); } catch(e){}
+    if (A.clearToken) A.clearToken();
     sessionStorage.removeItem('kal_user');
     location.reload();
   }
 
   async function tryResume(){
     try {
-      var res = await fetch(A.url('/api/v1/auth/me'), { method: 'GET', credentials: 'include' });
+      var hdrs = {};
+      var token = A.getToken ? A.getToken() : '';
+      if (token) hdrs['Authorization'] = 'Bearer ' + token;
+      var res = await fetch(A.url('/api/v1/auth/me'), { method: 'GET', credentials: 'include', headers: hdrs });
       if (!res.ok){
+        if (A.clearToken) A.clearToken();
         sessionStorage.removeItem('kal_user');
         return false;
       }
@@ -80,6 +86,7 @@
       msgEl = document.getElementById('login-msg');
       btnEl = document.getElementById('login-btn');
       A.state.onAuthLost = function(){
+        if (A.clearToken) A.clearToken();
         if (sessionStorage.getItem('kal_user')){
           sessionStorage.removeItem('kal_user');
           location.reload();

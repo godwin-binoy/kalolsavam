@@ -1,4 +1,4 @@
-"""FastAPI app factory. FullAuth, Astro dist mount, SSE bus."""
+"""FastAPI app factory. Single-DB auth, static mounts, SSE bus."""
 from __future__ import annotations
 
 import asyncio
@@ -14,9 +14,8 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlmodel import SQLModel
 
-from .auth import create_auth
+from .auth import router as auth_router
 from .config import Settings
 from .db import Database
 from .errors import http_error
@@ -35,10 +34,7 @@ SEC_HEADERS = {
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.loop = asyncio.get_running_loop()
-    async with app.state.auth_engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)
     yield
-    await app.state.auth_engine.dispose()
 
 
 def create_app(cfg: Settings, db: Database) -> FastAPI:
@@ -49,12 +45,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     app.state.cfg = cfg
     app.state.db = db
     app.state.subscribers = {}
-
-    fullauth, auth_engine, auth_session_maker = create_auth(cfg)
-    fullauth.init_app(app)
-    app.state.fullauth = fullauth
-    app.state.auth_engine = auth_engine
-    app.state.auth_session_maker = auth_session_maker
 
     expected_origin = urlparse(cfg.public_origin)
     cors_origins = [cfg.public_origin]
@@ -70,6 +60,14 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         else None
     )
 
+    def _origin_allowed(origin_val: str, host_hdr: str) -> bool:
+        o = urlparse(origin_val)
+        allowed = set(allowed_netlocs)
+        if host_hdr:
+            allowed.add(host_hdr)
+        preview_ok = bool(pages_preview_re and pages_preview_re.match(origin_val.rstrip("/")))
+        return o.netloc in allowed or preview_ok
+
     @app.middleware("http")
     async def security_middleware(request: Request, call_next):
         request.state.request_id = uuid.uuid4().hex[:12]
@@ -79,15 +77,17 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             return JSONResponse({"error": "registration_disabled"}, status_code=403)
 
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
+            auth_hdr = request.headers.get("authorization", "")
+            using_bearer = auth_hdr.lower().startswith("bearer ")
+            host_hdr = request.headers.get("host", "")
             origin = request.headers.get("origin")
+            referer = request.headers.get("referer")
+
             if origin:
-                o = urlparse(origin)
-                host_hdr = request.headers.get("host", "")
-                allowed = set(allowed_netlocs)
-                if host_hdr:
-                    allowed.add(host_hdr)
-                preview_ok = bool(pages_preview_re and pages_preview_re.match(origin.rstrip("/")))
-                if o.netloc not in allowed and not preview_ok:
+                if not _origin_allowed(origin, host_hdr):
+                    return JSONResponse({"error": "origin_mismatch"}, status_code=403)
+            elif not using_bearer and referer:
+                if not _origin_allowed(referer, host_hdr):
                     return JSONResponse({"error": "origin_mismatch"}, status_code=403)
 
         resp = await call_next(request)
@@ -102,19 +102,13 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
         elif path.startswith("/assets/"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        elif path.startswith("/api/v1/admin/"):
-            resp.headers["Cache-Control"] = "no-store"
-        elif path.startswith("/api/v1/live/"):
+        elif path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")):
             resp.headers["Cache-Control"] = "no-store"
         elif path in ("/healthz", "/readyz"):
             resp.headers["Cache-Control"] = "no-store"
         elif path == "/sw.js":
-            # Force revalidation every load so SW updates land immediately.
             resp.headers["Cache-Control"] = "no-cache, must-revalidate"
         else:
-            # HTML pages: always revalidate. FileResponse supplies ETag, so
-            # revalidation is a cheap 304 when unchanged. setdefault preserves
-            # any Cache-Control a route already set (e.g. public API TTLs).
             if "text/html" in resp.headers.get("content-type", ""):
                 resp.headers.setdefault(
                     "Cache-Control", "public, max-age=0, must-revalidate"
@@ -170,6 +164,7 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     from .routes.public import router as public_router
     from .routes.live import router as live_router
     from .routes.admin import router as admin_router
+    app.include_router(auth_router, prefix="/api/v1/auth")
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")
@@ -220,36 +215,30 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             except ValueError:
                 return False
 
-        # 1. Exact file match (sandboxed under dist_root)
         target = dist / full_path
         if _safe(target) and target.is_file():
             return FileResponse(target)
 
-        # 2. Directory with index.html (e.g. venues -> dist/venues/index.html)
         target_html = dist / full_path / "index.html"
         if _safe(target_html) and target_html.is_file():
             return FileResponse(target_html)
 
-        # 3. File with .html appended
         target_ext = dist / f"{full_path}.html"
         if _safe(target_ext) and target_ext.is_file():
             return FileResponse(target_ext)
 
-        # 4. Default root index (SPA fallback)
         index = dist / "index.html"
         if index.exists():
             return FileResponse(index)
         return JSONResponse({"detail": "Not Found"}, status_code=404)
 
-    # Register CORSMiddleware last so it runs outermost (handles OPTIONS preflight
-    # and attaches CORS headers even on 401/403 responses from inner layers).
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,
         allow_origin_regex=pages_preview_re.pattern if pages_preview_re else None,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        allow_headers=["Content-Type", "Idempotency-Key"],
+        allow_headers=["Content-Type", "Idempotency-Key", "Authorization"],
     )
     app.add_exception_handler(HTTPException, http_error)
     return app

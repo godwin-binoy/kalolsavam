@@ -1,4 +1,5 @@
 # Development / CI-only requirements.
 # Not installed in the production Docker image.
 -r requirements.txt
+httpx>=0.28
 pytest>=8

@@ -47,62 +47,24 @@ if [ ! -f ".env" ] && [ -f ".env.example" ]; then
   echo "Created .env from .env.example."
 fi
 
-echo "==> Initializing SQLite databases and roles..."
-python - <<'PY_INIT'
-import asyncio
+echo "==> Initializing SQLite database..."
+HAS_EXISTING_USER="$(python - <<'PY_INIT'
 from pathlib import Path
-from sqlmodel import SQLModel, select
-
-from server.auth import Role, User, create_auth
 from server.config import Settings
 from server.db import Database
 
 cfg = Settings()
-Database(Path(cfg.db_path))
-
-async def init_auth():
-    _, engine, session_maker = create_auth(cfg)
-    try:
-        async with engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
-        async with session_maker() as session:
-            for name in ("admin", "stagemaster"):
-                existing = (await session.execute(select(Role).where(Role.name == name))).scalar_one_or_none()
-                if not existing:
-                    session.add(Role(name=name))
-            await session.commit()
-            has_user = (await session.execute(select(User).limit(1))).scalar_one_or_none() is not None
-            return has_user
-    finally:
-        await engine.dispose()
-
-has_user = asyncio.run(init_auth())
-print("HAS_USER=" + ("1" if has_user else "0"))
+db = Database(Path(cfg.db_path))
+has_user = db.one("SELECT id FROM users LIMIT 1") is not None
+print("1" if has_user else "0")
 PY_INIT
-
-HAS_EXISTING_USER="$(python - <<'PY_CHK'
-import asyncio
-from sqlmodel import select
-from server.auth import User, create_auth
-from server.config import Settings
-
-async def check():
-    _, engine, session_maker = create_auth(Settings())
-    try:
-        async with session_maker() as session:
-            return (await session.execute(select(User).limit(1))).scalar_one_or_none() is not None
-    finally:
-        await engine.dispose()
-
-print("1" if asyncio.run(check()) else "0")
-PY_CHK
 )"
 
 if [ "$HAS_EXISTING_USER" = "0" ]; then
   echo "==> Seeding initial admin account ($ADMIN_EMAIL)..."
   python -m server.scripts.seed_admin "$ADMIN_EMAIL"
 else
-  echo "==> Admin/staff user already exists in auth DB; skipping seed_admin."
+  echo "==> Admin/staff user already exists in DB; skipping seed_admin."
 fi
 
 echo "==> Running backend test suite..."
@@ -111,6 +73,6 @@ pytest -q server/tests
 echo ""
 echo "Backend setup complete!"
 echo "Next steps:"
-echo "  1. Edit server/.env and set PUBLIC_ORIGIN to your frontend URL (e.g. https://your-site.pages.dev)."
+echo "  1. Verify server/.env PUBLIC_ORIGIN=https://mala-subdistrict-kalolsavam.pages.dev."
 echo "  2. Run locally:        source $VENV_DIR/bin/activate && python -m server"
 echo "  3. Or run via Docker:  set CLOUDFLARE_TUNNEL_TOKEN in .env, then run: docker compose up -d --build"

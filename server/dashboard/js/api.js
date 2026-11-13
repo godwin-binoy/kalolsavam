@@ -2,6 +2,7 @@
   'use strict';
   var S = { onAuthLost: function(){} };
   var DEFAULT_API_ORIGIN = 'https://apikalolsavammala.dpdns.org';
+  var TOKEN_KEY = 'kal_token';
 
   function resolveApiOrigin(){
     if (typeof window.KAL_API_BASE === 'string') return window.KAL_API_BASE.replace(/\/+$/, '');
@@ -18,6 +19,17 @@
     return API_ORIGIN + (path.charAt(0) === '/' ? path : '/' + path);
   }
 
+  function getToken(){
+    try { return sessionStorage.getItem(TOKEN_KEY) || ''; } catch(e){ return ''; }
+  }
+  function setToken(t){
+    try {
+      if (t) sessionStorage.setItem(TOKEN_KEY, t);
+      else sessionStorage.removeItem(TOKEN_KEY);
+    } catch(e){}
+  }
+  function clearToken(){ setToken(''); }
+
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
       return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
@@ -27,6 +39,10 @@
   async function raw(path, opts){
     opts = opts || {};
     opts.headers = opts.headers || {};
+    var token = getToken();
+    if (token && !opts.headers['Authorization']){
+      opts.headers['Authorization'] = 'Bearer ' + token;
+    }
     var method = (opts.method || 'GET').toUpperCase();
     if (method !== 'GET' && method !== 'HEAD'){
       if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)){
@@ -44,7 +60,10 @@
 
   async function api(path, opts){
     var r = await raw(path, opts);
-    if (r.status === 401) S.onAuthLost();
+    if (r.status === 401){
+      clearToken();
+      S.onAuthLost();
+    }
     return r;
   }
 
@@ -56,9 +75,13 @@
       while (!stopped){
         var alive = false;
         try {
-          var res = await fetch(apiUrl(path), { method: 'GET', credentials: 'include' });
+          var hdrs = {};
+          var token = getToken();
+          if (token) hdrs['Authorization'] = 'Bearer ' + token;
+          var res = await fetch(apiUrl(path), { method: 'GET', credentials: 'include', headers: hdrs });
           if (res.status === 401) {
             stopped = true;
+            clearToken();
             if (S.onAuthLost) S.onAuthLost();
             if (handlers.onmissed) handlers.onmissed();
             return;
@@ -101,6 +124,9 @@
     state: S,
     apiOrigin: API_ORIGIN,
     url: apiUrl,
+    getToken: getToken,
+    setToken: setToken,
+    clearToken: clearToken,
     esc: esc,
     api: api,
     stream: stream,
