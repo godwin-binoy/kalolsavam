@@ -1,4 +1,4 @@
-"""Admin API: master data CRUD, FullAuth users, health, audit, exports."""
+"""Admin API: master data CRUD, FullAuth user administration, dashboard, CSV exports."""
 from __future__ import annotations
 
 import csv
@@ -9,35 +9,26 @@ import os
 import shutil
 import sqlite3
 import time as _t
+import uuid as _uuid
 from collections import defaultdict
 from pathlib import Path
 
+from argon2 import PasswordHasher
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import Response
-from ..auth import AuthUser, hash_password
+from sqlmodel import select
+
 from ..deps import client_ip, get_cfg, get_db, hash_ip, require_admin
-from .public import invalidate_public_cache
 from ..models import (
     AddToQueueIn, CategoryIn, CategoryUpdateIn, EventIn, EventUpdateIn,
-    PasswordResetIn, QueueItemUpdateIn, QueueMoveIn, UserIn, UserUpdateIn,
-    VenueIn, VenueUpdateIn,
+    PasswordResetIn, QueueItemUpdateIn, QueueMoveIn, Role, User, UserIn,
+    UserUpdateIn, VenueIn, VenueUpdateIn,
 )
+from .public import invalidate_public_cache
 
 router = APIRouter()
 log = logging.getLogger("kalolsavam")
-
-
-def _admin_log(db, request: Request, user: AuthUser, action: str, detail: str = "") -> None:
-    try:
-        secret = get_cfg(request).secret_key
-        db.ex(
-            "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) "
-            "VALUES (?,?,?,?,?)",
-            (db.now(), user.email, hash_ip(client_ip(request), secret),
-             "admin_action", f"{action}|{detail}"),
-        )
-    except Exception as exc:
-        log.warning("audit_write_failed: %s", exc)
+_ph = PasswordHasher()
 
 
 def _csv_cell(val: object) -> str:
@@ -48,11 +39,28 @@ def _csv_cell(val: object) -> str:
     return s
 
 
-def _parse_uid(uid: str) -> int:
+def _admin_log(db, request: Request, user: object, action: str, detail: str = "") -> None:
     try:
-        return int(uid)
-    except ValueError:
-        raise HTTPException(404, "not_found")
+        secret = get_cfg(request).secret_key
+        email = getattr(user, "email", "admin")
+        db.ex(
+            "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) "
+            "VALUES (?,?,?,?,?)",
+            (db.now(), email, hash_ip(client_ip(request), secret),
+             "admin_action", f"{action}|{detail}"),
+        )
+    except Exception as exc:
+        log.warning("audit_write_failed: %s", exc)
+
+
+def _parse_uid(uid: str) -> _uuid.UUID | int | str:
+    try:
+        return _uuid.UUID(uid)
+    except (ValueError, AttributeError):
+        try:
+            return int(uid)
+        except ValueError:
+            return uid
 
 
 def _validate_stage_ids(db, stages: list[int]) -> None:
@@ -231,6 +239,7 @@ def list_categories(request: Request, user=Depends(require_admin)):
 def create_category(body: CategoryIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     cur = db.ex("INSERT INTO categories(name, grp) VALUES (?,?)", (body.name, body.group))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "create_category", f"id={cur.lastrowid}")
     return {"id": cur.lastrowid}
 
@@ -258,6 +267,7 @@ def delete_category(cid: int, request: Request, user=Depends(require_admin)):
     if db.one("SELECT COUNT(*) c FROM events WHERE category_id = ?", (cid,))["c"]:
         raise HTTPException(409, "category_has_events")
     db.ex("DELETE FROM categories WHERE id = ?", (cid,))
+    invalidate_public_cache(request.app)
     _admin_log(db, request, user, "delete_category", f"id={cid}")
     return {"ok": True}
 
@@ -393,6 +403,7 @@ def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, u
         part = db.one("SELECT school, student_name, roll FROM participants WHERE id = ?", (pid,))
         if not part:
             raise HTTPException(409, "no_participant")
+
         new_school = body.school if body.school is not None else part["school"]
         new_name = (body.student_name.strip() or None) if body.student_name is not None else part["student_name"]
         new_roll = (body.roll.strip() or None) if body.roll is not None else part["roll"]
@@ -497,118 +508,154 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
     return {"id": cur_q.lastrowid, "participant_id": pid}
 
 
-# ── Users ─────────────────────────────────────────────────────────────
+# ── FullAuth Users Administration ─────────────────────────────────────
 @router.get("/users")
-def list_users(request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    rows = db.q("SELECT id, email, role, stages, is_active FROM users ORDER BY email")
-    return {
-        "users": [
-            {
-                "id": str(r["id"]),
-                "email": r["email"],
-                "stages": r["stages"],
-                "roles": [r["role"]],
-                "disabled": not bool(r["is_active"]),
-            }
-            for r in rows
-        ]
-    }
+async def list_users(request: Request, user=Depends(require_admin)):
+    async with request.app.state.auth_session_maker() as session:
+        result = await session.execute(select(User).order_by(User.email))
+        users = result.scalars().all()
+        return {
+            "users": [
+                {
+                    "id": str(u.id),
+                    "email": u.email,
+                    "stages": u.stages,
+                    "roles": [r.name for r in u.roles],
+                    "disabled": not u.is_active,
+                }
+                for u in users
+            ]
+        }
 
 
 @router.post("/users")
-def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
+async def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    email = body.email.strip().lower()
     _validate_stage_ids(db, body.stages)
-    if db.one("SELECT id FROM users WHERE email = ?", (email,)):
-        raise HTTPException(409, "email_taken")
-    now = db.now()
-    cur = db.ex(
-        "INSERT INTO users(email, password_hash, role, stages, is_active, created_at, updated_at) "
-        "VALUES (?,?,?,?,1,?,?)",
-        (email, hash_password(body.password), body.role, json.dumps(body.stages), now, now),
-    )
-    _admin_log(db, request, user, "create_user", f"id={cur.lastrowid},role={body.role}")
-    return {"id": str(cur.lastrowid), "email": email, "role": body.role}
+    async with request.app.state.auth_session_maker() as session:
+        clean_email = body.email.strip().lower()
+        existing = (
+            await session.execute(select(User).where(User.email == clean_email))
+        ).scalar_one_or_none()
+        if existing:
+            raise HTTPException(409, "email_taken")
+
+        role = (
+            await session.execute(select(Role).where(Role.name == body.role))
+        ).scalar_one_or_none()
+        if not role:
+            raise HTTPException(400, "role_missing")
+
+        u = User(
+            email=clean_email,
+            hashed_password=_ph.hash(body.password),
+            is_active=True,
+            is_verified=True,
+            stages=json.dumps(body.stages),
+        )
+        u.roles.append(role)
+        session.add(u)
+        await session.commit()
+        await session.refresh(u)
+        _admin_log(db, request, user, "create_user", f"id={u.id},role={body.role}")
+        return {"id": str(u.id), "email": u.email, "role": body.role}
 
 
 @router.put("/users/{uid}")
-def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
+async def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    target_id = _parse_uid(uid)
     if body.stages is not None:
         _validate_stage_ids(db, body.stages)
 
-    with db.transaction():
-        target = db.one("SELECT * FROM users WHERE id = ?", (target_id,))
+    async with request.app.state.auth_session_maker() as session:
+        target = await session.get(User, _parse_uid(uid))
         if not target:
             raise HTTPException(404, "not_found")
-        if target_id == user.id and (body.is_active is False or (body.role is not None and body.role != "admin")):
-            raise HTTPException(400, "cannot_modify_own_access")
 
-        new_email = body.email.strip().lower() if body.email is not None else target["email"]
-        if new_email != target["email"]:
-            if db.one("SELECT id FROM users WHERE email = ? AND id != ?", (new_email, target_id)):
+        # Admin self-demotion / self-disable protection
+        curr_user_id = str(getattr(user, "id", ""))
+        if str(target.id) == curr_user_id:
+            if body.is_active is False:
+                raise HTTPException(400, "cannot_modify_own_access")
+            if body.role is not None and body.role != "admin":
+                raise HTTPException(400, "cannot_modify_own_access")
+
+        if body.email is not None and body.email.strip().lower() != target.email:
+            new_email = body.email.strip().lower()
+            dup = (
+                await session.execute(select(User).where(User.email == new_email))
+            ).scalar_one_or_none()
+            if dup:
                 raise HTTPException(409, "email_taken")
+            target.email = new_email
 
-        new_role = body.role if body.role is not None else target["role"]
-        new_stages = json.dumps(body.stages) if body.stages is not None else target["stages"]
-        new_active = int(body.is_active) if body.is_active is not None else target["is_active"]
+        if body.stages is not None:
+            target.stages = json.dumps(body.stages)
 
-        db.ex(
-            "UPDATE users SET email = ?, role = ?, stages = ?, is_active = ?, updated_at = ? WHERE id = ?",
-            (new_email, new_role, new_stages, new_active, db.now(), target_id),
-        )
-        if not new_active or new_role != target["role"]:
-            db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
-    _admin_log(db, request, user, "update_user", f"id={target_id}")
-    return {"ok": True}
+        if body.is_active is not None:
+            target.is_active = body.is_active
+
+        if body.role is not None:
+            new_role = (
+                await session.execute(select(Role).where(Role.name == body.role))
+            ).scalar_one_or_none()
+            if not new_role:
+                raise HTTPException(400, "role_missing")
+            target.roles.clear()
+            target.roles.append(new_role)
+
+        session.add(target)
+        await session.commit()
+        _admin_log(db, request, user, "update_user", f"id={target.id}")
+        return {"ok": True}
 
 
 @router.post("/users/{uid}/disable")
-def disable_user(uid: str, request: Request, user=Depends(require_admin)):
+async def disable_user(uid: str, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    target_id = _parse_uid(uid)
-    if target_id == user.id:
-        raise HTTPException(400, "cannot_disable_self")
-    with db.transaction():
-        if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
+    curr_user_id = str(getattr(user, "id", ""))
+    async with request.app.state.auth_session_maker() as session:
+        u = await session.get(User, _parse_uid(uid))
+        if not u:
             raise HTTPException(404, "not_found")
-        db.ex("UPDATE users SET is_active = 0, updated_at = ? WHERE id = ?", (db.now(), target_id))
-        db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
-    _admin_log(db, request, user, "disable_user", f"id={target_id}")
-    return {"ok": True}
+        if str(u.id) == curr_user_id:
+            raise HTTPException(400, "cannot_disable_self")
+        u.is_active = False
+        session.add(u)
+        await session.commit()
+        _admin_log(db, request, user, "disable_user", f"id={u.id}")
+        return {"ok": True}
 
 
 @router.post("/users/{uid}/enable")
-def enable_user(uid: str, request: Request, user=Depends(require_admin)):
+async def enable_user(uid: str, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    target_id = _parse_uid(uid)
-    if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
-        raise HTTPException(404, "not_found")
-    db.ex("UPDATE users SET is_active = 1, updated_at = ? WHERE id = ?", (db.now(), target_id))
-    _admin_log(db, request, user, "enable_user", f"id={target_id}")
-    return {"ok": True}
+    async with request.app.state.auth_session_maker() as session:
+        u = await session.get(User, _parse_uid(uid))
+        if not u:
+            raise HTTPException(404, "not_found")
+        u.is_active = True
+        session.add(u)
+        await session.commit()
+        _admin_log(db, request, user, "enable_user", f"id={u.id}")
+        return {"ok": True}
 
 
 @router.post("/users/{uid}/reset-password")
-def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
+async def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    target_id = _parse_uid(uid)
-    with db.transaction():
-        if not db.one("SELECT id FROM users WHERE id = ?", (target_id,)):
+    async with request.app.state.auth_session_maker() as session:
+        u = await session.get(User, _parse_uid(uid))
+        if not u:
             raise HTTPException(404, "not_found")
-        db.ex(
-            "UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?",
-            (hash_password(body.password), db.now(), target_id),
-        )
-        db.ex("DELETE FROM sessions WHERE user_id = ?", (target_id,))
-    _admin_log(db, request, user, "reset_password", f"id={target_id}")
-    return {"ok": True}
+        u.hashed_password = _ph.hash(body.password)
+        session.add(u)
+        await session.commit()
+        _admin_log(db, request, user, "reset_password", f"id={u.id}")
+        return {"ok": True}
 
 
-# ── Audit / Stats / Health ────────────────────────────────────────────
+# ── Audit / Stats / Health / Backup ───────────────────────────────────
 @router.get("/audit")
 def list_audit(request: Request, limit: int = 100, offset: int = 0, user=Depends(require_admin)):
     limit = max(1, min(limit, 500))
@@ -648,35 +695,33 @@ def health(request: Request, user=Depends(require_admin)):
 
 @router.post("/backup")
 def backup(request: Request, user=Depends(require_admin)):
-    cfg = get_cfg(request)
+    db, cfg = get_db(request), get_cfg(request)
     dst_dir = Path(cfg.db_path).parent / "backups"
     dst_dir.mkdir(parents=True, exist_ok=True)
     ts = _t.strftime("%Y%m%d-%H%M%S")
 
-    backed_up = []
-    for p in (cfg.db_path,):
-        src = Path(p)
-        if not src.exists():
-            continue
-        dst = dst_dir / f"{src.stem}-{ts}.db"
-        src_con = sqlite3.connect(str(src))
-        dst_con = sqlite3.connect(str(dst))
-        try:
-            src_con.backup(dst_con)
-        finally:
-            dst_con.close()
-            src_con.close()
-        backed_up.append(str(dst))
+    src = Path(cfg.db_path)
+    if not src.exists():
+        raise HTTPException(500, "db_not_found")
 
-        # Keep the 24 newest backups per database stem.
-        existing = sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)
-        for old in existing[:-24]:
-            try:
-                old.unlink()
-            except OSError:
-                pass
-    _admin_log(get_db(request), request, user, "backup", f"count={len(backed_up)}")
-    return {"ok": True, "backups": backed_up}
+    dst = dst_dir / f"{src.stem}-{ts}.db"
+    src_con = sqlite3.connect(str(src))
+    dst_con = sqlite3.connect(str(dst))
+    try:
+        src_con.backup(dst_con)
+    finally:
+        dst_con.close()
+        src_con.close()
+
+    existing = sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)
+    for old in existing[:-24]:
+        try:
+            old.unlink()
+        except OSError:
+            pass
+
+    _admin_log(db, request, user, "backup", f"file={dst.name}")
+    return {"ok": True, "backups": [str(dst)]}
 
 
 # ── Leaderboard / Dashboard / Exports ─────────────────────────────────
@@ -687,7 +732,6 @@ def leaderboard(request: Request, user=Depends(require_admin)):
 
 @router.get("/dashboard")
 def dashboard(request: Request, user=Depends(require_admin)):
-    """Aggregated stats for the /dashboard/ statistics page."""
     db, cfg = get_db(request), get_cfg(request)
     s = _collect_stats(db)
     overall = {
@@ -706,7 +750,7 @@ def dashboard(request: Request, user=Depends(require_admin)):
 
     per_venue = [
         dict(r) for r in db.q("""
-            SELECT v.id, v.name, v.kind, v.active,
+            SELECT v.id, v.name, v.kind, v.slug, v.active,
                    COUNT(q.id) AS total,
                    SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END) AS waiting,
                    SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END) AS onstage,

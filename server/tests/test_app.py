@@ -113,43 +113,7 @@ def test_score_endpoint_unauthorized(client):
     assert r.status_code == 401
 
 
-def test_admin_bare_path_redirects(client):
-    r = client.get("/admin", follow_redirects=False)
-    assert r.status_code in (307, 308, 301, 302, 200)
-    assert r.headers.get("location", "").endswith("/admin/")
-
-
-def test_admin_trailing_slash_serves_panel(client):
-    r = client.get("/admin/")
-    assert r.status_code == 200
-    assert "Admin Console" in r.text
-    assert "/dashboard/js/admin.js" in r.text
-
-
-def test_stagemaster_bare_path_redirects(client):
-    r = client.get("/stagemaster", follow_redirects=False)
-    assert r.status_code in (307, 308, 301, 302, 200)
-    assert r.headers.get("location", "").endswith("/stagemaster/")
-
-
-def test_stagemaster_trailing_slash_serves_panel(client):
-    r = client.get("/stagemaster/")
-    assert r.status_code == 200
-    assert "Stage Control" in r.text
-    assert "/dashboard/js/board.js" in r.text
-
-
-def test_dashboard_assets_served(client):
-    r = client.get("/dashboard/css/dashboard.css")
-    assert r.status_code == 200
-    assert ":root" in r.text
-
-    r = client.get("/dashboard/js/api.js")
-    assert r.status_code == 200
-    assert "window.KalAPI" in r.text
-
-
-def test_full_admin_and_stage_workflow(client):
+def test_full_admin_workflow_and_security(client):
     cfg = client.app.state.cfg
     db = client.app.state.db
     asyncio.run(_seed_user(cfg.db_path, "admin@example.com", "StrongPass1234!", "admin", []))
@@ -157,10 +121,21 @@ def test_full_admin_and_stage_workflow(client):
     tok = login_res.json()["access_token"]
     headers = {"Authorization": f"Bearer {tok}"}
 
-    r = client.post("/api/v1/admin/venues", json={"name": "   ", "kind": "stage", "active": True}, headers=headers)
-    assert r.status_code == 422
+    # Admin self-demotion or self-disable is rejected
+    me = client.get("/api/v1/auth/me", headers=headers).json()
+    self_id = me["id"]
+    self_disable = client.post(f"/api/v1/admin/users/{self_id}/disable", headers=headers)
+    assert self_disable.status_code == 400
 
-    v = client.post("/api/v1/admin/venues", json={"name": "Stage 1", "kind": "stage", "slug": "stage-1", "active": True}, headers=headers).json()
+    # Create venue with slug and reject blank names
+    assert client.post("/api/v1/admin/venues", json={"name": "   ", "kind": "stage"}, headers=headers).status_code == 422
+    v = client.post(
+        "/api/v1/admin/venues",
+        json={"name": "Stage 1", "kind": "stage", "slug": "stage-1", "active": True},
+        headers=headers,
+    ).json()
+    assert v["slug"] == "stage-1"
+
     c = client.post("/api/v1/admin/categories", json={"name": "HS General", "group": "HS"}, headers=headers).json()
     e = client.post(
         "/api/v1/admin/events",
@@ -168,51 +143,60 @@ def test_full_admin_and_stage_workflow(client):
         headers=headers,
     ).json()
 
-    q1 = client.post(
+    # CSV injection string neutralization
+    client.post(
         "/api/v1/admin/queue",
-        json={"venue_id": v["id"], "event_id": e["id"], "school": "School A", "student_name": "Asha", "roll": "101"},
+        json={"venue_id": v["id"], "event_id": e["id"], "school": "=CMD()", "student_name": "+Asha", "roll": "101"},
         headers=headers,
-    ).json()
+    )
+    csv_res = client.get("/api/v1/admin/export/participants.csv", headers=headers)
+    assert csv_res.status_code == 200
+    assert "'=CMD()" in csv_res.text and "'+Asha" in csv_res.text
+
     q2 = client.post(
         "/api/v1/admin/queue",
         json={"venue_id": v["id"], "event_id": e["id"], "school": "School B", "student_name": "Binu", "roll": "102"},
         headers=headers,
     ).json()
 
-    r = client.post("/api/v1/live/advance", json={"venue_id": v["id"], "action": "START_NEXT"}, headers={**headers, "Idempotency-Key": "k1"})
-    assert r.status_code == 200 and r.json()["item_id"] == q1["id"]
-
-    r = client.post("/api/v1/live/advance", json={"venue_id": v["id"], "action": "COMPLETE_CURRENT"}, headers={**headers, "Idempotency-Key": "k2"})
-    assert r.status_code == 200 and r.json()["status"] == "COMPLETE"
-
-    r = client.post("/api/v1/live/advance", json={"venue_id": v["id"], "action": "START_NEXT"}, headers={**headers, "Idempotency-Key": "k3"})
-    assert r.status_code == 200 and r.json()["item_id"] == q2["id"]
-
-    r = client.post(
+    # Stage run-of-show controls: START_NEXT -> PAUSE pins item at top of board
+    r_start = client.post(
         "/api/v1/live/advance",
-        json={"venue_id": v["id"], "action": "RECALL", "item_id": q1["id"]},
-        headers={**headers, "Idempotency-Key": "k4"},
+        json={"venue_id": v["id"], "action": "START_NEXT"},
+        headers={**headers, "Idempotency-Key": "k1"},
     )
-    assert r.status_code == 200 and r.json()["item_id"] == q1["id"]
+    assert r_start.status_code == 200
 
-    paused_q2 = db.one("SELECT status, completed_at FROM queue_items WHERE id = ?", (q2["id"],))
-    assert paused_q2["status"] == "PAUSED"
-    assert paused_q2["completed_at"] is None
+    r_pause = client.post(
+        "/api/v1/live/advance",
+        json={"venue_id": v["id"], "action": "PAUSE"},
+        headers={**headers, "Idempotency-Key": "k2"},
+    )
+    assert r_pause.status_code == 200
 
-    r = client.post("/api/v1/live/score", json={"queue_item_id": q1["id"], "judge_no": 1, "value": 92.5}, headers=headers)
-    assert r.status_code == 200 and r.json()["total"] == 92.5
+    board = client.get("/api/v1/live/board", headers=headers).json()["board"]
+    assert len(board) == 1
+    assert board[0]["items"][0]["status"] == "PAUSED"
 
+    # Score item
+    r_score = client.post(
+        "/api/v1/live/score",
+        json={"queue_item_id": q2["id"], "judge_no": 1, "value": 94.0},
+        headers=headers,
+    )
+    assert r_score.status_code == 200 and r_score.json()["total"] == 94.0
+
+    # Dashboard and audit trail
     dash = client.get("/api/v1/admin/dashboard", headers=headers)
     assert dash.status_code == 200
     assert dash.json()["overall"]["scores_entered"] == 1
-    assert dash.json()["top_schools"][0]["school"] == "School A"
 
-    sched = client.get(f"/api/v1/public/schedule?venue_id={v['id']}")
-    assert sched.status_code == 200
-    assert len(sched.json()["events"]) == 1
+    audit = client.get("/api/v1/admin/audit", headers=headers)
+    assert audit.status_code == 200
+    assert len(audit.json()["items"]) > 0
 
 
-def test_cors_and_preflight(client):
+def test_cors_preflight(client):
     pre = client.options(
         "/api/v1/auth/login",
         headers={

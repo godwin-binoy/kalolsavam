@@ -12,7 +12,7 @@ router = APIRouter()
 _CACHE_LOCK = threading.Lock()
 
 
-def invalidate_public_cache(app) -> None:
+def invalidate_public_cache(app: Any) -> None:
     cache = getattr(app.state, "public_cache", None)
     if cache is not None:
         with _CACHE_LOCK:

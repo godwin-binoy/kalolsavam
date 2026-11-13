@@ -165,7 +165,8 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
     raw_idem = request.headers.get("idempotency-key", "").strip()[:96]
     if not raw_idem:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "idempotency_required")
-    scoped_key = f"{user.id}:{body.venue_id}:{body.action}:{raw_idem}"
+    user_id = getattr(user, "id", "staff")
+    scoped_key = f"{user_id}:{body.venue_id}:{body.action}:{raw_idem}"
 
     hit = db.one("SELECT response FROM idempotency WHERE key = ?", (scoped_key,))
     if hit:
@@ -270,12 +271,13 @@ def enter_score(body: ScoreIn, request: Request, user=Depends(require_staff)):
     check_stage(user, item["venue_id"])
     if item["status"] not in ("ON-STAGE", "PAUSED", "COMPLETE"):
         raise HTTPException(409, "item_not_scorable")
+    user_id = str(getattr(user, "id", "staff"))
     db.ex(
         "INSERT INTO scores(queue_item_id, judge_no, value, entered_by, entered_at) "
         "VALUES (?,?,?,?,?) ON CONFLICT(queue_item_id, judge_no) DO UPDATE SET "
         " value = excluded.value, entered_by = excluded.entered_by, "
         " entered_at = excluded.entered_at",
-        (body.queue_item_id, body.judge_no, body.value, str(user.id), db.now()),
+        (body.queue_item_id, body.judge_no, body.value, user_id, db.now()),
     )
     rows = db.q(
         "SELECT judge_no, value FROM scores WHERE queue_item_id = ? ORDER BY judge_no",
