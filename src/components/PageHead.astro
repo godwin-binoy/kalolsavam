@@ -1,8 +1,8 @@
 ---
-const { badge = "", title, intro = "", badgeClass = "badge-gov" } = Astro.props;
+const { badge = "", title, intro = "", badgeClass = "badge-gov", titleI18n = "", introI18n = "" } = Astro.props;
 ---
 <div class="page-head">
   {badge && <span class={badgeClass} style="margin-bottom:.6rem">{badge}</span>}
-  <h1 class="page-title">{title}</h1>
-  {intro && <p set:html={intro} />}
+  <h1 class="page-title" data-i18n={titleI18n || undefined}>{title}</h1>
+  {intro && <p data-i18n={introI18n || undefined} set:html={intro} />}
 </div>

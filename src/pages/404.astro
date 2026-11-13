@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { url } from '../lib/url';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Page Not Found | Mala Kalolsavam">
+  <div class="main-container">
+    <PageHead badge="404" title="Page Not Found" intro="The page you requested does not exist or may have moved." />
+    <div class="row">
+      <a class="btn-primary dark" href={url('/')}>Go Home</a>
+      <a class="btn-primary ghost" href={url('/venues-live')}>Live Stages</a>
+      <a class="btn-primary ghost" href={url('/help')}>Help Desk</a>
+    </div>
+  </div>
+</BaseLayout>

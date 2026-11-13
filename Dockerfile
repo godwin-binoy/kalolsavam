@@ -13,6 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY server ./server
 COPY public/admin ./public/admin
 COPY public/stagemaster ./public/stagemaster
+COPY public/dashboard ./public/dashboard
 COPY public/robots.txt ./public/robots.txt
 RUN mkdir -p /app/deployment
 

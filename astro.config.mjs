@@ -1,5 +1,4 @@
 import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
 
 function normalizeBase(raw) {
   if (!raw || raw === '/') return '/';
@@ -13,8 +12,7 @@ const base = normalizeBase(process.env.BASE_PATH || '/');
 
 export default defineConfig({
   output: 'static',
-  build: { assets: 'astro' },  // avoid leading-underscore asset dirs (some static hosts strip them)
+  build: { assets: 'astro' },
   base,
   site: process.env.SITE_URL || 'https://mala-subdistrict-kalolsavam.pages.dev',
-  vite: { plugins: [tailwindcss()] },
 });

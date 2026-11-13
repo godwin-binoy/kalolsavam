@@ -1,23 +1,8 @@
 ---
 import { BASE, url } from '../lib/url';
 const { title, subtitle = "", banner = "banner-blue", icon = "map-pin.svg", href } = Astro.props;
-
-// Inline styles are bulletproof against CSS cascade issues. We DON'T set
-// `transform` inline so the CSS :hover transform still works.
-const inline = [
-  'border-radius: 1.25rem',
-  'background-color: var(--card-bg, rgba(255,255,255,0.95))',
-  'border: 1px solid var(--border, #E2E8F0)',
-  'box-shadow: 0 4px 24px -8px rgba(15,23,42,.08), 0 1px 2px rgba(15,23,42,.04)',
-  'overflow: hidden',
-  'display: flex',
-  'flex-direction: column',
-  'transition: transform .25s cubic-bezier(0.16,1,0.3,1), box-shadow .25s ease, border-color .25s ease',
-  href ? 'text-decoration: none' : '',
-  href ? 'color: inherit' : '',
-].filter(Boolean).join('; ');
 ---
-<{href ? 'a' : 'div'} href={href ? url(href) : undefined} class="fest-card" style={inline}>
+<{href ? 'a' : 'div'} href={href ? url(href) : undefined} class="fest-card">
   <div class={`fest-header ${banner}`}>
     <h3 class="fest-title">{title}</h3>
     {subtitle && <span class="fest-subtitle">{subtitle}</span>}

@@ -9,7 +9,7 @@ import stages from '../data/stages.json';
     <PageHead badge="Module 01 · Live Tracker" title="All Stages — Live" intro="Real-time status across all 9 stages. Tap any stage for its full detail page." />
     <div id="live" class="grid-3" data-refresh-ms="5000">
       {stages.map((s) => (
-        <a href={url(`venues-stage/${s.n}`)} class="fest-card stage-live-card" data-stage-name={s.name} data-stage-n={s.n} style="text-decoration:none;color:inherit">
+        <a href={url(`venues-stage/${s.n}`)} class="fest-card stage-live-card" data-stage-name={s.name} data-stage-slug={s.slug} data-stage-n={s.n} style="text-decoration:none;color:inherit">
           <div class={`fest-header ${s.banner}`} style="padding:1rem 1.25rem">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap">
               <h3 class="fest-title" style="font-size:1.05rem;margin:0">Stage {s.n}</h3>

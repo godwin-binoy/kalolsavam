@@ -36,7 +36,7 @@ const bpImages = (stage.blueprint_images || []).map(resolveImg).filter(i => i.sr
 <BaseLayout title={`Stage ${stage.n} · ${stage.name} | Mala Kalolsavam`} active="venues">
   <div class="main-container">
     <PageHead badge={`Stage ${stage.n}`} title={stage.name} intro={stage.short} />
-    <div class="card-base" id="stage-live" data-stage-name={stage.name} data-stage-n={stage.n} style="margin-bottom:1.25rem">
+    <div class="card-base" id="stage-live" data-stage-name={stage.name} data-stage-slug={stage.slug} data-stage-n={stage.n} style="margin-bottom:1.25rem">
       <h2 class="card-title" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem"><span class="live-dot"></span> Live status</h2>
       <div id="stage-live-body"><p class="text-muted sm" style="margin:0">Connecting to live data…</p></div>
     </div>
@@ -64,7 +64,7 @@ const bpImages = (stage.blueprint_images || []).map(resolveImg).filter(i => i.sr
         <ul style="margin:0;padding-left:1.25rem;color:var(--text)">{stage.landmarks.map((lm) => <li style="margin-bottom:.3rem">{lm}</li>)}</ul>
       </div>
     </details>
-    <div class="card-base" id="stage-schedule" data-stage-name={stage.name} style="margin-bottom:1.25rem">
+    <div class="card-base" id="stage-schedule" data-stage-name={stage.name} data-stage-slug={stage.slug} style="margin-bottom:1.25rem">
       <h2 class="card-title" style="margin-bottom:.75rem">Competitions at this stage</h2>
       <div id="stage-schedule-body"><p class="text-muted sm" style="margin:0">Loading schedule…</p></div>
     </div>

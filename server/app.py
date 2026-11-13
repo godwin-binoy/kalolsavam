@@ -127,8 +127,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     if (dist / "assets").exists():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
-    dashboard_dir = dist / "dashboard" if (dist / "dashboard").exists() else srv / "dashboard"
-    if dashboard_dir.exists():
+    dashboard_dir = next((p for p in (dist / "dashboard", pub / "dashboard", srv / "dashboard") if p.exists()), None)
+    if dashboard_dir is not None:
         app.mount("/dashboard", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
 
     @app.get("/healthz")

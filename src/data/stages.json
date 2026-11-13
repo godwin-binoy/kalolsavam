@@ -27,7 +27,8 @@
         "caption": "Campus/Floor overview — Stage 1 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-1"
   },
   {
     "n": 2,
@@ -57,7 +58,8 @@
         "caption": "Campus/Floor overview — Stage 2 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-2"
   },
   {
     "n": 3,
@@ -85,7 +87,8 @@
         "caption": "Campus/Floor overview — Stage 3 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-3"
   },
   {
     "n": 4,
@@ -114,7 +117,8 @@
         "caption": "Campus/Floor overview — Stage 4 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-4"
   },
   {
     "n": 5,
@@ -142,7 +146,8 @@
         "caption": "Campus/Floor overview — Stage 5 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-5"
   },
   {
     "n": 6,
@@ -171,7 +176,8 @@
         "caption": "Campus/Floor overview — Stage 6 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-6"
   },
   {
     "n": 7,
@@ -199,7 +205,8 @@
         "caption": "Campus/Floor overview — Stage 7 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-7"
   },
   {
     "n": 8,
@@ -226,7 +233,8 @@
         "caption": "Campus/Floor overview — Stage 8 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-8"
   },
   {
     "n": 9,
@@ -254,6 +262,7 @@
         "caption": "Campus/Floor overview — Stage 9 highlighted"
       }
     ],
-    "floor_images": []
+    "floor_images": [],
+    "slug": "stage-9"
   }
 ]

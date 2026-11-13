@@ -29,12 +29,12 @@ const svg = (name) => `--icon-url:url('${BASE}assets/svg/${name}.svg')`;
     </div>
 
     <!-- Universal Smart Search Bar -->
-    <div class="search-wrapper" style="margin: 0.5rem auto 1rem auto; max-width: 44rem;">
-      <div class="search-input-box" style="position:relative;display:flex;align-items:center;">
-        <span style={`position:absolute;left:1.35rem;width:1.25rem;height:1.25rem;color:#1D4ED8;pointer-events:none;z-index:10;${svg('search')}`} class="icn"></span>
-        <input id="global-search" type="search" placeholder="Search anything" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false" style="text-align:center;padding-left:3.5rem;padding-right:3.5rem;">
+    <div class="search-wrapper">
+      <div class="search-input-box">
+        <span style={svg('search')} class="icn search-icon"></span>
+        <input id="global-search" type="search" placeholder="Search anything" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false" >
       </div>
-      <div id="search-results-dropdown" class="hidden" style="position:absolute;top:calc(100% + .5rem);left:0;right:0;background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-card);box-shadow:0 16px 36px -8px rgba(15,23,42,.2);z-index:60;max-height:26rem;overflow-y:auto;padding:.6rem"></div>
+      <div id="search-results-dropdown" class="hidden"></div>
     </div>
 
     <div class="grid-3">
@@ -136,10 +136,17 @@ const svg = (name) => `--icon-url:url('${BASE}assets/svg/${name}.svg')`;
           <span class="fest-watermark" style={svg('clipboard-check')}></span>
         </div>
         <div class="fest-body">
-          <a class="fest-action-item" href="https://kalolsavam.kerala.gov.in/" target="_blank" rel="noopener" style="height: 100%; justify-content: center; flex-direction: column; gap: 0.5rem; padding: 2rem 1rem; text-align: center;">
-            <span class="fest-item-icon c-amber" style="margin: 0 0 0.5rem 0; width: 3rem; height: 3rem; border-radius: 50%;"><span class="icn" style={svg('clipboard-check')}></span></span>
-            <span style="font-size: 1.1rem; font-weight: 800; color: var(--brand);" data-i18n="card.results.check">Check Official Results</span>
-            <span class="text-muted xs" style="margin-top: 0.2rem;" data-i18n="card.results.hint">Tap to open the government portal</span>
+          <a class="fest-action-item results-cta" href="https://kalolsavam.kerala.gov.in/" target="_blank" rel="noopener">
+            <span class="fest-item-icon c-amber results-cta-icon"><span class="icn" style={svg('clipboard-check')}></span></span>
+            <span style="font-size:1.05rem;font-weight:800;color:var(--brand)" data-i18n="card.results.check">Check Official Results</span>
+            <span class="text-muted xs" data-i18n="card.results.hint">Tap to open the government portal</span>
+          </a>
+          <a class="fest-action-item" href={url('/results')}>
+            <span class="left">
+              <span class="fest-item-icon c-amber"><span class="icn" style={svg('grid')}></span></span>
+              <span>Browse by Category</span>
+            </span>
+            <span class="fest-arrow" style={svg('arrow-right')}></span>
           </a>
         </div>
       </div>
@@ -207,7 +214,7 @@ const svg = (name) => `--icon-url:url('${BASE}assets/svg/${name}.svg')`;
     <div class="grid-2" style="margin-top: 2.5rem; gap: 1.5rem; align-items: stretch;">
       <!-- Meet the Team Card -->
       <div class="fest-card">
-        <div class="fest-header banner-indigo" style="background: linear-gradient(135deg, #4f46e5, #3730a3);">
+        <div class="fest-header banner-indigo">
           <h3 class="fest-title" data-i18n="card.dev.title">Meet the Developers &amp; Volunteers</h3>
           <span class="fest-subtitle" data-i18n="card.dev.sub">Platform Creators &amp; Backstage Crew</span>
           <span class="fest-watermark" style={`--icon-url:url('${BASE}assets/svg/user.svg')`}></span>
@@ -234,7 +241,7 @@ const svg = (name) => `--icon-url:url('${BASE}assets/svg/${name}.svg')`;
       </div>
 
       <!-- Venue Information / Location Card -->
-      <div class="fest-card" style="padding: 1.75rem; display: flex; flex-direction: column; gap: 1.25rem; align-items: flex-start; justify-content: space-between; height: 100%;">
+      <div class="fest-card fest-card-padded">
         <div>
           <span class="badge-gov" style="margin-bottom: 0.5rem;" data-i18n="card.venue.badge">Event Venue Location</span>
           <h3 class="card-title" style="margin-bottom: 0.35rem; font-family: Georgia, serif; font-size: 1.3rem;" data-i18n="card.venue.title">St. Antony's Higher Secondary School</h3>

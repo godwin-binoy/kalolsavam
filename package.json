@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build && node scripts/copy-private.mjs && node scripts/stamp-sw.mjs",
+    "build": "astro build && node scripts/stamp-sw.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "test": "pytest -q server/tests",
