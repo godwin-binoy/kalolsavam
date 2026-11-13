@@ -111,14 +111,16 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         return resp
 
     srv = Path(__file__).resolve().parent
+    pub = srv.parent / "public"
     dist = Path(cfg.dist_path)
 
     if (dist / "assets").exists():
         app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
     if (dist / "pages").exists():
         app.mount("/pages", StaticFiles(directory=dist / "pages"), name="pages")
-    if (dist / "dashboard").exists():
-        app.mount("/dashboard", StaticFiles(directory=dist / "dashboard", html=True), name="dashboard")
+    dashboard_dir = dist / "dashboard" if (dist / "dashboard").exists() else srv / "dashboard"
+    if dashboard_dir.exists():
+        app.mount("/dashboard", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
 
     @app.get("/healthz")
     async def healthz():
@@ -170,6 +172,22 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             or clean_path.startswith(("api/", "assets/", "dashboard/", "pages/"))
         ):
             return JSONResponse({"error": "not_found"}, status_code=404)
+
+        if clean_path in ("admin/", "admin/index.html"):
+            admin_html = dist / "admin" / "index.html"
+            if admin_html.is_file():
+                return FileResponse(admin_html)
+            pub_admin = pub / "admin" / "index.html"
+            if pub_admin.is_file():
+                return FileResponse(pub_admin)
+
+        if clean_path in ("stagemaster/", "stagemaster/index.html"):
+            sm_html = dist / "stagemaster" / "index.html"
+            if sm_html.is_file():
+                return FileResponse(sm_html)
+            pub_sm = pub / "stagemaster" / "index.html"
+            if pub_sm.is_file():
+                return FileResponse(pub_sm)
 
         if not dist.exists():
             gate = srv / "static" / "gate.html"

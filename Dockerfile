@@ -2,15 +2,14 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install system dependencies if required (none needed for this app currently)
-# RUN apt-get update && apt-get install -y --no-install-recommends gcc && rm -rf /var/lib/apt/lists/*
-
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY server ./server
 COPY deployment ./deployment
+COPY public/admin ./public/admin
+COPY public/stagemaster ./public/stagemaster
 
 EXPOSE 8000
 
-CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "server"]
