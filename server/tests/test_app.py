@@ -214,3 +214,55 @@ def test_full_admin_and_stage_workflow(client):
     sched = client.get(f"/api/v1/public/schedule?venue_id={v['id']}")
     assert sched.status_code == 200
     assert len(sched.json()["events"]) == 1
+
+
+def test_cors_and_cross_origin_cookies(tmp_path, monkeypatch):
+    from fastapi.testclient import TestClient
+    from server.app import create_app
+    from server.config import Settings
+    from server.db import Database
+
+    db_path = tmp_path / "cors_k.db"
+    auth_path = tmp_path / "cors_a.db"
+    monkeypatch.setenv("DB_PATH", str(db_path))
+    monkeypatch.setenv("AUTH_DB_PATH", str(auth_path))
+    monkeypatch.setenv("PUBLIC_ORIGIN", "https://kalolsavam.pages.dev")
+    monkeypatch.setenv("SECRET_KEY", "super-secret-test-key-01234567890123456789")
+
+    app = create_app(Settings(), Database(db_path))
+    with TestClient(app, base_url="https://api.example.com") as c:
+        asyncio.run(_seed_user(str(auth_path), "admin@example.com", "StrongPass1234!", "admin", []))
+
+        # Allowed preview subdomain preflight
+        pre = c.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://abc123.kalolsavam.pages.dev",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "Content-Type",
+            },
+        )
+        assert pre.status_code == 200
+        assert pre.headers.get("access-control-allow-origin") == "https://abc123.kalolsavam.pages.dev"
+        assert pre.headers.get("access-control-allow-credentials") == "true"
+
+        # Disallowed origin is rejected even with CORS headers omitted
+        bad = c.post(
+            "/api/v1/auth/login",
+            json={"email": "admin@example.com", "password": "StrongPass1234!"},
+            headers={"Origin": "https://evil.example.org"},
+        )
+        assert bad.status_code == 403
+        assert bad.json()["error"] == "origin_mismatch"
+
+        # Allowed origin gets SameSite=none; Secure cookies
+        ok = c.post(
+            "/api/v1/auth/login",
+            json={"email": "admin@example.com", "password": "StrongPass1234!"},
+            headers={"Origin": "https://kalolsavam.pages.dev"},
+        )
+        assert ok.status_code == 200
+        assert ok.headers.get("access-control-allow-origin") == "https://kalolsavam.pages.dev"
+        cookies = " ".join(ok.headers.get_list("set-cookie")).lower()
+        assert "samesite=none" in cookies
+        assert "secure" in cookies

@@ -1,6 +1,22 @@
 (function(){
   'use strict';
   var S = { onAuthLost: function(){} };
+  var DEFAULT_API_ORIGIN = 'https://malakalolsavamapi.qd.je';
+
+  function resolveApiOrigin(){
+    if (typeof window.KAL_API_BASE === 'string') return window.KAL_API_BASE.replace(/\/+$/, '');
+    var meta = document.querySelector('meta[name="kal-api"]');
+    if (meta && meta.content) return meta.content.replace(/\/+$/, '');
+    if (location.port === '8000' || location.hostname === 'testserver') return '';
+    return DEFAULT_API_ORIGIN;
+  }
+
+  var API_ORIGIN = resolveApiOrigin();
+
+  function apiUrl(path){
+    if (!path || /^https?:\/\//i.test(path)) return path;
+    return API_ORIGIN + (path.charAt(0) === '/' ? path : '/' + path);
+  }
 
   function esc(s){
     return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
@@ -19,7 +35,7 @@
       }
     }
     opts.credentials = 'include';
-    var res = await fetch(path, opts);
+    var res = await fetch(apiUrl(path), opts);
     var data = null;
     var ct = res.headers.get('content-type') || '';
     if (ct.indexOf('json') >= 0){ try { data = await res.json(); } catch(e){} }
@@ -40,7 +56,7 @@
       while (!stopped){
         var alive = false;
         try {
-          var res = await fetch(path, { method: 'GET', credentials: 'include' });
+          var res = await fetch(apiUrl(path), { method: 'GET', credentials: 'include' });
           if (res.status === 401) {
             stopped = true;
             if (S.onAuthLost) S.onAuthLost();
@@ -83,6 +99,8 @@
 
   window.KalAPI = {
     state: S,
+    apiOrigin: API_ORIGIN,
+    url: apiUrl,
     esc: esc,
     api: api,
     stream: stream,

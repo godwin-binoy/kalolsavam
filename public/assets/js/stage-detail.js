@@ -1,8 +1,10 @@
 (function(){
   'use strict';
   function apiBase(){
-    var b = document.body.getAttribute('data-base') || '/';
-    return b.replace(/\/+$/, '');
+    if (location.port === '8000' || location.hostname === 'testserver') return '';
+    var explicit = document.body.getAttribute('data-api');
+    if (explicit != null) return explicit.replace(/\/+$/, '');
+    return 'https://malakalolsavamapi.qd.je';
   }
   var liveEl = document.getElementById('stage-live');
   var schedEl = document.getElementById('stage-schedule');

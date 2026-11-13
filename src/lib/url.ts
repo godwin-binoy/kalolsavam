@@ -3,12 +3,14 @@
 const RAW = import.meta.env.BASE_URL || "/";
 export const BASE = RAW.endsWith("/") ? RAW : RAW + "/";
 
+const RAW_API = (import.meta.env.PUBLIC_API_URL ?? "https://malakalolsavamapi.qd.je").trim();
+export const API_BASE = RAW_API.replace(/\/+$/, "");
+
 export function url(path: string): string {
   if (!path) return BASE;
   // External, protocol-relative, mailto/tel, anchors, data URLs: leave alone.
   if (/^(?:https?:|mailto:|tel:|data:|#|\/\/)/.test(path)) return path;
   // Idempotent: if path already starts with BASE, don't double-prefix.
-  // (Call sites sometimes pass url(...) results back into url(...).)
   if (BASE !== "/" && path.startsWith(BASE)) return path;
   return BASE + path.replace(/^\/+/, "");
 }

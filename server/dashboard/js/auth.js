@@ -26,7 +26,7 @@
     btnEl.disabled = true;
     msg('Signing in…');
     try {
-      var r = await fetch('/api/v1/auth/login', {
+      var r = await fetch(A.url('/api/v1/auth/login'), {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: username, password: password })
@@ -59,7 +59,7 @@
 
   async function tryResume(){
     try {
-      var res = await fetch('/api/v1/auth/me', { method: 'GET', credentials: 'include' });
+      var res = await fetch(A.url('/api/v1/auth/me'), { method: 'GET', credentials: 'include' });
       if (!res.ok){
         sessionStorage.removeItem('kal_user');
         return false;

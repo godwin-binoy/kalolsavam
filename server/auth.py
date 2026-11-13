@@ -75,10 +75,12 @@ def create_auth(cfg: Settings):
         SECRET_KEY=cfg.secret_key,
         ACCESS_TOKEN_EXPIRE_MINUTES=cfg.session_ttl_min,
     )
+    is_https = cfg.public_origin.startswith("https://")
+    samesite = (cfg.cookie_samesite or ("none" if is_https else "lax")).lower()
     fullauth = FullAuth(
         adapter=adapter,
         config=config,
-        backends=[CookieBackend(config, secure=cfg.public_origin.startswith("https://"))],
+        backends=[CookieBackend(config, secure=is_https, samesite=samesite)],
     )
     return fullauth, engine, session_maker
 

@@ -4,12 +4,14 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 import logging
+import re
 from pathlib import Path
 import time
 from urllib.parse import urlparse
 import uuid
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlmodel import SQLModel
@@ -55,6 +57,18 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     app.state.auth_session_maker = auth_session_maker
 
     expected_origin = urlparse(cfg.public_origin)
+    cors_origins = [cfg.public_origin]
+    if cfg.allowed_origins:
+        cors_origins.extend(
+            o.strip().rstrip("/") for o in cfg.allowed_origins.split(",") if o.strip()
+        )
+    cors_origins = list(dict.fromkeys(cors_origins))
+    allowed_netlocs = {urlparse(o).netloc for o in cors_origins if urlparse(o).netloc}
+    pages_preview_re = (
+        re.compile(r"^https://([a-z0-9-]+\.)?" + re.escape(expected_origin.netloc) + r"$")
+        if expected_origin.scheme == "https" and expected_origin.netloc.endswith(".pages.dev")
+        else None
+    )
 
     @app.middleware("http")
     async def security_middleware(request: Request, call_next):
@@ -69,10 +83,11 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             if origin:
                 o = urlparse(origin)
                 host_hdr = request.headers.get("host", "")
-                allowed = {expected_origin.netloc}
+                allowed = set(allowed_netlocs)
                 if host_hdr:
                     allowed.add(host_hdr)
-                if o.netloc not in allowed:
+                preview_ok = bool(pages_preview_re and pages_preview_re.match(origin.rstrip("/")))
+                if o.netloc not in allowed and not preview_ok:
                     return JSONResponse({"error": "origin_mismatch"}, status_code=403)
 
         resp = await call_next(request)
@@ -223,5 +238,15 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             return FileResponse(index)
         return JSONResponse({"detail": "Not Found"}, status_code=404)
 
+    # Register CORSMiddleware last so it runs outermost (handles OPTIONS preflight
+    # and attaches CORS headers even on 401/403 responses from inner layers).
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_origin_regex=pages_preview_re.pattern if pages_preview_re else None,
+        allow_credentials=True,
+        allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type", "Idempotency-Key"],
+    )
     app.add_exception_handler(HTTPException, http_error)
     return app

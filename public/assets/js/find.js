@@ -2,7 +2,13 @@
   'use strict';
   var rawBase = document.body.getAttribute('data-base') || '/';
   var ASSET_BASE = rawBase.endsWith('/') ? rawBase : rawBase + '/';
-  var API_BASE = ASSET_BASE.replace(/\/+$/, '');
+  function resolveApiBase(){
+    if (location.port === '8000' || location.hostname === 'testserver') return '';
+    var explicit = document.body.getAttribute('data-api');
+    if (explicit != null) return explicit.replace(/\/+$/, '');
+    return 'https://malakalolsavamapi.qd.je';
+  }
+  var API_BASE = resolveApiBase();
 
   var q = document.getElementById('q');
   var res = document.getElementById('results');

@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { BASE, url } from '../lib/url';
+import { API_BASE, BASE, url } from '../lib/url';
 const { title = "Mala Sub-District Kalolsavam", active = "" } = Astro.props;
 const nav = [
   ["home", "/", "Home"],
@@ -35,7 +35,7 @@ const navKey = (k: string) => `nav.${k}`;
 <script is:inline>try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
 <script is:inline src={BASE + 'assets/js/lang.js?v=4.1.7'}></script>
 </head>
-<body data-nav={active} data-base={BASE}>
+<body data-nav={active} data-base={BASE} data-api={API_BASE}>
 <a class="skip" href="#main">Skip to content</a>
 <div class="utility-dock" role="group" aria-label="Display settings">
   <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">

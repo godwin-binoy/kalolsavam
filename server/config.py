@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     )
 
     public_origin: str = Field(default="http://localhost:8000")
+    allowed_origins: str = Field(default="")
+    cookie_samesite: str = Field(default="")
     session_ttl_min: int = Field(default=480, ge=1, le=10080)
     secret_key: str = Field(default="")
     auth_db_path: str = Field(default=str(ROOT / "deployment" / "fullauth.db"))

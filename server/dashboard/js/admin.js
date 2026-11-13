@@ -680,8 +680,8 @@
       '<div class="panel"><h2>Operations</h2>' +
         '<div class="row" style="flex-wrap:wrap">' +
           '<button id="op-backup" class="primary">💾 Backup databases</button>' +
-          '<a class="btn" href="/api/v1/admin/export/participants.csv" download>⬇ Participants CSV</a>' +
-          '<a class="btn" href="/api/v1/admin/export/results.csv" download>⬇ Results CSV</a>' +
+          '<a class="btn" href="' + esc(A.url('/api/v1/admin/export/participants.csv')) + '" download>⬇ Participants CSV</a>' +
+          '<a class="btn" href="' + esc(A.url('/api/v1/admin/export/results.csv')) + '" download>⬇ Results CSV</a>' +
         '</div>' +
       '</div>'
     );
