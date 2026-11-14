@@ -134,7 +134,8 @@
         body: payload
       });
       if (!r.ok){
-        if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state'){
+        if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state'
+            || r.detail === 'state_changed'){
           A.toast('Board changed — re-syncing.'); await loadBoard();
         } else {
           A.toast('Action failed: ' + (r.detail || r.status), true);

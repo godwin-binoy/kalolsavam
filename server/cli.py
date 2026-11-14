@@ -142,8 +142,12 @@ def seed_admin(
         return
     typer.echo("=" * 65)
     typer.echo(f"Admin user '{email}' created.")
-    typer.echo(f"Temporary password: {final_pass}")
-    typer.echo("Sign in at /admin/ and change password immediately.")
+    if password:
+        # Caller supplied the password; never echo it to stdout/logs.
+        typer.echo("Password: (provided via --password / ADMIN_PASSWORD)")
+    else:
+        typer.echo(f"Temporary password: {final_pass}")
+        typer.echo("Sign in at /admin/ and change password immediately.")
     typer.echo("=" * 65)
 
 
@@ -267,6 +271,79 @@ async def _async_list_users():
             ]
     finally:
         await engine.dispose()
+
+
+async def _async_create_user(email: str, password: str, role_name: str, stages: list[int]):
+    from argon2 import PasswordHasher
+    from sqlmodel import select
+
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+    from .models import Role, User
+
+    cfg = Settings()
+    engine = make_engine(cfg.db_path)
+    session_maker = make_session_maker(engine)
+    ph = PasswordHasher()
+    try:
+        async with session_maker() as session:
+            clean_email = email.strip().lower()
+            existing = (
+                await session.execute(select(User).where(User.email == clean_email))
+            ).scalar_one_or_none()
+            if existing:
+                return False, "email_taken", None
+
+            role = (
+                await session.execute(select(Role).where(Role.name == role_name))
+            ).scalar_one_or_none()
+            if not role:
+                role = Role(name=role_name)
+                session.add(role)
+                await session.commit()
+                await session.refresh(role)
+
+            u = User(
+                email=clean_email,
+                hashed_password=ph.hash(password),
+                is_active=True,
+                is_verified=True,
+                stages=json.dumps(stages or []),
+            )
+            u.roles.append(role)
+            session.add(u)
+            await session.commit()
+            return True, None, str(u.id)
+    finally:
+        await engine.dispose()
+
+
+@app.command()
+def user_create(
+    email: str = typer.Option(..., "--email", "-e"),
+    password: str = typer.Option(..., "--password", "-p"),
+    role: str = typer.Option("admin", "--role", help="admin or stagemaster"),
+    stages: str = typer.Option("[]", "--stages", help="JSON array of stage numbers"),
+) -> None:
+    """Create a staff user with a given role and assigned stages."""
+    from .config import Settings
+    from .schema import upgrade_to_head
+
+    if role not in ("admin", "stagemaster"):
+        typer.echo(f"Invalid role: {role}", err=True)
+        raise typer.Exit(1)
+    try:
+        stage_ids = [int(x) for x in json.loads(stages)] if stages else []
+    except Exception:
+        typer.echo(f"Invalid --stages JSON: {stages!r}", err=True)
+        raise typer.Exit(1)
+
+    upgrade_to_head(Settings().db_path)
+    ok, err_msg, uid = asyncio.run(_async_create_user(email, password, role, stage_ids))
+    if not ok:
+        typer.echo(f"Failed: {err_msg}", err=True)
+        raise typer.Exit(1)
+    typer.echo(f"User '{email}' created (id={uid}, role={role}).")
 
 
 @app.command()

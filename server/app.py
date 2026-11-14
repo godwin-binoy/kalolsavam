@@ -104,20 +104,23 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
         resp = await call_next(request)
 
-        # Audit login attempts
+        # Audit login attempts (best-effort; must never break the response)
         if request.method == "POST" and clean_path in ("/api/v1/auth/login", "/auth/login"):
-            ip_h = hash_ip(client_ip(request), cfg.secret_key)
-            now = db.now()
-            if resp.status_code == 200:
-                db.ex(
-                    "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-                    (now, "staff", ip_h, "login_ok", "status=200"),
-                )
-            elif resp.status_code in (400, 401, 403, 429):
-                db.ex(
-                    "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-                    (now, "unknown", ip_h, "login_fail", f"status={resp.status_code}"),
-                )
+            try:
+                ip_h = hash_ip(client_ip(request), cfg.secret_key)
+                now = db.now()
+                if resp.status_code == 200:
+                    db.ex(
+                        "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
+                        (now, "staff", ip_h, "login_ok", "status=200"),
+                    )
+                elif resp.status_code in (400, 401, 403, 429):
+                    db.ex(
+                        "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
+                        (now, "unknown", ip_h, "login_fail", f"status={resp.status_code}"),
+                    )
+            except Exception as exc:
+                log.warning("auth_audit_write_failed: %s", exc)
 
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)

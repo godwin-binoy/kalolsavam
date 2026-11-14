@@ -5,7 +5,9 @@
   if (!K || !root) return;
 
   var BASE = K.apiBase();
-  var refreshMs = Math.max(5000, parseInt(root.getAttribute('data-refresh-ms') || '10000', 10));
+  var _raw = parseInt(root.getAttribute('data-refresh-ms') || '10000', 10);
+  if (!Number.isFinite(_raw)) _raw = 10000;
+  var refreshMs = Math.max(5000, _raw);
 
   var cardList = [];
   root.querySelectorAll('.stage-live-card').forEach(function(el){

@@ -493,8 +493,11 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
     with db.transaction():
         if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
             raise HTTPException(404, "venue_not_found")
-        if not db.one("SELECT id FROM events WHERE id = ?", (body.event_id,)):
+        ev = db.one("SELECT id, venue_id FROM events WHERE id = ?", (body.event_id,))
+        if not ev:
             raise HTTPException(404, "event_not_found")
+        if ev["venue_id"] is not None and ev["venue_id"] != body.venue_id:
+            raise HTTPException(409, "event_venue_mismatch")
         cur_p = db.ex(
             "INSERT INTO participants(event_id, school, student_name, roll) VALUES (?,?,?,?)",
             (
@@ -763,10 +766,10 @@ def dashboard(request: Request, user=Depends(require_admin)):
         dict(r) for r in db.q("""
             SELECT v.id, v.name, v.kind, v.slug, v.active,
                    COUNT(q.id) AS total,
-                   SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END) AS waiting,
-                   SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END) AS onstage,
-                   SUM(CASE WHEN q.status='COMPLETE' THEN 1 ELSE 0 END) AS complete,
-                   SUM(CASE WHEN q.status='SKIPPED' THEN 1 ELSE 0 END) AS skipped
+                   COALESCE(SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END), 0) AS waiting,
+                   COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END), 0) AS onstage,
+                   COALESCE(SUM(CASE WHEN q.status='COMPLETE' THEN 1 ELSE 0 END), 0) AS complete,
+                   COALESCE(SUM(CASE WHEN q.status='SKIPPED' THEN 1 ELSE 0 END), 0) AS skipped
             FROM venues v
             LEFT JOIN queue_items q ON q.venue_id = v.id
             GROUP BY v.id

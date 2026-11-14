@@ -10,7 +10,7 @@ down:
 	docker compose down
 
 restart:
-	docker compose restart backend
+	docker compose up -d --force-recreate backend
 
 logs:
 	docker compose logs -f backend

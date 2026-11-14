@@ -186,12 +186,18 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
                 if cur:
                     next_status = "COMPLETE" if body.action == "START_NEXT" else "PAUSED"
                     completed_val = now if next_status == "COMPLETE" else cur["completed_at"]
-                    db.ex(
+                    # Guarded UPDATE: only proceed if the current item is still
+                    # in a state we can transition. Prevents a concurrent
+                    # START_NEXT from auto-completing an item it never saw
+                    # (which would otherwise skip the item it just started).
+                    upd = db.ex(
                         "UPDATE queue_items SET status = ?, "
                         " version = version + 1, completed_at = ?, updated_at = ? "
-                        "WHERE id = ?",
+                        "WHERE id = ? AND status IN ('ON-STAGE', 'PAUSED')",
                         (next_status, completed_val, now, cur["id"]),
                     )
+                    if upd.rowcount == 0:
+                        raise HTTPException(status.HTTP_409_CONFLICT, "state_changed")
                     broadcasts.append({
                         "entity": "queue", "venue_id": body.venue_id,
                         "item_id": cur["id"], "status": next_status,

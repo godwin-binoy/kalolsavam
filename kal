@@ -544,7 +544,19 @@ def cmd_admin(args):
     if action == "create":
         pwd = args.password
         if not pwd: pwd = prompt(f"password for {args.email}", secret=True, validate=validate_password)
-        r = in_container(["python", "-m", "server", "seed-admin", "--email", args.email, "--password", pwd])
+        role = getattr(args, "role", "admin") or "admin"
+        cmd = ["python", "-m", "server", "user-create",
+               "--email", args.email, "--password", pwd, "--role", role]
+        stages_csv = getattr(args, "stages", None)
+        if stages_csv:
+            try:
+                import json as _json
+                ids = [int(x) for x in str(stages_csv).split(",") if x.strip()]
+                cmd += ["--stages", _json.dumps(ids)]
+            except ValueError:
+                err(f"invalid --stages value: {stages_csv}")
+                return 1
+        r = in_container(cmd)
         print(r.stdout or r.stderr); return 0
     if action == "password":
         pwd = args.password
@@ -762,7 +774,7 @@ def build_parser():
     t_logs = tun.add_parser("logs"); t_logs.add_argument("-f", "--follow", action="store_true")
     p_admin = sub.add_parser("admin"); adm = p_admin.add_subparsers(dest="admin_action")
     adm.add_parser("list")
-    a_create = adm.add_parser("create"); a_create.add_argument("email"); a_create.add_argument("--password", "-p"); a_create.add_argument("--role", default="admin", choices=["admin", "stagemaster"])
+    a_create = adm.add_parser("create"); a_create.add_argument("email"); a_create.add_argument("--password", "-p"); a_create.add_argument("--role", default="admin", choices=["admin", "stagemaster"]); a_create.add_argument("--stages", help="comma-separated stage numbers (e.g. 1,2,3)")
     a_pass = adm.add_parser("password"); a_pass.add_argument("email"); a_pass.add_argument("--password", "-p")
     a_del = adm.add_parser("delete"); a_del.add_argument("email"); a_del.add_argument("--yes", "-y", action="store_true")
     a_ena = adm.add_parser("enable"); a_ena.add_argument("email")

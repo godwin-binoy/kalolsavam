@@ -9,9 +9,19 @@
   var AUTH_PATHS = ['/auth/login', '/auth/refresh', '/auth/register'];
 
   function resolveApiOrigin() {
-    if (typeof window.KAL_API_BASE === 'string') return window.KAL_API_BASE.replace(/\/+$/, '');
+    var body = document.body;
+    var explicit = body && body.getAttribute('data-api');
+    if (explicit === 'same-origin' || explicit === '') return '';
+    if (explicit != null) return explicit.replace(/\/+$/, '');
+    if (typeof window.KAL_API_BASE === 'string') {
+      if (window.KAL_API_BASE === 'same-origin') return '';
+      return window.KAL_API_BASE.replace(/\/+$/, '');
+    }
     var meta = document.querySelector('meta[name="kal-api"]');
-    if (meta && meta.content) return meta.content.replace(/\/+$/, '');
+    if (meta && meta.content) {
+      if (meta.content === 'same-origin') return '';
+      return meta.content.replace(/\/+$/, '');
+    }
     if (location.port === '8000' || location.hostname === 'testserver' ||
         location.hostname === 'apikalolsavammala.dpdns.org') return '';
     return DEFAULT_API_ORIGIN;
