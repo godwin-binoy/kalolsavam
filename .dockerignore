@@ -15,11 +15,16 @@ __pycache__/
 .env
 server/.env
 deployment/
-server/tests/
+
+# Frontend-only — Cloudflare Pages builds and serves these
+public/
 
 requirements-dev.txt
 pyproject.toml
 Makefile
 scripts/setup-backend.sh
+scripts/stamp-sw.mjs
 kal
 .kal.lock
+
+server/tests/

@@ -19,6 +19,12 @@
 /sw.js
   Cache-Control: no-cache, must-revalidate
 
+/config.js
+  Cache-Control: public, max-age=300, must-revalidate
+
+/manifest.json
+  Cache-Control: public, max-age=3600
+
 /admin/*
   Cache-Control: no-store
   X-Robots-Tag: noindex, nofollow

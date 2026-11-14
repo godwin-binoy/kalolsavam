@@ -14,8 +14,9 @@ services:
       SERVER_HOST: "0.0.0.0"
       SERVER_PORT: "8000"
       DB_PATH: "/app/deployment/kalolsavam.db"
-      DIST_PATH: "/app/dist"
-      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-http://localhost:8000}"
+      # PUBLIC_ORIGIN is the FRONTEND origin (Pages URL / custom domain).
+      # Empty -> Settings._valid_origin raises at startup (fail loud).
+      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-}"
       ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
       SECRET_KEY: "${SECRET_KEY:-}"
       SESSION_TTL_MIN: "${SESSION_TTL_MIN:-480}"
@@ -30,6 +31,11 @@ services:
       retries: 3
       start_period: 30s
 
+  # Cloudflare Tunnel sidecar. Only starts with `--profile tunnel` (or
+  # `./kal up --tunnel`). Configure once in the Cloudflare dashboard:
+  #   Zero Trust > Networks > Tunnels > <your tunnel> > Public Hostname
+  #     hostname: apikalolsavammala.dpdns.org
+  #     service:  http://backend:8000
   tunnel:
     image: cloudflare/cloudflared:latest
     restart: unless-stopped

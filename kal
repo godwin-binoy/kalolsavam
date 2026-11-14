@@ -117,14 +117,32 @@ def get_compose():
         return ["docker-compose"]
     die("Docker Compose not available.")
 
+def _parse_compose_ps(raw):
+    """Compose v2 emits NDJSON; some versions emit a single JSON array. Handle both."""
+    raw = (raw or "").strip()
+    if not raw:
+        return []
+    if raw.startswith("["):
+        try:
+            return json.loads(raw)
+        except json.JSONDecodeError:
+            return []
+    out = []
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
 def backend_running():
     r = run(get_compose() + ["ps", "--format", "json"], capture=True)
     if r.returncode != 0: return False
-    for line in r.stdout.splitlines():
-        line = line.strip()
-        if not line: continue
-        try: svc = json.loads(line)
-        except json.JSONDecodeError: continue
+    for svc in _parse_compose_ps(r.stdout):
         if svc.get("Service") == "backend":
             return (svc.get("State") or "").lower() == "running"
     return False
@@ -132,11 +150,7 @@ def backend_running():
 def tunnel_container_state():
     r = run(get_compose() + ["ps", "--all", "--format", "json"], capture=True)
     if r.returncode != 0: return "missing"
-    for line in r.stdout.splitlines():
-        line = line.strip()
-        if not line: continue
-        try: svc = json.loads(line)
-        except json.JSONDecodeError: continue
+    for svc in _parse_compose_ps(r.stdout):
         if svc.get("Service") == "tunnel":
             return (svc.get("State") or "").lower() or "unknown"
     return "missing"
@@ -448,7 +462,8 @@ def cmd_restart(args):
 def cmd_status(args):
     banner(); ensure_docker()
     run(get_compose() + ["ps"], capture=False); print()
-    (ok if check_health() else warn)("healthz: " + ("OK" if check_health() else "unreachable"))
+    h_ok = check_health()
+    (ok if h_ok else warn)("healthz: " + ("OK" if h_ok else "unreachable"))
     (ok if check_health(READY_URL) else warn)("readyz: " + ("OK" if check_health(READY_URL) else "not ready"))
     state = tunnel_container_state()
     if state == "running": ok("tunnel: running")

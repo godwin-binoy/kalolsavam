@@ -266,6 +266,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         allow_headers=["Content-Type", "Idempotency-Key", "Authorization"],
+        expose_headers=["X-Request-ID"],
+        max_age=600,
     )
     app.add_exception_handler(HTTPException, http_error)
     return app

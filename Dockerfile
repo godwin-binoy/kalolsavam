@@ -1,29 +1,16 @@
 # syntax=docker/dockerfile:1
 # ============================================================================
-# Kalolsavam — unified production image
-# Stage 1: build the Astro site  |  Stage 2: Python backend + built dist
+# Kalolsavam — backend-only image (split deploy)
+#
+# Static frontend is built and served by Cloudflare Pages. This image runs
+# ONLY the FastAPI backend. The Cloudflare Tunnel sidecar (docker-compose.yml,
+# profile "tunnel") publishes it at a fixed public hostname.
+#
+# No Node, no Astro, no dist/. If you ever need a single-origin image for
+# local Docker preview, run `npm run build` on the host and mount ./dist in
+# via a compose override — do not reintroduce Node here.
 # ============================================================================
 
-# ---------- Stage 1: Astro frontend ----------
-FROM node:22-alpine AS frontend
-
-WORKDIR /frontend
-
-COPY package.json ./
-COPY astro.config.mjs tsconfig.json ./
-RUN npm install --no-audit --no-fund
-
-COPY src ./src
-COPY public ./public
-COPY scripts ./scripts
-
-# Same-origin by default: the backend serves the frontend and the API.
-ARG PUBLIC_API_URL=same-origin
-RUN echo "PUBLIC_API_URL=${PUBLIC_API_URL}" > .env
-
-RUN npm run build
-
-# ---------- Stage 2: Python backend ----------
 FROM python:3.13-slim AS runtime
 
 ENV PYTHONUNBUFFERED=1 \
@@ -32,8 +19,7 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     SERVER_HOST=0.0.0.0 \
     SERVER_PORT=8000 \
-    DB_PATH=/app/deployment/kalolsavam.db \
-    DIST_PATH=/app/dist
+    DB_PATH=/app/deployment/kalolsavam.db
 
 WORKDIR /app
 
@@ -47,13 +33,11 @@ RUN pip install --upgrade pip && \
 
 COPY alembic.ini ./
 COPY server ./server
-COPY --from=frontend /frontend/dist ./dist
 COPY src/data/stages.json ./src/data/stages.json
 
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh \
- && mkdir -p /app/deployment \
- && touch /app/server/.env
+ && mkdir -p /app/deployment
 
 EXPOSE 8000
 
