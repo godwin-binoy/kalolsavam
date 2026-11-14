@@ -11,7 +11,7 @@ from fastapi.responses import StreamingResponse
 
 from ..auth import get_user_stages, has_role
 from ..deps import check_stage, get_db, require_staff
-from ..models import AdvanceIn, ScoreIn, StateIn
+from ..models import AdvanceIn, StateIn
 from .public import invalidate_public_cache
 
 router = APIRouter()
@@ -80,7 +80,7 @@ def board(request: Request, user=Depends(require_staff)):
         "FROM queue_items q "
         "JOIN events e ON e.id = q.event_id "
         "LEFT JOIN categories c ON c.id = e.category_id "
-        "LEFT JOIN participants p ON p.id = q.participant_id "
+        "LEFT JOIN _deprecated_participants p ON p.id = q.participant_id "
         "ORDER BY q.venue_id, "
         "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position"
     )
@@ -261,34 +261,3 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
     return resp
 
 
-@router.post("/score")
-def enter_score(body: ScoreIn, request: Request, user=Depends(require_staff)):
-    db = get_db(request)
-    item = db.one("SELECT * FROM queue_items WHERE id = ?", (body.queue_item_id,))
-    if not item:
-        raise HTTPException(404, "item_not_found")
-    check_stage(user, item["venue_id"])
-    if item["status"] not in ("ON-STAGE", "PAUSED", "COMPLETE"):
-        raise HTTPException(409, "item_not_scorable")
-    user_id = str(getattr(user, "id", "staff"))
-    db.ex(
-        "INSERT INTO scores(queue_item_id, judge_no, value, entered_by, entered_at) "
-        "VALUES (?,?,?,?,?) ON CONFLICT(queue_item_id, judge_no) DO UPDATE SET "
-        " value = excluded.value, entered_by = excluded.entered_by, "
-        " entered_at = excluded.entered_at",
-        (body.queue_item_id, body.judge_no, body.value, user_id, db.now()),
-    )
-    rows = db.q(
-        "SELECT judge_no, value FROM scores WHERE queue_item_id = ? ORDER BY judge_no",
-        (body.queue_item_id,),
-    )
-    vals = [r["value"] for r in rows]
-    _broadcast_sync(
-        request,
-        {"entity": "score", "venue_id": item["venue_id"], "queue_item_id": body.queue_item_id},
-    )
-    return {
-        "scores": [dict(r) for r in rows],
-        "total": round(sum(vals), 2),
-        "mean": round(sum(vals) / len(vals), 2) if vals else None,
-    }

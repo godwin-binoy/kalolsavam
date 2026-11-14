@@ -109,10 +109,6 @@ def test_registration_blocked(client):
     assert r.json()["error"] == "registration_disabled"
 
 
-def test_score_endpoint_unauthorized(client):
-    r = client.post("/api/v1/live/score", json={"queue_item_id": 1, "judge_no": 1, "value": 85.5})
-    assert r.status_code == 401
-
 
 def test_full_admin_workflow_and_security(client):
     cfg = client.app.state.cfg
@@ -182,19 +178,9 @@ def test_full_admin_workflow_and_security(client):
     assert board[0]["items"][0]["id"] == q1["id"]
     assert board[0]["items"][1]["id"] == q2["id"]
 
-    # Score item (q1 is currently PAUSED, so it is scorable)
-    r_score = client.post(
-        "/api/v1/live/score",
-        json={"queue_item_id": q1["id"], "judge_no": 1, "value": 94.0},
-        headers=headers,
-    )
-    assert r_score.status_code == 200 and r_score.json()["total"] == 94.0
-
     # Dashboard and audit trail
     dash = client.get("/api/v1/admin/dashboard", headers=headers)
     assert dash.status_code == 200
-    assert dash.json()["overall"]["scores_entered"] == 1
-    assert dash.json()["top_schools"][0]["school"] == "=CMD()"
 
     audit = client.get("/api/v1/admin/audit", headers=headers)
     assert audit.status_code == 200
@@ -213,3 +199,40 @@ def test_cors_preflight(client):
     assert pre.status_code == 200
     assert pre.headers.get("access-control-allow-origin") == "http://testserver"
     assert "authorization" in pre.headers.get("access-control-allow-headers", "").lower()
+
+def test_participant_registry_smoke(client):
+    cfg = client.app.state.cfg
+    asyncio.run(_seed_user(cfg.db_path, "reg@example.com", "StrongPass1234!", "admin", []))
+    r = client.post("/api/v1/auth/login",
+                    json={"email": "reg@example.com", "password": "StrongPass1234!"})
+    assert r.status_code == 200, r.text
+    h = {"Authorization": f"Bearer {r.json()['access_token']}"}
+
+    r = client.post("/api/v1/admin/participants", json={
+        "register_no": "10342",
+        "name": "Asha",
+        "school_name": "Sacred Heart HSS",
+        "school_code": "22001",
+        "class": 9,
+    }, headers=h)
+    assert r.status_code == 200, r.text
+    pid = r.json()["id"]
+
+    r = client.post(f"/api/v1/admin/participants/{pid}/entries", json={
+        "item_code": "101",
+        "venue_id": 3,
+        "venue_name": "GLPS Mala",
+        "perf_date": "2026-11-14",
+    }, headers=h)
+    assert r.status_code == 200, r.text
+
+    r = client.get("/api/v1/admin/participants", headers=h)
+    assert r.status_code == 200
+    assert r.json()["total"] == 1
+    assert r.json()["participants"][0]["entry_count"] == 1
+
+    r = client.delete(f"/api/v1/admin/participants/{pid}", headers=h)
+    assert r.status_code == 200
+    r = client.get("/api/v1/admin/participants", headers=h)
+    assert r.json()["total"] == 0
+

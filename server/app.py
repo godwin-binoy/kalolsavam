@@ -195,11 +195,13 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         return FileResponse(f, media_type="application/javascript") if f.exists() else JSONResponse({}, status_code=404)
 
     from .routes.admin import router as admin_router
+    from .routes.participants import router as participants_router
     from .routes.live import router as live_router
     from .routes.public import router as public_router
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")
+    app.include_router(participants_router, prefix="/api/v1/admin")
 
     @app.get("/admin", include_in_schema=False)
     async def admin_bare_redirect():

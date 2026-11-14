@@ -90,8 +90,7 @@ def _collect_stats(db) -> dict[str, int]:
             (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
             (SELECT COUNT(*) FROM categories) AS categories,
             (SELECT COUNT(*) FROM events) AS events,
-            (SELECT COUNT(*) FROM participants) AS participants,
-            (SELECT COUNT(*) FROM scores) AS scores_entered,
+            (SELECT COUNT(*) FROM _deprecated_participants) AS participants,
             COUNT(q.id) AS queue_items,
             COALESCE(SUM(CASE WHEN q.status = 'WAITING' THEN 1 ELSE 0 END), 0) AS queue_waiting,
             COALESCE(SUM(CASE WHEN q.status = 'ON-STAGE' THEN 1 ELSE 0 END), 0) AS queue_onstage_only,
@@ -123,58 +122,6 @@ def _collect_health(db, cfg, sse_connections: int, fail_window_sec: int) -> dict
         "auth_failures": fails,
     }
 
-
-def _compute_leaderboard(db) -> dict[str, list[dict]]:
-    rows = db.q("""
-        SELECT q.id AS queue_item_id, e.id AS event_id, e.code AS event_code,
-               e.title AS event_title, p.school,
-               COALESCE(SUM(s.value), 0) AS total_score,
-               COUNT(s.id) AS judge_count
-        FROM queue_items q
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
-        LEFT JOIN scores s ON s.queue_item_id = q.id
-        WHERE q.status IN ('COMPLETE','ON-STAGE','PAUSED')
-        GROUP BY q.id
-    """)
-    by_event = defaultdict(list)
-    for r in rows:
-        if r["judge_count"] and r["school"]:
-            by_event[r["event_id"]].append(dict(r))
-
-    points = defaultdict(lambda: {"first": 0, "second": 0, "third": 0, "total": 0})
-    per_event = []
-    for eid, items in by_event.items():
-        items.sort(key=lambda x: (x["total_score"], x["judge_count"]), reverse=True)
-        winners = []
-        for rank, it in enumerate(items[:3], start=1):
-            pts = {1: 5, 2: 3, 3: 1}[rank]
-            school = it["school"]
-            points[school]["total"] += pts
-            if rank == 1:
-                points[school]["first"] += 1
-            elif rank == 2:
-                points[school]["second"] += 1
-            else:
-                points[school]["third"] += 1
-            winners.append({
-                "rank": rank,
-                "school": school,
-                "total_score": round(it["total_score"], 2),
-                "points": pts,
-            })
-        per_event.append({
-            "event_id": eid,
-            "event_code": items[0]["event_code"],
-            "event_title": items[0]["event_title"],
-            "winners": winners,
-        })
-
-    school_totals = [
-        {"school": school, **data}
-        for school, data in sorted(points.items(), key=lambda x: -x[1]["total"])
-    ]
-    return {"schools": school_totals, "events": per_event}
 
 
 # ── Venues ────────────────────────────────────────────────────────────
@@ -345,7 +292,7 @@ def delete_event(eid: int, request: Request, user=Depends(require_admin)):
     if db.one("SELECT COUNT(*) c FROM queue_items WHERE event_id = ?", (eid,))["c"]:
         raise HTTPException(409, "event_has_queue_items")
     with db.transaction():
-        db.ex("DELETE FROM participants WHERE event_id = ?", (eid,))
+        db.ex("DELETE FROM _deprecated_participants WHERE event_id = ?", (eid,))
         db.ex("DELETE FROM events WHERE id = ?", (eid,))
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "delete_event", f"id={eid}")
@@ -363,7 +310,7 @@ def list_queue(request: Request, venue_id: int | None = None, user=Depends(requi
                p.school, p.student_name, p.roll
         FROM queue_items q
         JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
+        LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
     """
     params: tuple = ()
     if venue_id is not None:
@@ -381,7 +328,7 @@ def get_queue_item(item_id: int, request: Request, user=Depends(require_admin)):
                p.school, p.student_name, p.roll
         FROM queue_items q
         JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
+        LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
         WHERE q.id = ?
     """, (item_id,))
     if not row:
@@ -411,7 +358,7 @@ def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, u
         pid = row["participant_id"]
         if not pid:
             raise HTTPException(409, "no_participant")
-        part = db.one("SELECT school, student_name, roll FROM participants WHERE id = ?", (pid,))
+        part = db.one("SELECT school, student_name, roll FROM _deprecated_participants WHERE id = ?", (pid,))
         if not part:
             raise HTTPException(409, "no_participant")
 
@@ -419,7 +366,7 @@ def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, u
         new_name = (body.student_name.strip() or None) if body.student_name is not None else part["student_name"]
         new_roll = (body.roll.strip() or None) if body.roll is not None else part["roll"]
         db.ex(
-            "UPDATE participants SET school = ?, student_name = ?, roll = ? WHERE id = ?",
+            "UPDATE _deprecated_participants SET school = ?, student_name = ?, roll = ? WHERE id = ?",
             (new_school, new_name, new_roll, pid),
         )
         db.ex(
@@ -442,7 +389,7 @@ def delete_queue_item(item_id: int, request: Request, user=Depends(require_admin
             raise HTTPException(409, "only_waiting_items_deletable")
         db.ex("DELETE FROM queue_items WHERE id = ?", (item_id,))
         if row["participant_id"]:
-            db.ex("DELETE FROM participants WHERE id = ?", (row["participant_id"],))
+            db.ex("DELETE FROM _deprecated_participants WHERE id = ?", (row["participant_id"],))
     invalidate_public_cache(request.app)
     _admin_log(db, request, user, "queue_delete", f"id={item_id}")
     return {"ok": True}
@@ -499,7 +446,7 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
         if ev["venue_id"] is not None and ev["venue_id"] != body.venue_id:
             raise HTTPException(409, "event_venue_mismatch")
         cur_p = db.ex(
-            "INSERT INTO participants(event_id, school, student_name, roll) VALUES (?,?,?,?)",
+            "INSERT INTO _deprecated_participants(event_id, school, student_name, roll) VALUES (?,?,?,?)",
             (
                 body.event_id,
                 body.school,
@@ -690,7 +637,6 @@ def stats(request: Request, user=Depends(require_admin)):
         "queue_waiting": s["queue_waiting"],
         "queue_onstage": s["queue_onstage_only"],
         "queue_complete": s["queue_complete"],
-        "scores_entered": s["scores_entered"],
     }
 
 
@@ -739,11 +685,6 @@ def backup(request: Request, user=Depends(require_admin)):
 
 
 # ── Leaderboard / Dashboard / Exports ─────────────────────────────────
-@router.get("/leaderboard")
-def leaderboard(request: Request, user=Depends(require_admin)):
-    return _compute_leaderboard(get_db(request))
-
-
 @router.get("/dashboard")
 def dashboard(request: Request, user=Depends(require_admin)):
     db, cfg = get_db(request), get_cfg(request)
@@ -759,7 +700,6 @@ def dashboard(request: Request, user=Depends(require_admin)):
         "queue_onstage": s["queue_active"],
         "queue_complete": s["queue_complete"],
         "queue_skipped": s["queue_skipped"],
-        "scores_entered": s["scores_entered"],
     }
 
     per_venue = [
@@ -777,26 +717,13 @@ def dashboard(request: Request, user=Depends(require_admin)):
         """)
     ]
 
-    lb = _compute_leaderboard(db)
-    recent_scores = [
-        dict(r) for r in db.q("""
-            SELECT s.queue_item_id, s.judge_no, s.value, s.entered_at,
-                   e.code AS event_code, e.title AS event_title,
-                   p.school, p.student_name
-            FROM scores s
-            JOIN queue_items q ON q.id = s.queue_item_id
-            JOIN events e ON e.id = q.event_id
-            LEFT JOIN participants p ON p.id = q.participant_id
-            ORDER BY s.entered_at DESC LIMIT 20
-        """)
-    ]
     recent_completed = [
         dict(r) for r in db.q("""
             SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
                    p.school, p.student_name
             FROM queue_items q
             JOIN events e ON e.id = q.event_id
-            LEFT JOIN participants p ON p.id = q.participant_id
+            LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
             WHERE q.status='COMPLETE' AND q.completed_at IS NOT NULL
             ORDER BY q.completed_at DESC LIMIT 20
         """)
@@ -807,8 +734,6 @@ def dashboard(request: Request, user=Depends(require_admin)):
         "updated_at": db.now(),
         "overall": overall,
         "per_venue": per_venue,
-        "top_schools": lb["schools"][:10],
-        "recent_scores": recent_scores,
         "recent_completed": recent_completed,
         "health": {
             "db_bytes": health_data["db_bytes"],
@@ -828,7 +753,7 @@ def export_participants(request: Request, user=Depends(require_admin)):
         FROM queue_items q
         JOIN venues v ON v.id = q.venue_id
         JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
+        LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
         ORDER BY v.id, q.position
     """)
     out = io.StringIO()
@@ -853,44 +778,3 @@ def export_participants(request: Request, user=Depends(require_admin)):
         headers={"Content-Disposition": "attachment; filename=participants.csv"},
     )
 
-
-@router.get("/export/results.csv")
-def export_results(request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    rows = db.q("""
-        SELECT q.id AS queue_item_id, v.name AS venue,
-               e.code AS event_code, e.title AS event,
-               p.school, p.student_name, p.roll,
-               COUNT(s.id) AS judges,
-               COALESCE(SUM(s.value), 0) AS total,
-               CASE WHEN COUNT(s.id) > 0 THEN SUM(s.value)/COUNT(s.id) ELSE NULL END AS average
-        FROM queue_items q
-        JOIN venues v ON v.id = q.venue_id
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participants p ON p.id = q.participant_id
-        LEFT JOIN scores s ON s.queue_item_id = q.id
-        GROUP BY q.id
-        ORDER BY e.id, total DESC
-    """)
-    out = io.StringIO()
-    w = csv.writer(out)
-    w.writerow(["queue_item_id", "venue", "event_code", "event", "school",
-                "student_name", "roll", "judges", "total", "average"])
-    for r in rows:
-        w.writerow([
-            r["queue_item_id"],
-            _csv_cell(r["venue"]),
-            _csv_cell(r["event_code"]),
-            _csv_cell(r["event"]),
-            _csv_cell(r["school"]),
-            _csv_cell(r["student_name"]),
-            _csv_cell(r["roll"]),
-            r["judges"],
-            round(r["total"], 2),
-            round(r["average"], 2) if r["average"] is not None else "",
-        ])
-    return Response(
-        content=out.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=results.csv"},
-    )

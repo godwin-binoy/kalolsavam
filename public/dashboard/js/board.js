@@ -36,9 +36,6 @@
     var rows = items.map(function(i){
       var rowClass = i.status === 'ON-STAGE' ? ' class="onstage"' : '';
       var actions = '';
-      if (['ON-STAGE', 'PAUSED', 'COMPLETE'].indexOf(i.status) >= 0){
-        actions += '<button data-act="score" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Score</button>';
-      }
       if (i.status === 'COMPLETE'){
         actions += ' <button data-act="recall" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Recall</button>';
       }
@@ -81,7 +78,6 @@
       var b = ev.target.closest('button[data-act]');
       if (!b || b.disabled) return;
       var act = b.dataset.act;
-      if (act === 'score'){ openScoreDialog(b.dataset.id); return; }
       if (act === 'recall'){ advance(venue.id, 'RECALL', Number(b.dataset.id), Number(b.dataset.ver)); return; }
       if (act === 'pushstate'){
         var sel = p.querySelector('#vstate-' + venue.id);
@@ -159,43 +155,6 @@
     else { A.toast('Posted.'); loadBoard(); }
   }
 
-  var scoreTarget = null;
-  function openScoreDialog(itemId){
-    scoreTarget = Number(itemId);
-    var dlg = document.getElementById('score-dialog');
-    var sel = document.getElementById('score-judge');
-    sel.innerHTML = '';
-    for (var j = 1; j <= 5; j++){
-      var o = document.createElement('option');
-      o.value = String(j); o.textContent = 'Judge ' + j;
-      sel.appendChild(o);
-    }
-    document.getElementById('score-value').value = '';
-    document.getElementById('score-who').textContent = 'Queue item #' + itemId;
-    dlg.showModal();
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    var form = document.getElementById('score-form');
-    form.addEventListener('submit', async function(ev){
-      ev.preventDefault();
-      var submitter = ev.submitter;
-      document.getElementById('score-dialog').close();
-      if (!submitter || submitter.value !== 'save') return;
-      if (!scoreTarget) return;
-      var r = await A.api('/api/v1/live/score', {
-        method: 'POST',
-        body: {
-          queue_item_id: scoreTarget,
-          judge_no: Number(document.getElementById('score-judge').value),
-          value: Number(document.getElementById('score-value').value)
-        }
-      });
-      if (!r.ok) A.toast('Score rejected', true);
-      else A.toast('Saved — total ' + r.data.total);
-    });
-  });
-
   function startFeed(){
     if (feed) feed.close();
     feed = A.stream('/api/v1/live/stream', {
@@ -224,11 +183,6 @@
     whoEl = document.getElementById('who');
     document.getElementById('logout-btn').addEventListener('click', window.KalAuth.logout);
     document.getElementById('sync-btn').addEventListener('click', loadBoard);
-    document.addEventListener('click', function(ev){
-      if (ev.target.closest && ev.target.closest('[data-cancel-score]')) {
-        document.getElementById('score-dialog').close();
-      }
-    });
     window.KalAuth.init();
   });
 })();

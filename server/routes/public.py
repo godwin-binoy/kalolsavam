@@ -62,14 +62,14 @@ def status(request: Request):
                        ROW_NUMBER() OVER (PARTITION BY q.venue_id ORDER BY q.position) AS rn
                 FROM queue_items q
                 JOIN events e ON e.id = q.event_id
-                LEFT JOIN participants p ON p.id = q.participant_id
+                LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
                 WHERE q.status = 'WAITING'
             )
             SELECT q.id, q.venue_id, q.status, q.position,
                    e.title AS event, p.school, p.student_name, p.roll
             FROM queue_items q
             JOIN events e ON e.id = q.event_id
-            LEFT JOIN participants p ON p.id = q.participant_id
+            LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
             WHERE q.status IN ('ON-STAGE', 'PAUSED')
             UNION ALL
             SELECT id, venue_id, status, position, event, school, student_name, roll

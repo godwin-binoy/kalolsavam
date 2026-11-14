@@ -66,25 +66,6 @@
       '</table></div>';
   }
 
-  function renderLeaderboard(d){
-    var rows = d.top_schools.map(function(s, i){
-      return '<tr>' +
-        '<td class="num">' + (i + 1) + '</td>' +
-        '<td>' + esc(s.school) + '</td>' +
-        '<td class="num">' + s.first + '</td>' +
-        '<td class="num">' + s.second + '</td>' +
-        '<td class="num">' + s.third + '</td>' +
-        '<td class="num"><strong>' + s.total + '</strong></td>' +
-      '</tr>';
-    }).join('');
-    document.getElementById('leaderboard-panel').innerHTML =
-      '<h2>Top Schools</h2>' +
-      '<div style="overflow-x:auto"><table>' +
-        '<thead><tr><th>#</th><th>School</th><th class="num">1st</th><th class="num">2nd</th><th class="num">3rd</th><th class="num">Total</th></tr></thead>' +
-        '<tbody>' + (rows || '<tr><td colspan="6" class="muted">No scored events yet.</td></tr>') + '</tbody>' +
-      '</table></div>';
-  }
-
   function renderHealth(d){
     var h = d.health;
     document.getElementById('health-panel').innerHTML =
@@ -96,22 +77,6 @@
         '<span>Auth failures (24h)</span><b>' + h.auth_failures_24h + '</b>' +
         '<span>Last updated</span><b>' + esc(fmtTime(d.updated_at)) + '</b>' +
       '</div>';
-  }
-
-  function renderRecentScores(d){
-    var rows = d.recent_scores.map(function(s){
-      return '<tr>' +
-        '<td class="small">' + esc(fmtTime(s.entered_at)) + '</td>' +
-        '<td class="mono small">' + esc(s.event_code) + '</td>' +
-        '<td class="small">' + esc(s.school || '—') + '</td>' +
-        '<td class="num small">J' + s.judge_no + ' · ' + Number(s.value).toFixed(2) + '</td>' +
-      '</tr>';
-    }).join('');
-    document.getElementById('recent-scores-panel').innerHTML =
-      '<h2>Recent Score Entries</h2>' +
-      '<table><thead><tr><th>Time</th><th>Event</th><th>School</th><th class="num">Score</th></tr></thead>' +
-        '<tbody>' + (rows || '<tr><td colspan="4" class="muted">No entries yet.</td></tr>') + '</tbody>' +
-      '</table>';
   }
 
   function renderRecentCompleted(d){
@@ -142,9 +107,7 @@
       }
       renderKPIs(r.data);
       renderVenues(r.data);
-      renderLeaderboard(r.data);
       renderHealth(r.data);
-      renderRecentScores(r.data);
       renderRecentCompleted(r.data);
     } finally {
       loading = false;
