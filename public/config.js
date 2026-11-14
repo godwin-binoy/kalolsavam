@@ -1,16 +1,15 @@
 // Kalolsavam API origin.
 //
-// Production is split: static Astro build on Cloudflare Pages (*.pages.dev)
-// talks to the FastAPI backend via a Cloudflare Tunnel at a different host.
-// Docker self-host, local preview, and tests serve frontend + API from one
-// origin. Detect the split by hostname.
+// Architecture:
+//   - Static frontend (Astro build) is deployed to Cloudflare Pages.
+//   - FastAPI backend runs on a self-hosted server, exposed via Cloudflare
+//     Tunnel at the hostname below. It is never directly reachable.
+//   - Static staff portals (/admin/, /dashboard/, /stagemaster/) are also
+//     served from Pages and call this origin.
 //
-// Self-hosting on a custom domain? Override window.KAL_API_BASE before this
-// script loads, or edit the tunnel URL below.
-(function () {
-  var host = (location.hostname || '').toLowerCase();
-  var isPages = host === 'pages.dev' || host.endsWith('.pages.dev');
-  window.KAL_API_BASE = isPages
-    ? 'https://apikalolsavammala.dpdns.org'
-    : '';
-})();
+// Astro pages get <body data-api="..."> baked from PUBLIC_API_URL at build
+// time, and common.js / api.js check data-api first — so a local Docker
+// dev build with PUBLIC_API_URL=same-origin still calls the same origin
+// without editing this file. This value is the fallback for the static
+// HTML portals, which have no data-api attribute.
+window.KAL_API_BASE = "https://apikalolsavammala.dpdns.org";
