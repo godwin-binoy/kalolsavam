@@ -336,7 +336,7 @@ def user_create(
         stage_ids = [int(x) for x in json.loads(stages)] if stages else []
     except Exception:
         typer.echo(f"Invalid --stages JSON: {stages!r}", err=True)
-        raise typer.Exit(1)
+        raise typer.Exit(1) from None
 
     upgrade_to_head(Settings().db_path)
     ok, err_msg, uid = asyncio.run(_async_create_user(email, password, role, stage_ids))

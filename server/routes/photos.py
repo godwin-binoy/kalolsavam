@@ -1,8 +1,6 @@
 """Core Photo API: Handles uploads, downloads, and assignment."""
-import os
 import shutil
 import uuid
-import sqlite3
 from pathlib import Path
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import FileResponse
@@ -44,7 +42,8 @@ def upload_file(
 ):
     db = get_db(request)
     b = db.one("SELECT id FROM photo_batches WHERE id = ?", (batch_id,))
-    if not b: raise HTTPException(404, "batch_not_found")
+    if not b:
+        raise HTTPException(404, "batch_not_found")
     
     storage = _get_storage(request)
     ext = Path(file.filename).suffix or ".jpg"
@@ -71,7 +70,8 @@ def list_batches(request = None, user=Depends(require_staff)):
 def get_batch(batch_id: int, request = None, user=Depends(require_staff)):
     db = get_db(request)
     b = db.one("SELECT * FROM photo_batches WHERE id = ?", (batch_id,))
-    if not b: raise HTTPException(404, "not_found")
+    if not b:
+        raise HTTPException(404, "not_found")
     assets = db.q("SELECT * FROM photo_assets WHERE batch_id = ?", (batch_id,))
     
     out = []
@@ -106,30 +106,34 @@ def publish_batch(batch_id: int, request = None, user=Depends(require_staff)):
 def view_asset(asset_id: int, request = None):
     db = get_db(request)
     a = db.one("SELECT filename, batch_id FROM photo_assets WHERE id = ?", (asset_id,))
-    if not a: raise HTTPException(404, "not_found")
+    if not a:
+        raise HTTPException(404, "not_found")
     fpath = _get_storage(request) / a["filename"]
-    if not fpath.exists(): raise HTTPException(404, "file_missing")
+    if not fpath.exists():
+        raise HTTPException(404, "file_missing")
     return FileResponse(fpath)
 
 @router.post("/public/lookup")
 def public_lookup(register_no: str, name: str, request = None):
     # Same lookup logic as before, but served locally by Core
-    from ..models import Participant, ParticipantEntry
-    db = get_db(request)
+        db = get_db(request)
     p = db.one("SELECT id FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL", (register_no, name))
-    if not p: raise HTTPException(404, "not_found")
+    if not p:
+        raise HTTPException(404, "not_found")
     
     entries = db.q("SELECT id, item_code FROM participant_entries WHERE participant_id = ? AND deleted_at IS NULL", (p["id"],))
     eids = [e["id"] for e in entries]
-    if not eids: return {"photos": []}
+    if not eids:
+        return {"photos": []}
     
     placeholders = ",".join(["?"] * len(eids))
-    photos = db.q(f"SELECT photo_asset_id FROM photo_asset_entries WHERE participant_entry_id IN ({placeholders})", tuple(eids))
+    photos = db.q(f"SELECT photo_asset_id FROM photo_asset_entries WHERE participant_entry_id IN ({placeholders})"  # noqa: S608, tuple(eids))
     aids = list(set([x["photo_asset_id"] for x in photos]))
-    if not aids: return {"photos": []}
+    if not aids:
+        return {"photos": []}
     
     placeholders = ",".join(["?"] * len(aids))
-    assets = db.q(f"SELECT id FROM photo_assets WHERE id IN ({placeholders}) AND kind = 'stage'", tuple(aids))
+    assets = db.q(f"SELECT id FROM photo_assets WHERE id IN ({placeholders}) AND kind = 'stage'"  # noqa: S608, tuple(aids))
     
     return {"photos": [{"asset_id": a["id"], "url": f"/api/v1/photos/assets/{a['id']}/view", "entries": [e["item_code"] for e in entries]} for a in assets]}
 
@@ -138,7 +142,8 @@ def pull_queue(request = None, _=Depends(require_admin)):
     """Worker endpoint: Fetch next batch to process."""
     db = get_db(request)
     b = db.one("SELECT * FROM photo_batches WHERE status = 'queued' LIMIT 1")
-    if not b: return {"batch": None}
+    if not b:
+        return {"batch": None}
     
     # Mark as processing so no other worker grabs it
     db.ex("UPDATE photo_batches SET status = 'processing' WHERE id = ?", (b["id"],))

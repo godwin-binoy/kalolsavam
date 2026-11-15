@@ -3,7 +3,11 @@ from __future__ import annotations
 
 import json
 import logging
+import queue
 import sys
+import threading
+
+import requests
 
 
 class JsonFormatter(logging.Formatter):
@@ -22,9 +26,6 @@ class JsonFormatter(logging.Formatter):
 
 
 
-import queue
-import threading
-import requests
 
 class HttpLogHandler(logging.Handler):
     def __init__(self, url, service, token):
@@ -49,7 +50,7 @@ class HttpLogHandler(logging.Handler):
                 "duration_ms": getattr(record, "duration_ms", None),
             }
             self.queue.put(log_data)
-        except Exception:
+        except Exception:  # noqa: S110
             pass
 
     def _worker(self):
@@ -72,7 +73,7 @@ class HttpLogHandler(logging.Handler):
                         headers={"X-Obs-Token": self.token},
                         timeout=5
                     )
-                except Exception:
+                except Exception:  # noqa: S110
                     pass
             time.sleep(0.5)
 

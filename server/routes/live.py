@@ -237,7 +237,7 @@ def advance(body: AdvanceIn, request: Request, user=Depends(require_staff)):
             update_vals.extend([row["id"], row["version"]])
             
             cur_db = db.ex(
-                f"UPDATE queue_items SET {', '.join(update_fields)} WHERE id = ? AND version = ?",
+                f"UPDATE queue_items SET {', '.join(update_fields)} WHERE id = ? AND version = ?",  # noqa: S608
                 tuple(update_vals),
             )
             if cur_db.rowcount == 0:

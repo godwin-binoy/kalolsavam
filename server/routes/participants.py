@@ -39,8 +39,9 @@ def _audit(db, request: Request, user, action: str, detail: str = "") -> None:
             (db.now(), email, hash_ip(client_ip(request), secret),
              "admin_action", f"participant_{action}|{detail}"),
         )
-    except Exception:
-        pass
+    except Exception as exc:
+        import logging
+        logging.getLogger("kalolsavam").debug("audit failed: %s", exc)
 
 
 def _get_participant_or_404(db, participant_id: int):
@@ -111,7 +112,7 @@ def list_participants(
             entry_params.append(day)
         entry_filter = (
             " AND p.id IN (SELECT participant_id FROM participant_entries pe "
-            "WHERE " + " AND ".join(entry_clauses) + ")"
+            "WHERE " + " AND ".join(entry_clauses) + ")"  # noqa: S608
         )
         params.extend(entry_params)
 
@@ -120,7 +121,7 @@ def list_participants(
         "SELECT p.*, "
         "(SELECT COUNT(*) FROM participant_entries pe "
         " WHERE pe.participant_id = p.id AND pe.deleted_at IS NULL) AS entry_count "
-        "FROM participants p" + where + entry_filter +
+        "FROM participants p" + where + entry_filter +  # noqa: S608
         " ORDER BY p.school_code, p.register_no LIMIT ? OFFSET ?"
     )
     rows = db.q(sql, tuple(params) + (limit, offset))
@@ -303,7 +304,7 @@ async def import_csv(
     try:
         text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
-        raise HTTPException(400, "csv_must_be_utf8")
+        raise HTTPException(400, "csv_must_be_utf8") from None
     reader = csv.DictReader(io.StringIO(text))
     if not reader.fieldnames:
         raise HTTPException(400, "csv_empty")
