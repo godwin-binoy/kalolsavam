@@ -112,7 +112,7 @@ def list_participants(
             entry_params.append(day)
         entry_filter = (
             " AND p.id IN (SELECT participant_id FROM participant_entries pe "
-            "WHERE " + " AND ".join(entry_clauses) + ")"  # noqa: S608
+            "WHERE " + " AND ".join(entry_clauses) + ")"  # noqa: S608  # noqa: S608
         )
         params.extend(entry_params)
 
@@ -121,12 +121,12 @@ def list_participants(
         "SELECT p.*, "
         "(SELECT COUNT(*) FROM participant_entries pe "
         " WHERE pe.participant_id = p.id AND pe.deleted_at IS NULL) AS entry_count "
-        "FROM participants p" + where + entry_filter +  # noqa: S608
+        "FROM participants p" + where + entry_filter +  # noqa: S608  # noqa: S608
         " ORDER BY p.school_code, p.register_no LIMIT ? OFFSET ?"
     )
     rows = db.q(sql, tuple(params) + (limit, offset))
     total = db.one(
-        "SELECT COUNT(*) c FROM participants p" + where + entry_filter,
+        "SELECT COUNT(*) c FROM participants p" + where + entry_filter,  # noqa: S608
         tuple(params),
     )["c"]
     return {"participants": [dict(r) for r in rows], "total": total, "limit": limit, "offset": offset}

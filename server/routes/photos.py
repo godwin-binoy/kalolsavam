@@ -2,9 +2,11 @@
 import shutil
 import uuid
 from pathlib import Path
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
+
 from ..deps import get_cfg, get_db, require_admin, require_staff
 
 router = APIRouter()
@@ -115,8 +117,7 @@ def view_asset(asset_id: int, request = None):
 
 @router.post("/public/lookup")
 def public_lookup(register_no: str, name: str, request = None):
-    # Same lookup logic as before, but served locally by Core
-        db = get_db(request)
+    db = get_db(request)
     p = db.one("SELECT id FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL", (register_no, name))
     if not p:
         raise HTTPException(404, "not_found")
@@ -127,13 +128,14 @@ def public_lookup(register_no: str, name: str, request = None):
         return {"photos": []}
     
     placeholders = ",".join(["?"] * len(eids))
-    photos = db.q(f"SELECT photo_asset_id FROM photo_asset_entries WHERE participant_entry_id IN ({placeholders})"  # noqa: S608, tuple(eids))
+    photos = db.q(f"SELECT photo_asset_id FROM photo_asset_entries WHERE participant_entry_id IN ({placeholders})", tuple(eids))  # noqa: S608
+    
     aids = list(set([x["photo_asset_id"] for x in photos]))
     if not aids:
         return {"photos": []}
     
     placeholders = ",".join(["?"] * len(aids))
-    assets = db.q(f"SELECT id FROM photo_assets WHERE id IN ({placeholders}) AND kind = 'stage'"  # noqa: S608, tuple(aids))
+    assets = db.q(f"SELECT id FROM photo_assets WHERE id IN ({placeholders}) AND kind = 'stage'", tuple(aids))  # noqa: S608
     
     return {"photos": [{"asset_id": a["id"], "url": f"/api/v1/photos/assets/{a['id']}/view", "entries": [e["item_code"] for e in entries]} for a in assets]}
 
