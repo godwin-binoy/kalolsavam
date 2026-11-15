@@ -1,0 +1,26 @@
+# Cloudflare Tunnel Ingress Rules (Path-based routing)
+# Note: If you use a token-based tunnel (CLOUDFLARE_TUNNEL_TOKEN),
+# you must configure these rules in the Cloudflare Zero Trust Dashboard 
+# under Public Hostnames, NOT in this file. 
+# This file is for locally-managed tunnels (cloudflared tunnel run <name>).
+
+tunnel: YOUR_TUNNEL_ID
+credentials-file: /etc/cloudflared/YOUR_TUNNEL_ID.json
+
+ingress:
+  # 1. Photo Server
+  - hostname: apikalolsavammala.dpdns.org
+    path: ^/api/v1/photos/.*
+    service: http://photos:8000
+
+  # 2. Obs Server
+  - hostname: apikalolsavammala.dpdns.org
+    path: ^/api/v1/obs/.*
+    service: http://obs:8000
+
+  # 3. Core Server (Catch-all)
+  - hostname: apikalolsavammala.dpdns.org
+    path: .*
+    service: http://backend:8000
+
+  - service: http_status:404
