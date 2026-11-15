@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>System Observability · Kalolsavam</title>
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body class="login-body">
+<main class="login-card">
+  <h1 class="brand">Kalolsavam <span>System</span></h1>
+  <p class="muted small">Observability & Operations Dashboard</p>
+  <form id="login-form" autocomplete="off">
+    <label>Admin Token<input id="token" type="password" required placeholder="Paste SECRET_KEY"></label>
+    <button type="submit" id="login-btn">Unlock</button>
+  </form>
+</main>
+
+<div id="app" class="hidden">
+  <header class="topbar">
+    <h1 class="brand">Kalolsavam <span>Observability</span></h1>
+    <span class="spacer"></span>
+    <button id="theme" title="Toggle dark mode">🌓 Theme</button>
+    <button id="refresh-btn">↻ Refresh</button>
+    <button id="logout-btn">Lock</button>
+  </header>
+  <main class="dashboard-main">
+    <section id="kpi-grid" class="kpi-grid"></section>
+    
+    <div class="split">
+      <section id="services-panel" class="panel"></section>
+      <section id="health-panel" class="panel"></section>
+    </div>
+    
+    <section id="logs-panel" class="panel"></section>
+  </main>
+</div>
+
+<script src="/config.js"></script>
+<script>
+(function(){
+  var html = document.documentElement;
+  var KEY = 'kal_obs_token';
+  
+  // Theme Toggle
+  try { if (localStorage.getItem('kal_theme') === 'dark') html.classList.add('dark'); } catch(e){}
+  document.getElementById('theme').addEventListener('click', function(){
+    var dark = html.classList.toggle('dark');
+    try { localStorage.setItem('kal_theme', dark ? 'dark' : 'light'); } catch(e){}
+  });
+
+  function api(url, token) {
+    return fetch(window.KAL_API_BASE + url, {
+      headers: { 'X-Obs-Token': token }
+    }).then(function(r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function load() {
+    var token = document.getElementById('token').value || sessionStorage.getItem(KEY);
+    if (!token) return;
+    
+    api('/api/v1/obs/stats', token).then(function(stats) {
+      document.getElementById('kpi-grid').innerHTML =
+        '<div class="kpi"><div class="kpi-value">' + stats.total_requests + '</div><div class="kpi-label">Total Logs</div></div>' +
+        '<div class="kpi"><div class="kpi-value">' + stats.total_errors + '</div><div class="kpi-label">Errors</div></div>';
+        
+      var svcRows = stats.services.map(function(s) {
+        return '<tr><td>' + s.name + '</td><td class="num">' + s.count + '</td></tr>';
+      }).join('');
+      document.getElementById('services-panel').innerHTML =
+        '<h2>Active Services</h2><table><thead><tr><th>Service</th><th class="num">Log Count</th></tr></thead><tbody>' + svcRows + '</tbody></table>';
+    }).catch(function(e) {
+      alert('Auth failed or network error: ' + e.message);
+      logout();
+    });
+
+    api('/api/v1/obs/logs?limit=100', token).then(function(data) {
+      var rows = data.logs.map(function(l) {
+        var time = new Date(l.ts * 1000).toLocaleTimeString();
+        var statusClass = l.status >= 500 ? 'err' : l.status >= 400 ? 'warn' : 'ok';
+        return '<tr>' +
+          '<td class="small">' + time + '</td>' +
+          '<td><span class="badge">' + l.service + '</span></td>' +
+          '<td class="small ' + (l.level === 'ERROR' ? 'err' : '') + '">' + l.level + '</td>' +
+          '<td class="mono small">' + (l.status ? '<span class="pill ' + statusClass + '">' + l.status + '</span>' : '') + '</td>' +
+          '<td class="mono small">' + (l.method || '') + ' ' + (l.path || '') + '</td>' +
+          '<td class="small">' + (l.duration_ms || 0) + 'ms</td>' +
+          '<td class="small">' + l.msg + '</td>' +
+        '</tr>';
+      }).join('');
+      
+      document.getElementById('logs-panel').innerHTML =
+        '<h2>Recent Activity</h2>' +
+        '<div style="overflow-x:auto"><table><thead><tr><th>Time</th><th>Service</th><th>Level</th><th>Status</th><th>Route</th><th>Latency</th><th>Message</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
+    });
+  }
+
+  function logout() {
+    sessionStorage.removeItem(KEY);
+    document.getElementById('app').classList.add('hidden');
+    document.querySelector('.login-card').style.display = 'block';
+  }
+
+  document.getElementById('login-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var t = document.getElementById('token').value;
+    sessionStorage.setItem(KEY, t);
+    document.querySelector('.login-card').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    load();
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', load);
+  document.getElementById('logout-btn').addEventListener('click', logout);
+
+  // Auto resume
+  var saved = sessionStorage.getItem(KEY);
+  if (saved) {
+    document.getElementById('token').value = saved;
+    document.querySelector('.login-card').style.display = 'none';
+    document.getElementById('app').classList.remove('hidden');
+    load();
+  }
+})();
+</script>
+</body>
+</html>

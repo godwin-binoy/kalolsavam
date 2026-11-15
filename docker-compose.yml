@@ -22,6 +22,7 @@ services:
       RESULTS_URL: "${RESULTS_URL:-https://kalolsavam.kerala.gov.in/}"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@kalolsavam.example.com}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
+      OBS_URL: "http://obs:8000/api/v1/obs/logs"
 
   photos:
     build:
@@ -35,6 +36,7 @@ services:
       SECRET_KEY: "${SECRET_KEY:-}"
       PHOTOS_DB_PATH: "sqlite:////app/photos_data/photos.db"
       CORE_URL: "http://backend:8000"
+      OBS_URL: "http://obs:8000/api/v1/obs/logs"
 
   obs:
     build:
@@ -44,6 +46,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./deployment/obs_backups:/app/backups:Z
+      - ./deployment/obs_data:/app/obs_data:Z
     environment:
       SECRET_KEY: "${SECRET_KEY:-}"
       CORE_URL: "http://backend:8000"

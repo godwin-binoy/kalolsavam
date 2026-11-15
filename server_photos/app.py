@@ -12,9 +12,50 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 from .models import init_db, PhotoBatch, PhotoAsset, PhotoAssetEntry
 
+
+import logging
+import queue
+import threading
+import requests
+import time
+
+class HttpLogHandler(logging.Handler):
+    def __init__(self, url, service, token):
+        super().__init__()
+        self.url = url
+        self.service = service
+        self.token = token
+        self.queue = queue.Queue()
+        self.thread = threading.Thread(target=self._worker, daemon=True)
+        self.thread.start()
+    def emit(self, record):
+        self.queue.put({"service": self.service, "level": record.levelname, "msg": record.getMessage()})
+    def _worker(self):
+        while True:
+            batch = []
+            try:
+                batch.append(self.queue.get(timeout=2))
+                while len(batch) < 100:
+                    batch.append(self.queue.get_nowait())
+            except queue.Empty:
+                pass
+            if batch:
+                try:
+                    requests.post(self.url, json={"logs": batch}, headers={"X-Obs-Token": self.token}, timeout=5)
+                except Exception:
+                    pass
+            time.sleep(0.5)
+
+
+log = logging.getLogger("photos")
+log.setLevel(logging.INFO)
+
 app = FastAPI(title="Kalolsavam Photos")
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 CORE_URL = os.getenv("CORE_URL", "http://backend:8000")
+OBS_URL = os.getenv("OBS_URL")
+if OBS_URL:
+    log.addHandler(HttpLogHandler(OBS_URL, "photos", SECRET_KEY))
 PHOTOS_ROOT = Path(os.getenv("PHOTOS_ROOT", "/app/photos_data"))
 PHOTOS_ROOT.mkdir(parents=True, exist_ok=True)
 
