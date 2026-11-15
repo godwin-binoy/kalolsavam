@@ -11,3 +11,4 @@ typer>=0.15
 python-multipart>=0.0.20
 httpx>=0.28
 requests>=2.32
+pyjwt>=2.8
