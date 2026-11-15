@@ -4,6 +4,7 @@
   var esc = A.esc;
   var boardsEl, connEl, whoEl;
   var feed = null;
+  var boardData = [];
   var lastAction = {};
 
   async function loadBoard(){
@@ -17,7 +18,25 @@
   }
 
   function render(board){
+    boardData = board;
     boardsEl.innerHTML = '';
+    
+    // Populate photo intake
+    var photoSec = document.getElementById('photo-intake');
+    var sel = document.getElementById('photo-item-select');
+    if (photoSec && sel) {
+      photoSec.style.display = 'block';
+      sel.innerHTML = '<option value="">-- Choose an item --</option>';
+      board.forEach(function(v){
+        var activeItems = v.items.filter(function(i){ return i.status === 'ON-STAGE' || i.status === 'PAUSED' || i.status === 'WAITING'; });
+        activeItems.forEach(function(i){
+          var o = document.createElement('option');
+          o.value = i.id;
+          o.textContent = v.venue.name + ' - ' + (i.chest_no ? 'Chest '+i.chest_no+' - ' : '') + i.event;
+          sel.appendChild(o);
+        });
+      });
+    }
     if (!board.length){
       boardsEl.innerHTML = '<div class="panel"><p class="muted">No stages are assigned to your account.</p></div>';
       return;
@@ -195,3 +214,63 @@
     window.KalAuth.init();
   });
 })();
+
+  // ---- Photo Intake Logic ----
+  window.uploadPhotos = async function(workflow) {
+    var sel = document.getElementById('photo-item-select');
+    var itemId = Number(sel.value);
+    if (!itemId) { A.toast('Select an item first', true); return; }
+    
+    var currentVenue = null;
+    var currentItem = null;
+    for (var i=0; i<boardData.length; i++) {
+       var it = boardData[i].items.find(x => x.id === itemId);
+       if (it) { currentVenue = boardData[i].venue; currentItem = it; break; }
+    }
+    if (!currentVenue) return;
+    
+    var batchReq = await A.api('/api/v1/photos/batches', {
+      method: 'POST',
+      body: { queue_item_id: itemId, venue_id: currentVenue.id, perf_date: new Date().toISOString().split('T')[0], workflow: workflow }
+    });
+    if (!batchReq.ok) { A.toast('Batch creation failed', true); return; }
+    var batchId = batchReq.data.batch_id;
+    
+    var files = [];
+    if (workflow === 'bulk') {
+      var slips = document.getElementById('w1-slips').files;
+      for (var i=0; i<slips.length; i++) files.push({kind: 'slip', file: slips[i]});
+      var stages = document.getElementById('w1-stage').files;
+      for (var i=0; i<stages.length; i++) files.push({kind: 'stage', file: stages[i]});
+    } else {
+      var stages = document.getElementById('w2-stage').files;
+      for (var i=0; i<stages.length; i++) files.push({kind: 'stage', file: stages[i]});
+    }
+    
+    A.toast('Uploading ' + files.length + ' photos...');
+    
+    for (var i=0; i<files.length; i++) {
+      var fd = new FormData();
+      fd.append('kind', files[i].kind);
+      fd.append('file', files[i].file);
+      
+      var res = await fetch(A.url('/api/v1/photos/batches/'+batchId+'/upload'), {
+        method: 'POST', headers: {'Authorization': 'Bearer ' + A.getToken()}, body: fd
+      });
+      var data = await res.json();
+      
+      // Auto-assign for workflow 2
+      if (workflow === 'quick' && currentItem.participant_entry_id) {
+        await A.api('/api/v1/photos/assign', {
+          method: 'POST',
+          body: { asset_id: data.asset_id, participant_entry_ids: [currentItem.participant_entry_id] }
+        });
+      }
+    }
+    
+    if (workflow === 'quick') {
+      await A.api('/api/v1/photos/batches/'+batchId+'/publish', { method: 'POST' });
+    }
+    
+    A.toast('Upload complete');
+  };

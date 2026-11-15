@@ -32,6 +32,41 @@
   </header>
   <main>
     <div id="boards" class="grid"></div>
+    
+    <section id="photo-intake" class="panel" style="margin-top:2rem;display:none">
+      <h2>Photo Intake</h2>
+      <p class="muted small">Upload photos for the current running item.</p>
+      
+      <div class="row" style="margin-bottom:1rem">
+        <label style="margin:0;display:flex;align-items:center;gap:0.5rem">
+          Select Item: <select id="photo-item-select" style="width:auto;margin:0"></select>
+        </label>
+      </div>
+
+      <div class="grid" style="grid-template-columns:1fr 1fr">
+        <!-- Workflow 1 -->
+        <div class="card-base">
+          <h3>Workflow 1 (Bulk)</h3>
+          <p class="small muted">Upload slip photos + raw stage photos for data workers to process.</p>
+          <label>Slip Photos<input type="file" id="w1-slips" multiple accept="image/*"></label>
+          <label>Stage Photos<input type="file" id="w1-stage" multiple accept="image/*"></label>
+          <button class="primary" onclick="submitWorkflow1()">Queue for Data Worker</button>
+        </div>
+        
+        <!-- Workflow 2 -->
+        <div class="card-base">
+          <h3>Workflow 2 (Quick)</h3>
+          <p class="small muted">Quickly upload stage photos directly to the current participant.</p>
+          <label>Stage Photos<input type="file" id="w2-stage" multiple accept="image/*"></label>
+          <button class="primary" onclick="submitWorkflow2()">Upload & Publish</button>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      function submitWorkflow1() { window.uploadPhotos('bulk'); }
+      function submitWorkflow2() { window.uploadPhotos('quick'); }
+    </script>
   </main>
 </div>
 

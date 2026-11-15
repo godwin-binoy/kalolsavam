@@ -8,7 +8,8 @@ class PhotoBatch(SQLModel, table=True):
     queue_item_id: int
     venue_id: int
     perf_date: str
-    status: str = Field(default="staging")
+    workflow: str  # 'bulk' or 'quick'
+    status: str = Field(default="staging")  # staging, queued, published
     created_at: float = Field(default_factory=time.time)
 
 class PhotoAsset(SQLModel, table=True):
@@ -16,8 +17,7 @@ class PhotoAsset(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     batch_id: int = Field(foreign_key="photo_batches.id")
     kind: str  # 'slip' or 'stage'
-    file_path: str
-    sha256: str
+    filename: str
     uploaded_at: float = Field(default_factory=time.time)
 
 class PhotoAssetEntry(SQLModel, table=True):

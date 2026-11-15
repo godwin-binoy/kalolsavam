@@ -34,6 +34,7 @@ services:
     environment:
       SECRET_KEY: "${SECRET_KEY:-}"
       PHOTOS_DB_PATH: "sqlite:////app/photos_data/photos.db"
+      CORE_URL: "http://backend:8000"
 
   obs:
     build:

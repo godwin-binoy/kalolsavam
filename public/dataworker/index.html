@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Data Worker · Kalolsavam</title>
+<link rel="stylesheet" href="/assets/css/tokens.css">
+<link rel="stylesheet" href="/dashboard/css/dashboard.css">
+</head>
+<body class="login-body">
+<main class="login-card">
+  <h1 class="brand">Kalolsavam <span>Data Worker</span></h1>
+  <p class="muted small">Process uploaded photos.</p>
+  <form id="login-form" autocomplete="off">
+    <label>Email<input id="email" type="email" required></label>
+    <label>Password<input id="password" type="password" required></label>
+    <button type="submit" id="login-btn">Sign in</button>
+    <p id="login-msg" class="msg"></p>
+  </form>
+</main>
+<div id="app" class="hidden">
+  <header class="topbar">
+    <h1 class="brand">Kalolsavam <span>Data Worker</span></h1>
+    <span id="who" class="badge"></span>
+    <span class="spacer"></span>
+    <button id="logout-btn">Sign out</button>
+  </header>
+  <main>
+    <div id="batches-view" class="grid"></div>
+    <div id="batch-detail-view" class="hidden" style="margin-top:1rem">
+      <button class="btn-link" onclick="document.getElementById('batch-detail-view').classList.add('hidden'); document.getElementById('batches-view').classList.remove('hidden');">&larr; Back to Queue</button>
+      <div id="batch-content" style="margin-top:1rem"></div>
+    </div>
+  </main>
+</div>
+<script src="/config.js"></script>
+<script src="/dashboard/js/api.js"></script>
+<script src="/dashboard/js/auth.js"></script>
+<script src="/dashboard/js/ui.js"></script>
+<script src="/dashboard/js/dataworker.js"></script>
+</body>
+</html>

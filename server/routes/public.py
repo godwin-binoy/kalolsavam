@@ -6,7 +6,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, HTTPException
+from pydantic import BaseModel
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
@@ -212,4 +213,29 @@ def dashboard_stats(request: Request):
         _cached(request, "dashboard", 10.0, build),
         headers={"Cache-Control": "public, max-age=10"},
     )
+
+class LookupIn(BaseModel):
+    register_no: str
+    name: str
+
+@router.post("/participant-lookup")
+def participant_lookup(body: LookupIn, request: Request):
+    db = request.app.state.db
+    
+    # Privacy Gate: exact match on both register_no and case-insensitive name
+    p = db.one(
+        "SELECT id, name FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL",
+        (body.register_no.strip(), body.name.strip())
+    )
+    if not p:
+        raise HTTPException(404, "participant_not_found_or_name_mismatch")
+        
+    entries = db.q("""
+        SELECT id, item_code, venue_name, perf_date
+        FROM participant_entries
+        WHERE participant_id = ? AND deleted_at IS NULL
+        ORDER BY perf_date, item_code
+    """, (p["id"],))
+    
+    return {"valid": True, "participant": dict(p), "entries": [dict(e) for e in entries]}
 
