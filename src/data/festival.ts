@@ -76,23 +76,7 @@ export const FACILITIES: FacilityItem[] = [
   { title: "Medical Room", titleI18n: "fac.med.title", sub: "First Aid · 24/7 Standby", subI18n: "fac.med.sub", desc: "Nursing staff, oxygen, stretcher, and emergency ambulance.", descI18n: "fac.med.desc", location: "Near Main Gate (west side)", href: "/help", tone: "rose", icon: "medical" },
 ];
 
-export const RESULTS_CATEGORIES = {
-  offstage: {
-    badge: "Results · Off Stage",
-    title: "Off Stage Results",
-    items: ["Chithra Drawing", "Pencil Drawing", "Collage", "Cartoon", "Clay Modeling"],
-  },
-  individual: {
-    badge: "Results · Individual Stage",
-    title: "Individual Stage Results",
-    items: ["Bharathanatyam", "Mohiniyattam", "Light Music", "Classical Music", "Elocution"],
-  },
-  group: {
-    badge: "Results · Group Stage",
-    title: "Group Stage Results",
-    items: ["Oppana", "Margamkali", "Nadan Pattu", "Group Dance", "Drama"],
-  },
-};
+
 
 export const TEAM_MEMBERS: TeamMember[] = [
   { role: "Lead Architect", name: "Name 1", desc: "Full-stack Frontend, Backend FastAPI API, Infrastructure & CI/CD Pipeline." },

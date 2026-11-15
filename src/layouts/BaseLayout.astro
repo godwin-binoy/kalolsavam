@@ -46,21 +46,21 @@ const navKey = (k: string) => `nav.${k}`;
 <link rel="icon" type="image/webp" href={BASE + 'assets/img/logo.webp'}>
 <script is:inline>try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
 <script is:inline src={BASE + 'assets/js/lang.js?v=' + VERSION}></script>
+<style>
+  @media (max-width: 768px) {
+    .utility-dock.desktop-only { display: none !important; }
+  }
+  @media (min-width: 769px) {
+    .utility-dock.desktop-only { display: flex !important; margin-left: auto; margin-right: 1rem; gap: 0.5rem; }
+  }
+</style>
 </head>
 <body data-nav={active} data-base={BASE} data-api={API_BASE}>
 <script is:inline src={BASE + 'config.js'}></script>
 <script is:inline src={BASE + 'assets/js/common.js?v=' + VERSION}></script>
 <a class="skip" href="#main">Skip to content</a>
-<div class="utility-dock" role="group" aria-label="Display settings">
-  <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">
-    <span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span>
-  </button>
-  <button id="theme" class="icbtn" type="button" aria-label="Toggle dark mode">
-    <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
-    <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
-  </button>
-</div>
-<header class="hdr">
+
+<header class="hdr" id="main-header">
   <div class="hdr-in">
     <a class="brand" href={BASE}>
       <img src={BASE + 'assets/img/logo.webp'} alt="St. Antony's HSS Mala" class="logo-box" width="40" height="40" decoding="async">
@@ -71,6 +71,15 @@ const navKey = (k: string) => `nav.${k}`;
         <a href={url(href)} class:list={["nav-link", { active: active === key }, key === "help" && "nav-link-help"]} data-active={key} data-i18n={navKey(key)}>{label}</a>
       ))}
     </nav>
+<div class="utility-dock desktop-only" role="group" aria-label="Display settings">
+      <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">
+        <span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span>
+      </button>
+      <button id="theme" class="icbtn" type="button" aria-label="Toggle dark mode">
+        <span class="icn icn-moon" style={`--icon-url:url('${BASE}assets/svg/moon.svg')`}></span>
+        <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
+      </button>
+    </div>
     <div class="mobile-controls">
       <a href={url('/help')} class="help-btn-m" aria-label="Help & Emergency">
         <span class="icn" style={`--icon-url:url('${BASE}assets/svg/phone.svg')`}></span>

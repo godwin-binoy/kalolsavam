@@ -46,7 +46,24 @@
     });
   }
 
+
+  function initTheme() {
+    var html = document.documentElement;
+    var KEY = 'kal_theme';
+    try {
+      if (localStorage.getItem(KEY) === 'dark') html.classList.add('dark');
+    } catch(e){}
+    document.addEventListener('click', function(ev) {
+      var btn = ev.target.closest('#theme');
+      if (btn) {
+        var dark = html.classList.toggle('dark');
+        try { localStorage.setItem(KEY, dark ? 'dark' : 'light'); } catch(e){}
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function(){
+    initTheme();
     initPasswordModal();
     setupExportInterceptors();
   });

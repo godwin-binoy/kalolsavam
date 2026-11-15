@@ -48,6 +48,21 @@
     });
   }
 
+
+  var header = document.querySelector('.hdr');
+  if (header) {
+    var lastScroll = 0;
+    window.addEventListener('scroll', function() {
+      var currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+      if (currentScroll > lastScroll && currentScroll > 80) {
+        header.classList.add('hdr-hidden');
+      } else {
+        header.classList.remove('hdr-hidden');
+      }
+      lastScroll = currentScroll <= 0 ? 0 : currentScroll;
+    }, { passive: true });
+  }
+
   // Lightweight hover prefetch (capped, same-origin HTML only)
   var prefetched = new Set();
   document.addEventListener('pointerenter', function(ev){
