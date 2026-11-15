@@ -6,7 +6,7 @@ services:
     image: kalolsavam-backend:latest
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8000:8000"
+      - "8000:8000"
     volumes:
       - ./deployment:/app/deployment:Z
     environment:
@@ -14,15 +14,16 @@ services:
       SERVER_HOST: "0.0.0.0"
       SERVER_PORT: "8000"
       DB_PATH: "/app/deployment/kalolsavam.db"
-      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-}"
-      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
       SECRET_KEY: "${SECRET_KEY:-}"
-      SESSION_TTL_MIN: "${SESSION_TTL_MIN:-480}"
-      TRUST_PROXY_HEADERS: "${TRUST_PROXY_HEADERS:-true}"
-      RESULTS_URL: "${RESULTS_URL:-https://kalolsavam.kerala.gov.in/}"
-      ADMIN_EMAIL: "${ADMIN_EMAIL:-admin@kalolsavam.example.com}"
+      ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
-      OBS_URL: "http://obs:8000/api/v1/obs/logs"
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
+    depends_on: [backend]
+    profiles: ["tunnel"]
 
   photos:
     build:
@@ -30,13 +31,9 @@ services:
       dockerfile: Dockerfile.photos
     image: kalolsavam-photos:latest
     restart: unless-stopped
-    volumes:
-      - ./deployment/photos:/app/photos_data:Z
     environment:
+      CORE_URL: "https://api.yourdomain.com"
       SECRET_KEY: "${SECRET_KEY:-}"
-      PHOTOS_DB_PATH: "sqlite:////app/photos_data/photos.db"
-      CORE_URL: "http://backend:8000"
-      OBS_URL: "http://obs:8000/api/v1/obs/logs"
 
   obs:
     build:
@@ -46,20 +43,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./deployment/obs_backups:/app/backups:Z
-      - ./deployment/obs_data:/app/obs_data:Z
     environment:
+      CORE_URL: "https://api.yourdomain.com"
       SECRET_KEY: "${SECRET_KEY:-}"
-      CORE_URL: "http://backend:8000"
-
-  tunnel:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:-}
-    volumes:
-      - ./deployment/cloudflared:/etc/cloudflared:Z
-    depends_on:
-      - backend
-      - photos
-      - obs
-    profiles:
-      - tunnel

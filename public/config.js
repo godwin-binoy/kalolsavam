@@ -13,3 +13,4 @@
 // without editing this file. This value is the fallback for the static
 // HTML portals, which have no data-api attribute.
 window.KAL_API_BASE = "https://apikalolsavammala.dpdns.org";
+window.KAL_PHOTOS_BASE = "https://apikalolsavammala.dpdns.org";
