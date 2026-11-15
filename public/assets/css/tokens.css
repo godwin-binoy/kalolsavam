@@ -200,3 +200,9 @@ html.dark {
 /* Hide header on scroll down */
 .hdr { transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) !important; }
 .hdr.hdr-hidden { transform: translateY(-100%) !important; }
+
+/* Live Stage Grid Fix for Desktop */
+.stage-live-card { width: 100% !important; max-width: 100% !important; box-sizing: border-box !important; }
+@media (min-width: 900px) {
+  .stage-live-grid { display: grid !important; grid-template-columns: repeat(2, 1fr) !important; gap: 1.5rem !important; }
+}

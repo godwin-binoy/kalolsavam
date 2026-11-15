@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+---
+<BaseLayout title="Dashboard | Kalolsavam">
+  <div class="main-container">
+    <PageHead badge="Live Stats" title="Festival Dashboard" intro="Real-time statistics and stage progress." />
+    
+    <section id="kpi-grid" class="kpi-grid"></section>
+    <section id="venue-panel" class="panel" style="margin-top:1.5rem"></section>
+    
+    <div class="split" style="margin-top:1.5rem">
+      <section id="health-panel" class="panel"></section>
+      <section id="recent-completed-panel" class="panel"></section>
+    </div>
+  </div>
+
+  <script is:inline src="/dashboard/js/api.js"></script>
+  <script is:inline src="/dashboard/js/ui.js"></script>
+  <script is:inline src="/dashboard/js/stats.js"></script>
+</BaseLayout>

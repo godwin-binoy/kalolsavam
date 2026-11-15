@@ -159,9 +159,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     if assets_dir is not None:
         app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    dashboard_dir = next((p for p in (dist / "dashboard", pub / "dashboard", srv / "dashboard") if p.exists()), None)
-    if dashboard_dir is not None:
-        app.mount("/dashboard", StaticFiles(directory=dashboard_dir, html=True), name="dashboard")
 
     @app.get("/healthz")
     async def healthz():

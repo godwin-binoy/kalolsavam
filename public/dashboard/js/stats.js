@@ -98,7 +98,7 @@
     if (loading) return;
     loading = true;
     try {
-      var r = await A.api('/api/v1/admin/dashboard');
+      var r = await A.api('/api/v1/public/dashboard');
       if (!r.ok){
         if (r.status === 401 || r.status === 403) return;
         document.getElementById('kpi-grid').innerHTML =
@@ -119,28 +119,14 @@
     timer = setInterval(load, REFRESH_MS);
   }
 
-  window.onKalLogin = function(info){
-    var role = String(info.role || '').toLowerCase();
-    if (role !== 'admin'){
-      document.getElementById('login-msg').textContent =
-        'Dashboard requires an admin account. Sign out and use an admin login.';
-      return;
-    }
-    document.body.classList.remove('login-body');
-    var card = document.querySelector('.login-card');
-    if (card) card.classList.add('hidden');
-    document.getElementById('app').classList.remove('hidden');
-    document.getElementById('who').textContent =
-      (info.email || info.username || 'admin') + ' · admin';
-    load();
-    startAutoRefresh();
-  };
 
   document.addEventListener('DOMContentLoaded', function(){
     var refreshBtn = document.getElementById('refresh-btn');
     if (refreshBtn) refreshBtn.addEventListener('click', load);
     var logoutBtn = document.getElementById('logout-btn');
-    if (logoutBtn) logoutBtn.addEventListener('click', window.KalAuth.logout);
-    window.KalAuth.init();
+    if (logoutBtn) logoutBtn.style.display = 'none';
+    
+    load();
+    startAutoRefresh();
   });
 })();

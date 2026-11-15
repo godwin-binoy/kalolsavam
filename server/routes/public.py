@@ -151,3 +151,65 @@ def schedule(request: Request, day: str | None = None, venue_id: int | None = No
         _cached(request, key, 10.0, build),
         headers={"Cache-Control": "public, max-age=60"},
     )
+
+@router.get("/dashboard")
+def dashboard_stats(request: Request):
+    db = request.app.state.db
+
+    def build() -> dict[str, Any]:
+        row = db.one("""
+            SELECT
+                (SELECT COUNT(*) FROM venues) AS venues,
+                (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
+                (SELECT COUNT(*) FROM events) AS events,
+                (SELECT COUNT(*) FROM participants) AS participants,
+                COUNT(q.id) AS queue_items,
+                COALESCE(SUM(CASE WHEN q.status = 'WAITING' THEN 1 ELSE 0 END), 0) AS queue_waiting,
+                COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 1 ELSE 0 END), 0) AS queue_onstage,
+                COALESCE(SUM(CASE WHEN q.status = 'COMPLETE' THEN 1 ELSE 0 END), 0) AS queue_complete,
+                COALESCE(SUM(CASE WHEN q.status = 'SKIPPED' THEN 1 ELSE 0 END), 0) AS queue_skipped
+            FROM queue_items q
+        """)
+
+        per_venue = [
+            dict(r) for r in db.q("""
+                SELECT v.id, v.name, v.kind, v.active,
+                       COUNT(q.id) AS total,
+                       COALESCE(SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END), 0) AS waiting,
+                       COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END), 0) AS onstage,
+                       COALESCE(SUM(CASE WHEN q.status='COMPLETE' THEN 1 ELSE 0 END), 0) AS complete,
+                       COALESCE(SUM(CASE WHEN q.status='SKIPPED' THEN 1 ELSE 0 END), 0) AS skipped
+                FROM venues v
+                LEFT JOIN queue_items q ON q.venue_id = v.id
+                GROUP BY v.id ORDER BY v.id
+            """)
+        ]
+
+        recent_completed = [
+            dict(r) for r in db.q("""
+                SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
+                       v.name AS venue_name
+                FROM queue_items q
+                JOIN events e ON e.id = q.event_id
+                JOIN venues v ON v.id = q.venue_id
+                WHERE q.status='COMPLETE' AND q.completed_at IS NOT NULL
+                ORDER BY q.completed_at DESC LIMIT 20
+            """)
+        ]
+
+        overall = dict(row)
+        overall["active_venues"] = row["active_venues"]
+        
+        return {
+            "updated_at": db.now(),
+            "overall": overall,
+            "per_venue": per_venue,
+            "recent_completed": recent_completed,
+            "health": {"status": "ok", "db_bytes": 0, "disk_free_bytes": 0, "sse_connections": 0, "auth_failures_24h": 0}
+        }
+
+    return JSONResponse(
+        _cached(request, "dashboard", 10.0, build),
+        headers={"Cache-Control": "public, max-age=10"},
+    )
+
