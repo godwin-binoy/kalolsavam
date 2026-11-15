@@ -440,32 +440,38 @@ def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admi
     with db.transaction():
         if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
             raise HTTPException(404, "venue_not_found")
-        ev = db.one("SELECT id, venue_id FROM events WHERE id = ?", (body.event_id,))
+        
+        # Fetch from new registry
+        entry = db.one("""
+            SELECT pe.*, p.school_name, p.name, p.register_no
+            FROM participant_entries pe
+            JOIN participants p ON p.id = pe.participant_id
+            WHERE pe.id = ? AND pe.deleted_at IS NULL
+        """, (body.participant_entry_id,))
+        if not entry:
+            raise HTTPException(404, "participant_entry_not_found")
+            
+        ev = db.one("SELECT id, venue_id FROM events WHERE code = ?", (entry["item_code"],))
         if not ev:
-            raise HTTPException(404, "event_not_found")
+            raise HTTPException(404, "event_not_found_for_item")
         if ev["venue_id"] is not None and ev["venue_id"] != body.venue_id:
             raise HTTPException(409, "event_venue_mismatch")
+
+        # Keep writing to deprecated table for legacy fallback display
         cur_p = db.ex(
             "INSERT INTO _deprecated_participants(event_id, school, student_name, roll) VALUES (?,?,?,?)",
-            (
-                body.event_id,
-                body.school,
-                (body.student_name or "").strip() or None,
-                (body.roll or "").strip() or None,
-            ),
+            (ev["id"], entry["school_name"], entry["name"], entry["register_no"]),
         )
         pid = cur_p.lastrowid
-        row = db.one(
-            "SELECT COALESCE(MAX(position),-1)+1 AS p FROM queue_items WHERE venue_id = ?",
-            (body.venue_id,),
-        )
+        
+        row = db.one("SELECT COALESCE(MAX(position),-1)+1 AS p FROM queue_items WHERE venue_id = ?", (body.venue_id,))
         cur_q = db.ex(
-            "INSERT INTO queue_items(venue_id, event_id, participant_id, status, "
-            " position, version, updated_at) VALUES (?,?,?, 'WAITING', ?, 1, ?)",
-            (body.venue_id, body.event_id, pid, row["p"], db.now()),
+            "INSERT INTO queue_items(venue_id, event_id, participant_id, participant_entry_id, chest_no, status, position, version, updated_at) "
+            "VALUES (?,?,?,?,?, 'WAITING', ?, 1, ?)",
+            (body.venue_id, ev["id"], pid, entry["id"], body.chest_no, row["p"], db.now()),
         )
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "queue_add", f"venue={body.venue_id},event={body.event_id}")
+    _admin_log(db, request, user, "queue_add", f"venue={body.venue_id},event={ev['id']}")
     return {"id": cur_q.lastrowid, "participant_id": pid}
 
 

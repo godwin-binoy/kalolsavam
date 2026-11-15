@@ -248,6 +248,7 @@ class AdvanceIn(BaseModel):
     action: str = Field(pattern=r"^(START_NEXT|COMPLETE_CURRENT|PAUSE|RESUME|SKIP|RECALL)$")
     version: int | None = None
     item_id: int | None = None
+    chest_no: str | None = None
 
 
 
@@ -341,16 +342,8 @@ class PasswordResetIn(BaseModel):
 
 class AddToQueueIn(BaseModel):
     venue_id: int
-    event_id: int
-    school: str = Field(min_length=1, max_length=200)
-    student_name: str | None = Field(default=None, max_length=200)
-    roll: str | None = Field(default=None, max_length=64)
-
-    @field_validator("school")
-    @classmethod
-    def _clean_school(cls, v: str) -> str:
-        return _require_non_blank(v)  # type: ignore[return-value]
-
+    participant_entry_id: int
+    chest_no: str | None = None
 
 class QueueItemUpdateIn(BaseModel):
     school: str | None = Field(default=None, min_length=1, max_length=200)

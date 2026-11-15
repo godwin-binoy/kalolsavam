@@ -40,7 +40,7 @@
         actions += ' <button data-act="recall" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Recall</button>';
       }
       return '<tr' + rowClass + ' data-status="' + esc(i.status) + '" data-ver="' + esc(i.version) + '">' +
-        '<td>' + (i.position + 1) + '</td>' +
+        '<td>' + (i.chest_no ? '<strong>' + esc(i.chest_no) + '</strong>' : '—') + '</td>' +
         '<td>' + esc(i.event || '') + '<br><span class="muted small">' + esc(i.category || '') + '</span></td>' +
         '<td>' + esc(i.school || '—') + '<br><span class="muted small">' + esc(i.student_name || '') + '</span></td>' +
         '<td><span class="status ' + esc(i.status) + '">' + esc(i.status) + '</span></td>' +
@@ -71,7 +71,7 @@
           esc(state.announcement || '') + '" style="flex:1">' +
         '<button data-act="pushstate">Post</button>' +
       '</div>' +
-      '<table><thead><tr><th>#</th><th>Event</th><th>Performer</th><th>Status</th><th></th></tr></thead>' +
+      '<table><thead><tr><th>Chest</th><th>Event</th><th>Performer</th><th>Status</th><th></th></tr></thead>' +
       '<tbody>' + (rows || '<tr><td colspan="5" class="muted">No items queued.</td></tr>') + '</tbody></table>';
 
     p.addEventListener('click', function(ev){
@@ -83,6 +83,14 @@
         var sel = p.querySelector('#vstate-' + venue.id);
         var ann = p.querySelector('#vann-' + venue.id);
         postState(venue.id, sel.value, ann.value);
+        return;
+      }
+      if (act === 'START_NEXT') {
+        var next = items.filter(function(i){ return i.status === 'WAITING'; })[0];
+        var defaultChest = (next && next.roll) ? next.roll : '';
+        var chest = prompt("Enter chest number for the starting item:", defaultChest);
+        if (chest === null) return; // Cancelled
+        advance(venue.id, act, null, null, chest.trim() || null);
         return;
       }
       advance(venue.id, act);
@@ -99,7 +107,7 @@
     RESUME: 'PAUSED', SKIP: 'WAITING', RECALL: 'COMPLETE'
   };
 
-  async function advance(venueId, action, itemId, itemVersion){
+  async function advance(venueId, action, itemId, itemVersion, chestNo){
     lastAction[venueId] = Date.now();
 
     var panel = document.querySelector('.panel[data-venue="' + venueId + '"]');
@@ -121,6 +129,7 @@
     }
 
     var payload = { venue_id: Number(venueId), action: action, version: version };
+    if (chestNo) payload.chest_no = chestNo;
     if (typeof itemId === 'number') payload.item_id = itemId;
 
     try {

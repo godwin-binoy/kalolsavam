@@ -91,6 +91,45 @@
 </dialog>
 
 <script src="/config.js"></script>
+
+<dialog id="part-edit-dialog">
+  <h3 style="margin-top:0">Edit Participant</h3>
+  <form id="part-edit-form">
+    <input type="hidden" id="pe-id">
+    <label>Register No<input id="pe-reg" required maxlength="5" pattern="\d{5}"></label>
+    <label>Name<input id="pe-name" required></label>
+    <label>School Name<input id="pe-school" required></label>
+    <label>School Code<input id="pe-scode" required maxlength="6" pattern="\d{5,6}"></label>
+    <label>Class<input id="pe-class" type="number" min="1" max="12" required></label>
+    
+    <div style="margin-top:1rem">
+      <h4 style="margin:.5rem 0">Items</h4>
+      <div id="pe-entries-list"></div>
+    </div>
+
+    <div class="row" style="margin-top:1.5rem">
+      <button value="save" class="primary" type="submit">Save Participant</button>
+      <button type="button" data-cancel-part>Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<dialog id="queue-add-dialog">
+  <h3 style="margin-top:0">Add to Queue</h3>
+  <form id="queue-add-form">
+    <input type="hidden" id="qa-venue">
+    <input type="hidden" id="qa-entry-id">
+    <label>Search Participant (Reg No or Name)<input id="qa-search" placeholder="Type at least 2 chars..."></label>
+    <div id="qa-results" style="max-height:150px;overflow-y:auto;background:var(--panel-2);padding:.5rem;border-radius:4px;margin-bottom:1rem"></div>
+    <label>Chest No (Optional)<input id="qa-chest" maxlength="16"></label>
+    <div class="row" style="margin-top:1rem">
+      <button class="primary" type="submit">Add</button>
+      <button type="button" onclick="document.getElementById('queue-add-dialog').close()">Cancel</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="/config.js"></script>
 <script src="/dashboard/js/api.js"></script>
 <script src="/dashboard/js/auth.js"></script>
 <script src="/dashboard/js/ui.js"></script>
