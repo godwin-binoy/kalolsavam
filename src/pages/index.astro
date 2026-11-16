@@ -4,6 +4,15 @@ import Card from '../components/Card.astro';
 import ActionItem from '../components/ActionItem.astro';
 import Icon from '../components/Icon.astro';
 import { BASE, url } from '../lib/url';
+import stages from '../data/stages.json';
+
+const stageSearch = stages.map((st) => ({
+  title: `Stage ${st.n}: ${st.name}`,
+  desc: `${st.short} · ${st.capacity}`,
+  href: `venues-stage/${st.n}`,
+  cat: `Stage ${st.n}`,
+  keys: [`stage ${st.n}`, st.name.toLowerCase(), String(st.n)],
+}));
 ---
 <BaseLayout active="home">
   <section class="hero">
@@ -18,7 +27,7 @@ import { BASE, url } from '../lib/url';
         </div>
       </div>
       <div class="hero-mark">
-        <img src={BASE + 'assets/img/master-logo.webp'} alt="Kalolsavam Master Logo" width="380" height="380" decoding="async">
+        <img src={BASE + 'assets/img/logo.webp'} alt="Kalolsavam Master Logo" width="380" height="380" decoding="async">
       </div>
     </div>
   </section>
@@ -40,21 +49,21 @@ import { BASE, url } from '../lib/url';
 
     <div class="grid-3">
       <!-- 1 · Stages -->
-      <Card title="Stages & Venues" titleI18n="card.stages.title" subtitle="Module 01 · Live Tracker" subtitleI18n="card.stages.sub" tone="blue" icon="map-pin">
+      <Card title="Stages & Venues" titleI18n="card.stages.title" subtitle="Live Tracker" subtitleI18n="card.stages.sub" tone="blue" icon="map-pin">
         <ActionItem href="/venues-location" icon="map-pin" iconTone="c-emerald" title="Location" titleI18n="card.stages.loc" />
         <ActionItem href="/venues-find" icon="search" iconTone="c-indigo" title="Find by Item" titleI18n="card.stages.find" />
         <ActionItem href="/venues-live" icon="bolt" iconTone="c-rose" title="Live Updates" titleI18n="card.stages.live" />
       </Card>
 
       <!-- 2 · Facilities -->
-      <Card title="Facilities" titleI18n="card.fac.title" subtitle="Module 04 · Campus Facilities" subtitleI18n="card.fac.sub" tone="teal" icon="sparkle">
+      <Card title="Facilities" titleI18n="card.fac.title" subtitle="Campus Facilities" subtitleI18n="card.fac.sub" tone="teal" icon="sparkle">
         <ActionItem href="/facilities-green-room" icon="user" iconTone="c-teal" title="Green Room" titleI18n="card.fac.green" />
         <ActionItem href="/facilities-toilet" icon="water" iconTone="c-blue" title="Toilet" titleI18n="card.fac.toilet" />
         <ActionItem href="/facilities" icon="grid" iconTone="c-indigo" title="See All" titleI18n="card.fac.all" />
       </Card>
 
       <!-- 3 · Media -->
-      <Card title="Media & Streaming" titleI18n="card.media.title" subtitle="Module 03 · Official Media" subtitleI18n="card.media.sub" tone="pink" icon="video">
+      <Card title="Media & Streaming" titleI18n="card.media.title" subtitle="Official Media" subtitleI18n="card.media.sub" tone="pink" icon="video">
         <ActionItem href="/media" icon="grid" iconTone="c-blue" title="Stage Photos" titleI18n="card.media.photos" />
         <ActionItem href="/media" icon="bolt" iconTone="c-rose" title="Live Streaming" titleI18n="card.media.live" />
       </Card>
@@ -66,18 +75,16 @@ import { BASE, url } from '../lib/url';
           <span style="font-size:1.05rem;font-weight:800;color:var(--brand)" data-i18n="card.results.check">Check Official Results</span>
           <span class="text-muted xs" data-i18n="card.results.hint">Tap to open the government portal</span>
         </a>
-        <ActionItem href="/results" icon="grid" iconTone="c-amber" title="Browse by Category" />
       </Card>
 
       <!-- 5 · Transportation -->
-      <Card title="Transportation" titleI18n="card.trans.title" subtitle="Module 06 · Bus & Auto" subtitleI18n="card.trans.sub" tone="purple" icon="bus">
+      <Card title="Transportation" titleI18n="card.trans.title" subtitle="Bus & Auto" subtitleI18n="card.trans.sub" tone="purple" icon="bus">
         <ActionItem href="/transportation-bus" icon="bus" iconTone="c-blue" title="Bus Timings" titleI18n="card.trans.bus" />
         <ActionItem href="/transportation-auto" icon="car" iconTone="c-emerald" title="Auto Drivers" titleI18n="card.trans.auto" />
-        <ActionItem href="/transportation" icon="map-pin" iconTone="c-indigo" title="All Travel Options" titleI18n="card.trans.all" />
       </Card>
 
       <!-- 6 · Help -->
-      <Card title="Help & Medical" titleI18n="card.help.title" subtitle="Module 05 · Emergency Directory" subtitleI18n="card.help.sub" tone="rose" icon="phone">
+      <Card title="Help & Medical" titleI18n="card.help.title" subtitle="Emergency Directory" subtitleI18n="card.help.sub" tone="rose" icon="phone">
         <ActionItem href="/help" icon="medical" iconTone="c-rose" title="First Aid" titleI18n="card.help.firstaid" />
         <ActionItem href="/help" icon="building" iconTone="c-amber" title="Convener Desk" titleI18n="card.help.convener" />
       </Card>
@@ -85,7 +92,7 @@ import { BASE, url } from '../lib/url';
 
     <!-- Meet Team & Venue Info -->
     <div class="grid-2" style="margin-top:2.5rem;gap:1.5rem;align-items:stretch">
-      <Card title="Meet the Developers & Volunteers" titleI18n="card.dev.title" subtitle="Platform Creators & Backstage Crew" subtitleI18n="card.dev.sub" tone="indigo" icon="user">
+      <Card title="Meet Our Team" titleI18n="card.dev.title" subtitle="Platform Creators & Backstage Crew" subtitleI18n="card.dev.sub" tone="indigo" icon="user">
         <p class="text-muted sm" style="margin-bottom:1rem" data-i18n="card.dev.desc">Choose an option below to explore the team and backstage crew behind this platform.</p>
         <div class="grid-2" style="gap:1rem">
           <ActionItem href="/developers#developers" icon="user" iconTone="c-indigo" title="Meet Developers" titleI18n="card.dev.devbtn" />
@@ -111,14 +118,6 @@ import { BASE, url } from '../lib/url';
     (function(){
       'use strict';
       var index = stageSearch.concat([
-        { title: "Stage 2: HS Hall", desc: "High School main hall indoor auditorium · 400 seats", href: "venues-stage/2", cat: "Stage 2", keys: ["stage 2", "hs hall", "hall", "2"] },
-        { title: "Stage 3: GLPS Mala", desc: "Government Lower Primary School Mala stage · 200 seats", href: "venues-stage/3", cat: "Stage 3", keys: ["stage 3", "glps mala", "glps", "3"] },
-        { title: "Stage 4: HSS A1 B1 Classes", desc: "Combined classrooms A1 and B1 ground floor", href: "venues-stage/4", cat: "Stage 4", keys: ["stage 4", "a1", "b1", "4"] },
-        { title: "Stage 5: HSS Seminar Hall", desc: "First floor seminar hall in HSS block · 150 seats", href: "venues-stage/5", cat: "Stage 5", keys: ["stage 5", "seminar hall", "5"] },
-        { title: "Stage 6: Vyaapaara Bhavan", desc: "Traders' Bhavan off-campus stage · Mala Road", href: "venues-stage/6", cat: "Stage 6", keys: ["stage 6", "vyaapaara bhavan", "6"] },
-        { title: "Stage 7: HSS 1st Floor Class", desc: "First-floor classroom stage Room 1F-A", href: "venues-stage/7", cat: "Stage 7", keys: ["stage 7", "1f-a", "7"] },
-        { title: "Stage 8: HS 9E Class", desc: "Classroom 9E in High School block ground floor", href: "venues-stage/8", cat: "Stage 8", keys: ["stage 8", "9e", "8"] },
-        { title: "Stage 9: HS Arabic Class", desc: "Arabic classroom in High School block", href: "venues-stage/9", cat: "Stage 9", keys: ["stage 9", "arabic", "9"] },
         { title: "Live Stages & Real-time Chest Numbers", desc: "Live stage statuses, current performers, queues", href: "venues-live", cat: "Live", keys: ["live", "chest", "queue", "now"] },
         { title: "Venue Map & Walking Directions", desc: "Blueprints, landmarks, accessibility for all 9 stages", href: "venues-location", cat: "Location", keys: ["map", "location", "blueprint", "directions"] },
         { title: "Find Venue by Item Code or Name", desc: "Lookup any competition item code, venue location, timings", href: "venues-find", cat: "Search", keys: ["find by item", "item code", "event", "schedule"] },
