@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import { DINING_HALLS } from '../data/festival';
+---
+<BaseLayout title="Dining Hall (Oottupura) | Mala Kalolsavam" active="facilities">
+  <div class="main-container">
+    <PageHead badge="Dining Hall" title="Dining Hall (Oottupura)" intro="Free meals and light refreshments for participants, teachers, and volunteers." />
+    <div class="grid-2">
+      {DINING_HALLS.map((d) => (
+        <Card title={d.name} subtitle={d.sub} tone="orange" icon="grid">
+          <p class="text-muted sm">{d.desc}</p>
+          <div class="fest-action-item">
+            <span><strong>Location:</strong> {d.loc}</span>
+          </div>
+        </Card>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

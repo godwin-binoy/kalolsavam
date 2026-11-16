@@ -56,6 +56,8 @@
   --action-item-hover-border: #CBD5E1;
   --action-item-icon-bg: #F0F4EF;
   --card-bg: rgba(255, 255, 255, 0.98);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(229, 235, 227, 0.85);
   --footer-bg: #0C120F;
   --footer-fg: #E2E8F0;
 
@@ -123,6 +125,8 @@ html.dark {
   --action-item-hover-border: rgba(255, 255, 255, 0.12);
   --action-item-icon-bg: rgba(255, 255, 255, 0.06);
   --card-bg: rgba(18, 24, 20, 0.95);
+  --glass-bg: rgba(20, 29, 23, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.1);
   --footer-bg: #050706;
   --footer-fg: #94A3B8;
   --dot-grid-color: rgba(255, 255, 255, 0.03);

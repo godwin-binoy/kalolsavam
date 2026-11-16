@@ -65,7 +65,7 @@ const stageSearch = stages.map((st) => ({
       <!-- 3 · Media -->
       <Card title="Media & Streaming" titleI18n="card.media.title" subtitle="Official Media" subtitleI18n="card.media.sub" tone="pink" icon="video">
         <ActionItem href="/media" icon="grid" iconTone="c-blue" title="Stage Photos" titleI18n="card.media.photos" />
-        <ActionItem href="/media" icon="bolt" iconTone="c-rose" title="Live Streaming" titleI18n="card.media.live" />
+        <ActionItem href="/live-stream" icon="bolt" iconTone="c-rose" title="Live Streaming" titleI18n="card.media.live" />
       </Card>
 
       <!-- 4 · Results -->
@@ -123,7 +123,9 @@ const stageSearch = stages.map((st) => ({
         { title: "Find Venue by Item Code or Name", desc: "Lookup any competition item code, venue location, timings", href: "venues-find", cat: "Search", keys: ["find by item", "item code", "event", "schedule"] },
         { title: "Green Rooms (G1 – G6)", desc: "Dressing and makeup rooms · Boys (G1-G2), Girls (G3-G4), Team (G5-G6)", href: "facilities-green-room", cat: "Facilities", keys: ["green room", "dressing", "makeup", "costume"] },
         { title: "Toilet & Washroom Blocks", desc: "Separate washrooms across Blocks A, B, and C", href: "facilities-toilet", cat: "Facilities", keys: ["toilet", "washroom", "bathroom", "wc"] },
-        { title: "Dining Hall (Oottupura)", desc: "Free meals for participants · Lunch 12:30–14:30", href: "facilities", cat: "Facilities", keys: ["dining", "food", "lunch", "meals", "oottupura"] },
+        { title: "Dining Hall (Oottupura)", desc: "Free meals for participants · Lunch 12:30–14:30", href: "facilities-dining", cat: "Facilities", keys: ["dining", "food", "lunch", "meals", "oottupura"] },
+        { title: "Live Streaming & Stage Telecasts", desc: "Watch live stage telecasts and official video streams", href: "live-stream", cat: "Media", keys: ["live stream", "youtube", "video", "watch", "telecast"] },
+        { title: "Drinking Water Stations", desc: "Filtered RO drinking water across 4 campus stations", href: "facilities-water", cat: "Facilities", keys: ["water", "drinking water", "ro", "thirst"] },
         { title: "Official Results Portal", desc: "Access verified state results, scorecards, points, and standings", href: "results", cat: "Results", keys: ["results", "result", "scores", "marks", "grades"] },
         { title: "Bus Departures & Timings", desc: "KSRTC & Private departures from Mala Stand", href: "transportation-bus", cat: "Transport", keys: ["bus", "ksrtc", "timing", "thrissur", "chalakudy"] },
         { title: "Verified Auto Drivers", desc: "Direct phone directory of local auto-rickshaws", href: "transportation-auto", cat: "Transport", keys: ["auto", "autorickshaw", "taxi", "driver"] },

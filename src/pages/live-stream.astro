@@ -1,0 +1,20 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
+import { LIVE_STREAMS } from '../data/festival';
+---
+<BaseLayout title="Live Streaming | Mala Kalolsavam" active="media">
+  <div class="main-container">
+    <PageHead badge="Live Telecast" badgeClass="badge-live" title="Live Streaming" intro="Official live video streams from festival stages. Tap any stream below to watch." />
+    <div class="grid-3">
+      {LIVE_STREAMS.map((s) => (
+        <Card title={s.title} badge={s.stage} subtitle={s.channel} tone={s.tone} icon="video">
+          <p class="text-muted sm">{s.desc}</p>
+          <ActionItem href={s.url} external={true} icon="bolt" iconTone="c-rose" title="Watch Live Stream" />
+        </Card>
+      ))}
+    </div>
+  </div>
+</BaseLayout>

@@ -7,14 +7,12 @@ import { FACILITIES } from '../data/festival';
 ---
 <BaseLayout title="Facilities | Mala Kalolsavam" active="facilities">
   <div class="main-container">
-    <PageHead badge="Facilities" title="All Campus Facilities" intro="Everything you need — green rooms, toilets, drinking water, dining hall, help desk, medical room, and sanitary facilities." />
+    <PageHead badge="Facilities" title="All Campus Facilities" intro="Everything you need — green rooms, toilets, drinking water, dining hall, help desk, and medical room." />
     <div class="grid-3">
       {FACILITIES.map((f) => (
-        <Card title={f.title} titleI18n={f.titleI18n} subtitle={f.sub} subtitleI18n={f.subI18n} tone={f.tone} href={f.href}>
+        <Card title={f.title} titleI18n={f.titleI18n} subtitle={f.sub} subtitleI18n={f.subI18n} tone={f.tone} icon={f.icon}>
           <p class="text-muted sm" data-i18n={f.descI18n || undefined}>{f.desc}</p>
-          <div class="fest-action-item">
-            <span><strong>Location:</strong> {f.location}</span>
-          </div>
+          <ActionItem href={f.href || '/facilities'} icon="map-pin" iconTone="c-emerald" title={f.location} />
         </Card>
       ))}
     </div>

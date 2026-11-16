@@ -25,6 +25,15 @@ export interface FacilityItem {
   icon: string;
 }
 
+export interface LiveStreamItem {
+  stage: string;
+  title: string;
+  channel: string;
+  desc: string;
+  url: string;
+  tone: string;
+}
+
 export interface TeamMember {
   role: string;
   name: string;
@@ -67,16 +76,53 @@ export const TOILET_BLOCKS = [
   { name: "Block C", sub: "Ground Wing · Near Stage 2", desc: "Open-air stage side washroom.", loc: "Ground Wing, East of Stage 2" },
 ];
 
+export const WATER_STATIONS = [
+  { name: "Station W1", sub: "Main Block · Ground Floor", desc: "Filtered RO drinking water cooler with disposable cups.", loc: "Main Block, GF, Central Verandah" },
+  { name: "Station W2", sub: "Annex Block · Near Green Rooms", desc: "Dedicated chilled water dispenser for stage performers.", loc: "Annex Block, Ground Floor Entrance" },
+  { name: "Station W3", sub: "Main Ground · Stage 1 Side", desc: "High-capacity water point for spectators and teams.", loc: "Main Ground, West Side near Canteen" },
+  { name: "Station W4", sub: "Dining Hall (Oottupura)", desc: "Filtered drinking water and handwash counters.", loc: "Main Block, GF, Dining Wing" },
+];
+
+export const DINING_HALLS = [
+  { name: "Main Oottupura", sub: "Lunch · 12:30 – 14:30", desc: "Free traditional meals for registered participants, escort teachers, and volunteers.", loc: "Main Block, Ground Floor, East Wing" },
+  { name: "Refreshment Counter", sub: "Light Snacks · All Day", desc: "Drinking water, lime juice, and light refreshments for performers between items.", loc: "Near Main Ground Flag Post" },
+];
+
+export const LIVE_STREAMS: LiveStreamItem[] = [
+  {
+    stage: "Stage 1",
+    title: "St. Antony's HSS Ground",
+    channel: "Official Main Stage Stream",
+    desc: "Live telecast of flagship dance, group, and open-air events from Stage 1.",
+    url: "https://www.youtube.com/",
+    tone: "rose",
+  },
+  {
+    stage: "Stage 2",
+    title: "HS Hall",
+    channel: "Indoor Auditorium Stream",
+    desc: "Live coverage of classical music, recitation, and indoor competitions from Stage 2.",
+    url: "https://www.youtube.com/",
+    tone: "blue",
+  },
+  {
+    stage: "Stage 5",
+    title: "HSS Seminar Hall",
+    channel: "Seminar Hall Stream",
+    desc: "Live stream of literary, elocution, and stage events from Stage 5.",
+    url: "https://www.youtube.com/",
+    tone: "purple",
+  },
+];
+
 export const FACILITIES: FacilityItem[] = [
   { title: "Green Room", titleI18n: "fac.green.title", sub: "Dressing · Annex 1st Floor", subI18n: "fac.green.sub", desc: "Rooms G1–G6 for dressing and pre-stage waiting.", descI18n: "fac.green.desc", location: "Annex Block, 1st Floor", href: "/facilities-green-room", tone: "teal", icon: "user" },
   { title: "Toilet", titleI18n: "fac.toilet.title", sub: "Washrooms · 3 Blocks", subI18n: "fac.toilet.sub", desc: "Washroom blocks A, B, C across the campus.", descI18n: "fac.toilet.desc", location: "Blocks A, B, C", href: "/facilities-toilet", tone: "blue", icon: "water" },
-  { title: "Drinking Water", titleI18n: "fac.water.title", sub: "Filtered · 4 Stations", subI18n: "fac.water.sub", desc: "Filtered RO water dispensers with disposable cups.", descI18n: "fac.water.desc", location: "Main Block, Annex, Ground, Dining Hall", tone: "teal", icon: "sparkle" },
-  { title: "Dining Hall", titleI18n: "fac.dining.title", sub: "Oottupura · Main Block GF", subI18n: "fac.dining.sub", desc: "Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.", descI18n: "fac.dining.desc", location: "Main Block, Ground Floor", tone: "orange", icon: "grid" },
+  { title: "Drinking Water", titleI18n: "fac.water.title", sub: "Filtered · 4 Stations", subI18n: "fac.water.sub", desc: "Filtered RO water dispensers with disposable cups.", descI18n: "fac.water.desc", location: "4 Campus Stations", href: "/facilities-water", tone: "teal", icon: "sparkle" },
+  { title: "Dining Hall", titleI18n: "fac.dining.title", sub: "Oottupura · Main Block GF", subI18n: "fac.dining.sub", desc: "Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.", descI18n: "fac.dining.desc", location: "Main Block, Ground Floor", href: "/facilities-dining", tone: "orange", icon: "grid" },
   { title: "Help Desk", titleI18n: "fac.help.title", sub: "Convener · Main Gate", subI18n: "fac.help.sub", desc: "General convener, chest-number queries, schedule changes, and volunteer dispatch.", descI18n: "fac.help.desc", location: "Main Gate / Control Room", href: "/help", tone: "purple", icon: "building" },
   { title: "Medical Room", titleI18n: "fac.med.title", sub: "First Aid · 24/7 Standby", subI18n: "fac.med.sub", desc: "Nursing staff, oxygen, stretcher, and emergency ambulance.", descI18n: "fac.med.desc", location: "Near Main Gate (west side)", href: "/help", tone: "rose", icon: "medical" },
 ];
-
-
 
 export const TEAM_MEMBERS: TeamMember[] = [
   { role: "Lead Architect", name: "Name 1", desc: "Full-stack Frontend, Backend FastAPI API, Infrastructure & CI/CD Pipeline." },
