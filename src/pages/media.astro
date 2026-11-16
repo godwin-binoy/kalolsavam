@@ -8,8 +8,8 @@ import PageHead from '../components/PageHead.astro';
     <div class="card-base" style="max-width:500px;margin:0 auto">
       <form id="photo-lookup-form">
         <label style="display:block;margin-bottom:.9rem">
-          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Register Number (5 digits)</span>
-          <input id="reg-no" class="inp" required maxlength="5" pattern="\d{5}" inputmode="numeric">
+          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Register Number (4-5 digits)</span>
+          <input id="reg-no" class="inp" required maxlength="5" pattern="\d{4,5}" inputmode="numeric">
         </label>
         <label style="display:block;margin-bottom:.9rem">
           <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Full Name</span>

@@ -55,7 +55,7 @@ class PhotoAssignByRegisterIn(BaseModel):
 
 
 class PhotoLookupIn(BaseModel):
-    register_no: str = Field(pattern=r"^\d{5}$")
+    register_no: str = Field(pattern=r"^\d{4,5}$")
     name: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
 
 

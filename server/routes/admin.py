@@ -37,7 +37,7 @@ internal_router = APIRouter()
 log = logging.getLogger("kalolsavam")
 
 MAX_ITEMS_PER_PARTICIPANT = 7
-_REG_RE = re.compile(r"^\d{5}$")
+_REG_RE = re.compile(r"^\d{4,5}$")
 _SCHOOL_RE = re.compile(r"^\d{5,6}$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CSV_COLS = (
@@ -119,7 +119,7 @@ class PasswordResetIn(BaseModel):
 
 
 class ParticipantIn(BaseModel):
-    register_no: str = Field(pattern=r"^\d{5}$")
+    register_no: str = Field(pattern=r"^\d{4,5}$")
     name: ReqStr
     school_name: ReqStr
     school_code: str = Field(pattern=r"^\d{5,6}$")
@@ -128,7 +128,7 @@ class ParticipantIn(BaseModel):
 
 
 class ParticipantUpdateIn(BaseModel):
-    register_no: str | None = Field(default=None, pattern=r"^\d{5}$")
+    register_no: str | None = Field(default=None, pattern=r"^\d{4,5}$")
     name: OptStr = None
     school_name: OptStr = None
     school_code: str | None = Field(default=None, pattern=r"^\d{5,6}$")

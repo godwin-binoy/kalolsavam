@@ -201,8 +201,8 @@
 
   function addRegChip(reg, name){
     reg = String(reg || '').trim();
-    if (!/^\d{5}$/.test(reg)){
-      A.toast('Register number must be 5 digits.', true);
+    if (!/^\d{4,5}$/.test(reg)){
+      A.toast('Register number must be 4 or 5 digits.', true);
       return;
     }
     if (w2SelectedRegs.some(function(x){ return x.register_no === reg; })) return;
@@ -401,15 +401,15 @@
       regSearch.addEventListener('keydown', function(ev){
         if (ev.key === 'Enter'){
           ev.preventDefault();
-          if (/^\d{5}$/.test(this.value.trim())){ addRegChip(this.value.trim(), ''); this.value = ''; }
+          if (/^\d{4,5}$/.test(this.value.trim())){ addRegChip(this.value.trim(), ''); this.value = ''; }
         }
       });
     }
 
     document.getElementById('w2-reg-add').addEventListener('click', function(){
       var val = regSearch ? regSearch.value.trim() : '';
-      if (/^\d{5}$/.test(val)){ addRegChip(val, ''); regSearch.value = ''; }
-      else A.toast('Type a 5-digit register number or pick from suggestions.', true);
+      if (/^\d{4,5}$/.test(val)){ addRegChip(val, ''); regSearch.value = ''; }
+      else A.toast('Type a 4-5 digit register number or pick from suggestions.', true);
     });
 
     document.getElementById('w1-submit').addEventListener('click', function(){ uploadBulk(this); });
