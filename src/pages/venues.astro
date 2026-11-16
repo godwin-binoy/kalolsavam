@@ -6,18 +6,18 @@ import ActionItem from '../components/ActionItem.astro';
 ---
 <BaseLayout title="Stages & Venues | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Stages & Venues" title="Stages & Venues" intro="Pick what you need: venue location, find a venue by competition item, or follow live on-stage updates." />
+    <PageHead badge="Stages & Venues" title="Stages & Venues" intro="Pick what you need: find a venue by competition item, venue locations, or live on-stage tracker." />
     <div class="grid-3">
-      <Card title="Location" subtitle="Where is it?" tone="blue" icon="map-pin">
-        <p class="text-muted sm">Every stage, hall, and ground on campus — with walking directions from the main gate.</p>
-        <ActionItem href="/venues-location" title="Open Venue Locations" />
-      </Card>
       <Card title="Find by Item" subtitle="Which venue?" tone="purple" icon="search">
-        <p class="text-muted sm">Type your item code or name — we'll show its venue, day, and scheduled time.</p>
+        <p class="text-muted sm">Search competitions by category (LP, UP, HS, HSS, Sanskrit, Arabic) or item name — with venues and schedules.</p>
         <ActionItem href="/venues-find" title="Search Items" />
       </Card>
+      <Card title="Location" subtitle="Where is it?" tone="blue" icon="map-pin">
+        <p class="text-muted sm">All 26 venues across campus with room numbers, hall floors, and walking locations.</p>
+        <ActionItem href="/venues-location" title="Open Venue Locations" />
+      </Card>
       <Card title="Live Updates" subtitle="On-stage Tracker" tone="teal" icon="bolt">
-        <p class="text-muted sm">Real-time chest numbers, queues, delays, and stage announcements.</p>
+        <p class="text-muted sm">Real-time chest numbers, active events, and stage queue announcements.</p>
         <ActionItem href="/venues-live" title="Open Live Tracker" />
       </Card>
     </div>

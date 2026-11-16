@@ -1,9 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
 import { FESTIVAL_SCHEDULE } from '../data/schedule';
 import stages from '../data/stages.json';
+
+const CATEGORIES = [
+  "LP General",
+  "UP General",
+  "HS General",
+  "HSS General",
+  "UP Sanskrit",
+  "HS Sanskrit",
+  "LP Arabic",
+  "UP Arabic",
+  "HS Arabic",
+];
 
 const venueMap: Record<number, { name: string; loc: string }> = {};
 for (const s of stages) {
@@ -15,48 +26,130 @@ const scheduleWithDetails = FESTIVAL_SCHEDULE.map((it) => ({
   venue_name: venueMap[it.venue_n]?.name || `Venue ${it.venue_n}`,
   venue_loc: venueMap[it.venue_n]?.loc || '',
 }));
+
+const categoryGroups = CATEGORIES.map((cat) => ({
+  name: cat,
+  count: scheduleWithDetails.filter((it) => it.cat === cat).length,
+  items: scheduleWithDetails.filter((it) => it.cat === cat),
+}));
 ---
 <BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Item Finder" title="Find Venue by Item" intro="Search any competition item name or category — venue, date, and timing will be displayed immediately." />
+    <PageHead badge="Item & Category Finder" title="Find Venue by Item" intro="Browse by category or type an item name. Every competition is listed with its assigned venue number and schedule." />
+
+    <!-- Live Search Bar -->
     <div class="card-base" style="margin-bottom:1.5rem">
-      <input id="q" type="search" class="inp" placeholder="Type item name in Manglish — e.g. Oppana, Bharathanatyam, Sanghanritham, Kolkali…" autocomplete="off">
-      <p class="text-muted sm" style="margin:.5rem 0 0">Try: Oppana · Bharathanatyam · Sanghanritham · Margamkali · Kolkali · Duffmuttu · Vattappattu</p>
+      <input id="q" type="search" class="inp" placeholder="Search item or category — e.g. Oppana, Bharathanatyam, Sanghanritham, Sanskrit, Arabic…" autocomplete="off">
+      <div class="row" style="margin-top:.75rem;gap:.4rem" id="cat-chips">
+        <button type="button" class="btn-primary sm ghost active" data-cat="all">All</button>
+        {CATEGORIES.map((cat) => (
+          <button type="button" class="btn-primary sm ghost" data-cat={cat}>{cat}</button>
+        ))}
+      </div>
     </div>
-    <div id="results" class="grid-2"></div>
-    <p id="empty" class="text-muted center" style="margin-top:2rem" hidden>No matching items found.</p>
+
+    <!-- Category Sections & Cards -->
+    <div id="category-sections" style="display:flex;flex-direction:column;gap:2rem">
+      {categoryGroups.map((grp) => (
+        <section class="cat-section" data-cat-name={grp.name}>
+          <div class="sec-head" style="margin-bottom:1rem;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
+            <h2 style="font-size:1.35rem;margin:0">{grp.name}</h2>
+            <span class="badge-gov">{grp.count} events</span>
+          </div>
+
+          <div class="grid-3 item-grid" style="gap:1rem">
+            {grp.items.map((it) => (
+              <div class="fest-card item-card" data-item-text={`${it.item} ${it.cat} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time}`.toLowerCase()}>
+                <div class="fest-header banner-blue" style="padding:.9rem 1.1rem">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem">
+                    <span style="font-size:.72rem;padding:.15rem .55rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">
+                      Venue #{it.venue_n}
+                    </span>
+                    <span style="font-size:.72rem;opacity:.9">{it.day.split(' ')[0]}</span>
+                  </div>
+                  <h3 class="fest-title" style="font-size:1.05rem;line-height:1.2">{it.item}</h3>
+                </div>
+                <div class="fest-body" style="padding:.85rem 1rem;gap:.45rem;font-size:.85rem">
+                  <div><strong>Venue:</strong> {it.venue_name}</div>
+                  <div class="text-muted xs">{it.venue_loc}</div>
+                  <div style="margin-top:.3rem;color:var(--accent);font-weight:600">
+                    ⏱ {it.day} · {it.time}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
+
+    <p id="empty-state" class="text-muted center" style="margin-top:3rem" hidden>No matching items found.</p>
   </div>
-  <script is:inline define:vars={{ BASE, scheduleWithDetails }}>
+
+  <style>
+    .cat-section { transition: opacity .2s ease; }
+    .item-card { border-radius: var(--radius-inner); }
+    .btn-primary.sm.ghost.active { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+  </style>
+
+  <script is:inline>
     (function(){
-      var q = document.getElementById('q'), res = document.getElementById('results'), emp = document.getElementById('empty');
-      if (!q || !res || !emp) return;
+      var q = document.getElementById('q');
+      var chipContainer = document.getElementById('cat-chips');
+      var sections = Array.from(document.querySelectorAll('.cat-section'));
+      var emptyState = document.getElementById('empty-state');
+      var activeCat = 'all';
 
-      function esc(s){ return window.Kal ? window.Kal.esc(s) : String(s || ''); }
+      function applyFilter(){
+        var searchVal = (q ? q.value : '').trim().toLowerCase();
+        var tokens = searchVal.split(/\s+/).filter(Boolean);
+        var anyVisible = false;
 
-      function render(filter){
-        var tokens = (filter || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-        var matches = scheduleWithDetails.filter(function(e){
-          if (!tokens.length) return true;
-          var txt = (e.item + ' ' + e.cat + ' ' + e.venue_name + ' ' + e.venue_loc + ' ' + e.day + ' ' + e.time).toLowerCase();
-          return tokens.every(function(t){ return txt.indexOf(t) >= 0; });
+        sections.forEach(function(sec){
+          var secCat = sec.getAttribute('data-cat-name');
+          var catMatches = (activeCat === 'all' || activeCat === secCat);
+          var items = Array.from(sec.querySelectorAll('.item-card'));
+          var visibleItemsInSec = 0;
+
+          items.forEach(function(card){
+            var text = card.getAttribute('data-item-text') || '';
+            var matchesSearch = (!tokens.length) || tokens.every(function(t){ return text.indexOf(t) >= 0; });
+
+            if (catMatches && matchesSearch){
+              card.style.display = '';
+              visibleItemsInSec++;
+            } else {
+              card.style.display = 'none';
+            }
+          });
+
+          if (catMatches && visibleItemsInSec > 0){
+            sec.style.display = '';
+            anyVisible = true;
+          } else {
+            sec.style.display = 'none';
+          }
         });
 
-        emp.hidden = matches.length > 0;
-        res.innerHTML = matches.slice(0, 80).map(function(e){
-          return '<div class="fest-card"><div class="fest-header banner-blue">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">' +
-              '<span style="font-size:.75rem;padding:.2rem .65rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">Venue #' + e.venue_n + '</span>' +
-              '<span style="font-size:.75rem;opacity:.9;font-weight:600">' + esc(e.cat) + '</span>' +
-            '</div><h3 class="fest-title" style="font-size:1.15rem">' + esc(e.item) + '</h3></div>' +
-            '<div class="fest-body">' +
-              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-rose"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/map-pin.svg\')"></span></span><span><strong>Venue:</strong> ' + esc(e.venue_name) + ' (' + esc(e.venue_loc) + ')</span></span></div>' +
-              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-amber"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/bolt.svg\')"></span></span><span><strong>Schedule:</strong> ' + esc(e.day) + ' · ' + esc(e.time) + '</span></span></div>' +
-            '</div></div>';
-        }).join('');
+        if (emptyState){
+          emptyState.hidden = anyVisible;
+        }
       }
 
-      render('');
-      q.addEventListener('input', function(){ render(q.value); });
+      if (q){
+        q.addEventListener('input', applyFilter);
+      }
+
+      if (chipContainer){
+        chipContainer.addEventListener('click', function(ev){
+          var btn = ev.target.closest('button[data-cat]');
+          if (!btn) return;
+          chipContainer.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
+          btn.classList.add('active');
+          activeCat = btn.getAttribute('data-cat') || 'all';
+          applyFilter();
+        });
+      }
     })();
   </script>
 </BaseLayout>
