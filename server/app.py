@@ -19,7 +19,8 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .auth import check_rate_limit, router as auth_router
+from .auth import check_rate_limit
+from .auth import router as auth_router
 from .config import Settings
 from .db import Database
 
