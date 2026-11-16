@@ -1,53 +1,5 @@
 @import "../../public/assets/css/tokens.css";
 
-/* Design Tokens & Theme */
-:root{
-  --bg:#FAFAF7; --bg-alt:#F3F1EC; --surface:#FFFFFF; --surface-2:#F6F4EE;
-  --text:#242D27; --text-heading:#111814; --muted:#5A6B60; --subtle:#829587;
-  --border:#E5EBE3;
-  --brand:#1B2E20; --brand-2:#283E2F; --on-brand:#FFFFFF;
-  --shadow-sm:0 1px 3px rgba(15,23,42,.05), 0 1px 2px rgba(15,23,42,.03);
-  --shadow-card:0 10px 30px -10px rgba(17,24,20,.07), 0 1px 3px rgba(17,24,20,.03);
-  --shadow-card-hover:0 20px 40px -12px rgba(17,24,20,.14), 0 4px 12px rgba(17,24,20,.06);
-  --banner-blue-from:#2563EB; --banner-blue-to:#1D4ED8;
-  --banner-purple-from:#6D28D9; --banner-purple-to:#4C1D95;
-  --banner-indigo-from:#4F46E5; --banner-indigo-to:#3730A3;
-  --banner-pink-from:#E11D48; --banner-pink-to:#BE123C;
-  --banner-teal-from:#0D9488; --banner-teal-to:#0F766E;
-  --banner-orange-from:#EA580C; --banner-orange-to:#C2410C;
-  --banner-rose-from:#E11D48; --banner-rose-to:#9F1239;
-  --badge-gov-bg:#E2ECE0; --badge-gov-text:#16261B; --badge-gov-border:#CEDCCD;
-  --badge-live-text:#065F46; --badge-live-bg:#D1FAE5; --badge-live-border:#6EE7B7; --dot-live:#059669;
-  --badge-emergency-text:#9F1239; --badge-emergency-bg:#FFE4E6; --badge-emergency-border:#FECDD3;
-  --action-item-bg:rgba(255,255,255,.95); --action-item-border:rgba(229,235,227,.9);
-  --action-item-hover-bg:#FFFFFF; --action-item-hover-border:#CBD5E1; --action-item-icon-bg:#F0F4EF;
-  --card-bg:rgba(255,255,255,.98);
-  --footer-bg:#0C120F; --footer-fg:#E2E8F0;
-  --radius-pill:9999px; --radius-card:1.25rem; --radius-inner:1rem;
-  --ease:cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-snappy:cubic-bezier(0.2, 0.8, 0.2, 1);
-  --ease-spring:cubic-bezier(0.34, 1.25, 0.64, 1);
-  --dur-fast:140ms; --dur-mid:220ms;
-  --dot-grid-color:rgba(27,46,32,0.05);
-  color-scheme:light;
-}
-html.dark{
-  color-scheme:dark;
-  --dot-grid-color:rgba(255,255,255,0.03);
-  --bg:#0A0F0D; --bg-alt:#101713; --surface:#141D17; --surface-2:#1A2520;
-  --text:#E2E8DF; --text-heading:#F8FAFC; --muted:#94A3B8; --subtle:#64748B;
-  --border:#223028; --brand:#D4E2CD; --brand-2:#A3B59D; --on-brand:#0A0F0D;
-  --shadow-card:0 10px 30px -10px rgba(0,0,0,.4);
-  --shadow-card-hover:0 20px 40px -12px rgba(0,0,0,.6);
-  --badge-gov-bg:#1E2B23; --badge-gov-text:#D4E2CD; --badge-gov-border:#2A3B31;
-  --badge-live-text:#6EE7B7; --badge-live-bg:rgba(6,78,59,.4); --badge-live-border:rgba(52,211,153,.3);
-  --badge-emergency-text:#FDA4AF; --badge-emergency-bg:rgba(159,18,57,.35); --badge-emergency-border:rgba(244,63,94,.3);
-  --action-item-bg:rgba(255,255,255,.03); --action-item-border:rgba(255,255,255,.06);
-  --action-item-hover-bg:rgba(255,255,255,.07); --action-item-hover-border:rgba(255,255,255,.12);
-  --action-item-icon-bg:rgba(255,255,255,.06); --card-bg:rgba(18,24,20,.95);
-  --footer-bg:#050706; --footer-fg:#94A3B8;
-}
-
 /* Base & Fluid Typography */
 *{box-sizing:border-box}
 html{scroll-behavior:smooth;background:var(--bg);scrollbar-width:none;-ms-overflow-style:none}
@@ -398,3 +350,7 @@ html.dark .stage-blueprint{border-color:var(--border);background:#141A17}
 .banner-teal, [data-tone="teal"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #0D9488), var(--tone-to, #0F766E)); }
 .banner-orange, [data-tone="orange"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #EA580C), var(--tone-to, #C2410C)); }
 .banner-rose, [data-tone="rose"] .fest-header { background: linear-gradient(135deg, var(--tone-from, #E11D48), var(--tone-to, #9F1239)); }
+
+/* Scroll-hide header & layout helpers */
+.hdr{transition:transform .3s var(--ease)}
+.hdr.hdr-hidden{transform:translateY(-100%)}

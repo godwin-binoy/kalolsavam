@@ -107,11 +107,10 @@ import { BASE, url } from '../lib/url';
     </div>
   </section>
 
-  <script is:inline define:vars={{ BASE }}>
+  <script is:inline define:vars={{ BASE, stageSearch }}>
     (function(){
       'use strict';
-      var index = [
-        { title: "Stage 1: St. Antony's HSS Ground", desc: "Main open-air stage on school ground · 1500 seats", href: "venues-stage/1", cat: "Stage 1", keys: ["stage 1", "main ground", "ground", "1"] },
+      var index = stageSearch.concat([
         { title: "Stage 2: HS Hall", desc: "High School main hall indoor auditorium · 400 seats", href: "venues-stage/2", cat: "Stage 2", keys: ["stage 2", "hs hall", "hall", "2"] },
         { title: "Stage 3: GLPS Mala", desc: "Government Lower Primary School Mala stage · 200 seats", href: "venues-stage/3", cat: "Stage 3", keys: ["stage 3", "glps mala", "glps", "3"] },
         { title: "Stage 4: HSS A1 B1 Classes", desc: "Combined classrooms A1 and B1 ground floor", href: "venues-stage/4", cat: "Stage 4", keys: ["stage 4", "a1", "b1", "4"] },

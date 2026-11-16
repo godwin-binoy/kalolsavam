@@ -13,10 +13,6 @@ const PRECACHE_FLEET = [
   'transportation/',
   'transportation-bus/',
   'transportation-auto/',
-  'results/',
-  'results-offstage/',
-  'results-individual/',
-  'results-group/',
   'media/',
   'developers/',
   'help/'

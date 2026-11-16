@@ -49,7 +49,6 @@
   }
 
 
-  var header = document.querySelector('.hdr');
   if (header) {
     var lastScroll = 0;
     window.addEventListener('scroll', function() {

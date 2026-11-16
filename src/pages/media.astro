@@ -5,65 +5,77 @@ import PageHead from '../components/PageHead.astro';
 <BaseLayout title="Media & Photos | Mala Kalolsavam" active="media">
   <div class="main-container">
     <PageHead badge="Official Media" title="Download Your Stage Photos" intro="Enter your register number and name exactly as printed on your participation card." />
-    
+
     <div class="card-base" style="max-width:500px;margin:0 auto">
       <form id="photo-lookup-form">
-        <label>Register Number<input id="reg-no" required maxlength="5" pattern="\d{5}"></label>
-        <label>Full Name<input id="reg-name" required></label>
-        <button type="submit" class="primary" style="margin-top:1rem;width:100%">Find My Photos</button>
-        <p id="lookup-msg" class="msg center" style="margin-top:1rem"></p>
+        <label style="display:block;margin-bottom:.9rem">
+          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Register Number (5 digits)</span>
+          <input id="reg-no" class="inp" required maxlength="5" pattern="\d{5}" inputmode="numeric">
+        </label>
+        <label style="display:block;margin-bottom:.9rem">
+          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Full Name</span>
+          <input id="reg-name" class="inp" required maxlength="200">
+        </label>
+        <button type="submit" class="btn-primary dark" style="margin-top:.5rem;width:100%">Find My Photos</button>
+        <p id="lookup-msg" class="text-muted sm center" style="margin:1rem 0 0" role="status" aria-live="polite"></p>
       </form>
     </div>
 
     <div id="gallery" class="grid-3" style="margin-top:3rem"></div>
   </div>
 
-  <script>
-    document.getElementById('photo-lookup-form').addEventListener('submit', async function(e) {
-      e.preventDefault();
+  <script is:inline>
+    (function(){
+      var form = document.getElementById('photo-lookup-form');
       var msg = document.getElementById('lookup-msg');
       var gal = document.getElementById('gallery');
-      msg.textContent = 'Searching...';
-      gal.innerHTML = '';
-      
-      var reg = document.getElementById('reg-no').value.trim();
-      var name = document.getElementById('reg-name').value.trim();
-      
-      try {
-        var res = await fetch(window.KAL_API_BASE + '/api/v1/photos/public/lookup', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({register_no: reg, name: name})
-        });
-        var data = await res.json();
-        
-        if (!res.ok) {
-          msg.textContent = 'No match found. Check your register number and name spelling.';
-          msg.className = 'msg err center';
-          return;
+      if (!form || !window.Kal) return;
+      var K = window.Kal;
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        msg.textContent = 'Searching…';
+        gal.innerHTML = '';
+
+        var reg = document.getElementById('reg-no').value.trim();
+        var name = document.getElementById('reg-name').value.trim();
+        var base = K.apiBase();
+
+        try {
+          var res = await fetch(base + '/api/v1/photos/public/lookup', {
+            method: 'POST',
+            credentials: 'omit',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ register_no: reg, name: name })
+          });
+          if (res.status === 429){
+            msg.textContent = 'Too many attempts. Please wait a minute and try again.';
+            return;
+          }
+          var data = await res.json().catch(function(){ return {}; });
+          if (!res.ok){
+            msg.textContent = 'No match found. Check your register number and name spelling.';
+            return;
+          }
+          if (!data.photos || !data.photos.length){
+            msg.textContent = 'Profile found, but no published photos are available yet.';
+            return;
+          }
+          msg.textContent = 'Found ' + data.photos.length + ' photo(s).';
+          gal.innerHTML = data.photos.map(function(p){
+            var viewUrl = base + p.url;
+            var dlUrl = viewUrl + '&dl=1';
+            return '<div class="fest-card">' +
+              '<img src="' + K.esc(viewUrl) + '" alt="Stage photo" loading="lazy" style="width:100%;display:block">' +
+              '<div class="fest-body">' +
+                '<p class="sm text-muted" style="margin:0">Item(s): ' + K.esc((p.entries || []).join(', ')) + '</p>' +
+                '<a href="' + K.esc(dlUrl) + '" class="btn-primary dark sm" style="width:100%;text-align:center">Download</a>' +
+              '</div></div>';
+          }).join('');
+        } catch (err){
+          msg.textContent = 'Network error. Please try again.';
         }
-        
-        if (!data.photos || !data.photos.length) {
-          msg.textContent = 'Profile found, but no photos have been uploaded for your items yet.';
-          msg.className = 'msg center';
-          return;
-        }
-        
-        msg.textContent = 'Found ' + data.photos.length + ' photos!';
-        msg.className = 'msg ok center';
-        
-        gal.innerHTML = data.photos.map(function(p) {
-          return '<div class="fest-card">' +
-            '<img src="' + window.KAL_API_BASE + p.url + '" style="width:100%;display:block">' +
-            '<div class="fest-body">' +
-              '<p class="small muted">Item: ' + p.entries.join(', ') + '</p>' +
-              '<a href="' + window.KAL_API_BASE + p.url + '" download class="btn-primary dark" style="width:100%;text-align:center">Download</a>' +
-            '</div>' +
-          '</div>';
-        }).join('');
-      } catch (err) {
-        msg.textContent = 'Network error.';
-      }
-    });
+      });
+    })();
   </script>
 </BaseLayout>

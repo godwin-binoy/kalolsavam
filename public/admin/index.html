@@ -11,7 +11,7 @@
 <body class="login-body">
 <main class="login-card">
   <h1 class="brand">Kalolsavam <span>Admin Console</span></h1>
-  <p class="muted small">Master data, staff accounts, queue, results, and operations.</p>
+  <p class="muted small">Master data, staff accounts, participants, queue, and operations.</p>
   <form id="login-form" autocomplete="off">
     <label>Email<input id="email" type="email" required maxlength="120" autocomplete="email"></label>
     <label>Password<input id="password" type="password" required autocomplete="current-password"></label>
@@ -26,7 +26,8 @@
     <span class="spacer"></span>
     <button id="theme" title="Toggle dark mode" style="margin-right:.5rem">🌓 Theme</button>
     <button id="change-pass-btn" class="small">🔑 Password</button>
-    <a href="/dashboard/" class="btn-link">&#x1F4CA; Dashboard</a>
+    <a href="/dashboard/" class="btn-link">📊 Dashboard</a>
+    <a href="/dataworker/" class="btn-link">📷 Data Worker</a>
     <button id="logout-btn">Sign out</button>
   </header>
   <main>
@@ -34,10 +35,9 @@
       <button class="tab active" data-tab="venues">Venues</button>
       <button class="tab" data-tab="categories">Categories</button>
       <button class="tab" data-tab="events">Events</button>
+      <button class="tab" data-tab="participants">Participants</button>
       <button class="tab" data-tab="queue">Queue</button>
       <button class="tab" data-tab="users">Users</button>
-      <button class="tab" data-tab="results">Results</button>
-      <button class="tab" data-tab="participants">Participants</button>
       <button class="tab" data-tab="audit">Audit</button>
       <button class="tab" data-tab="ops">Ops</button>
     </nav>
@@ -52,6 +52,7 @@
     <label>Email<input id="u-edit-email" type="email" required></label>
     <label>Role<select id="u-edit-role">
       <option value="stagemaster">stagemaster</option>
+      <option value="dataworker">dataworker</option>
       <option value="admin">admin</option>
     </select></label>
     <label>Status<select id="u-edit-active">
@@ -90,41 +91,44 @@
   </form>
 </dialog>
 
-<script src="/config.js"></script>
-
 <dialog id="part-edit-dialog">
-  <h3 style="margin-top:0">Edit Participant</h3>
+  <h3 style="margin-top:0">Participant</h3>
   <form id="part-edit-form">
     <input type="hidden" id="pe-id">
-    <label>Register No<input id="pe-reg" required maxlength="5" pattern="\d{5}"></label>
-    <label>Name<input id="pe-name" required></label>
-    <label>School Name<input id="pe-school" required></label>
-    <label>School Code<input id="pe-scode" required maxlength="6" pattern="\d{5,6}"></label>
-    <label>Class<input id="pe-class" type="number" min="1" max="12" required></label>
-    
-    <div style="margin-top:1rem">
-      <h4 style="margin:.5rem 0">Items</h4>
-      <div id="pe-entries-list"></div>
-    </div>
-
-    <div class="row" style="margin-top:1.5rem">
+    <label>Register No (5 digits)<input id="pe-reg" required maxlength="5" pattern="\d{5}"></label>
+    <label>Name<input id="pe-name" required maxlength="200"></label>
+    <label>School Name<input id="pe-school" required maxlength="200"></label>
+    <label>School Code (5-6 digits)<input id="pe-scode" required maxlength="6" pattern="\d{5,6}"></label>
+    <label>Class (1-12)<input id="pe-class" type="number" min="1" max="12" required></label>
+    <div class="row" style="margin-top:1rem">
       <button value="save" class="primary" type="submit">Save Participant</button>
-      <button type="button" data-cancel-part>Cancel</button>
+      <button type="button" data-cancel-part>Close</button>
     </div>
   </form>
+  <div id="pe-entries-section" style="margin-top:1.25rem;display:none">
+    <hr style="margin:1rem 0;border:none;border-top:1px solid var(--border)">
+    <h4 style="margin:0 0 .5rem">Item Entries (max 7)</h4>
+    <div id="pe-entries-list"></div>
+    <form id="pe-entry-add-form" class="row" style="margin-top:.75rem">
+      <input id="pe-item-code" placeholder="Item code" required maxlength="32" style="width:6.5rem">
+      <select id="pe-entry-venue" required style="flex:1"></select>
+      <input id="pe-entry-date" type="date" required style="width:9.5rem">
+      <button type="submit" class="primary small">+ Add</button>
+    </form>
+  </div>
 </dialog>
 
 <dialog id="queue-add-dialog">
   <h3 style="margin-top:0">Add to Queue</h3>
   <form id="queue-add-form">
-    <input type="hidden" id="qa-venue">
+    <label>Venue<select id="qa-venue" required></select></label>
     <input type="hidden" id="qa-entry-id">
-    <label>Search Participant (Reg No or Name)<input id="qa-search" placeholder="Type at least 2 chars..."></label>
-    <div id="qa-results" style="max-height:150px;overflow-y:auto;background:var(--panel-2);padding:.5rem;border-radius:4px;margin-bottom:1rem"></div>
+    <label>Search Participant (Reg No or Name)<input id="qa-search" placeholder="Type at least 2 chars..." autocomplete="off"></label>
+    <div id="qa-results" style="max-height:190px;overflow-y:auto;background:var(--panel-2);padding:.5rem;border-radius:6px;margin:.5rem 0 1rem"></div>
     <label>Chest No (Optional)<input id="qa-chest" maxlength="16"></label>
     <div class="row" style="margin-top:1rem">
-      <button class="primary" type="submit">Add</button>
-      <button type="button" onclick="document.getElementById('queue-add-dialog').close()">Cancel</button>
+      <button class="primary" type="submit">Add to Queue</button>
+      <button type="button" data-cancel-queue>Cancel</button>
     </div>
   </form>
 </dialog>
@@ -134,6 +138,5 @@
 <script src="/dashboard/js/auth.js"></script>
 <script src="/dashboard/js/ui.js"></script>
 <script src="/dashboard/js/admin.js"></script>
-<script src="/dashboard/js/admin_participants.js"></script>
 </body>
 </html>

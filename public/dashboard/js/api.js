@@ -296,6 +296,7 @@
     refresh: refreshOnce,
     esc: esc,
     api: api,
+    authorizedFetch: authorizedFetch,
     downloadBlob: downloadBlob,
     stream: stream,
     toast: toast
