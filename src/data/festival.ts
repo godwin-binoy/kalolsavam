@@ -116,12 +116,12 @@ export const LIVE_STREAMS: LiveStreamItem[] = [
 ];
 
 export const FACILITIES: FacilityItem[] = [
-  { title: "Green Room", titleI18n: "fac.green.title", sub: "Dressing · Annex 1st Floor", subI18n: "fac.green.sub", desc: "Rooms G1–G6 for dressing and pre-stage waiting.", descI18n: "fac.green.desc", location: "Annex Block, 1st Floor", href: "/facilities-green-room", tone: "teal", icon: "user" },
-  { title: "Toilet", titleI18n: "fac.toilet.title", sub: "Washrooms · 3 Blocks", subI18n: "fac.toilet.sub", desc: "Washroom blocks A, B, C across the campus.", descI18n: "fac.toilet.desc", location: "Blocks A, B, C", href: "/facilities-toilet", tone: "blue", icon: "water" },
-  { title: "Drinking Water", titleI18n: "fac.water.title", sub: "Filtered · 4 Stations", subI18n: "fac.water.sub", desc: "Filtered RO water dispensers with disposable cups.", descI18n: "fac.water.desc", location: "4 Campus Stations", href: "/facilities-water", tone: "teal", icon: "sparkle" },
-  { title: "Dining Hall", titleI18n: "fac.dining.title", sub: "Oottupura · Main Block GF", subI18n: "fac.dining.sub", desc: "Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.", descI18n: "fac.dining.desc", location: "Main Block, Ground Floor", href: "/facilities-dining", tone: "orange", icon: "grid" },
-  { title: "Help Desk", titleI18n: "fac.help.title", sub: "Convener · Main Gate", subI18n: "fac.help.sub", desc: "General convener, chest-number queries, schedule changes, and volunteer dispatch.", descI18n: "fac.help.desc", location: "Main Gate / Control Room", href: "/help", tone: "purple", icon: "building" },
-  { title: "Medical Room", titleI18n: "fac.med.title", sub: "First Aid · 24/7 Standby", subI18n: "fac.med.sub", desc: "Nursing staff, oxygen, stretcher, and emergency ambulance.", descI18n: "fac.med.desc", location: "Near Main Gate (west side)", href: "/help", tone: "rose", icon: "medical" },
+  { title: "Green Room", sub: "Dressing · Annex 1st Floor", desc: "Rooms G1–G6 for dressing and pre-stage waiting.", location: "Annex Block, 1st Floor", href: "/facilities-green-room", tone: "teal", icon: "user" },
+  { title: "Toilet", sub: "Washrooms · 3 Blocks", desc: "Washroom blocks A, B, C across the campus.", location: "Blocks A, B, C", href: "/facilities-toilet", tone: "blue", icon: "water" },
+  { title: "Drinking Water", sub: "Filtered · 4 Stations", desc: "Filtered RO water dispensers with disposable cups.", location: "4 Campus Stations", href: "/facilities-water", tone: "teal", icon: "sparkle" },
+  { title: "Dining Hall", sub: "Oottupura · Main Block GF", desc: "Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.", location: "Main Block, Ground Floor", href: "/facilities-dining", tone: "orange", icon: "grid" },
+  { title: "Help Desk", sub: "Convener · Main Gate", desc: "General convener, chest-number queries, schedule changes, and volunteer dispatch.", location: "Main Gate / Control Room", href: "/help", tone: "purple", icon: "building" },
+  { title: "Medical Room", sub: "First Aid · 24/7 Standby", desc: "Nursing staff, oxygen, stretcher, and emergency ambulance.", location: "Near Main Gate (west side)", href: "/help", tone: "rose", icon: "medical" },
 ];
 
 export const TEAM_MEMBERS: TeamMember[] = [

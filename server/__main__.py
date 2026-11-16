@@ -18,15 +18,12 @@ app = typer.Typer(help="Kalolsavam management CLI", no_args_is_help=False)
 log = logging.getLogger("kalolsavam")
 
 FALLBACK_STAGES = [
-    {"n": 1, "name": "St. Antony's HSS Ground", "slug": "stage-1", "kind": "stage"},
-    {"n": 2, "name": "HS Hall", "slug": "stage-2", "kind": "stage"},
-    {"n": 3, "name": "GLPS Mala", "slug": "stage-3", "kind": "stage"},
-    {"n": 4, "name": "HSS A1 B1 Classes", "slug": "stage-4", "kind": "stage"},
-    {"n": 5, "name": "HSS Seminar Hall", "slug": "stage-5", "kind": "stage"},
-    {"n": 6, "name": "Vyaapaara Bhavan", "slug": "stage-6", "kind": "stage"},
-    {"n": 7, "name": "HSS 1st Floor Class", "slug": "stage-7", "kind": "stage"},
-    {"n": 8, "name": "HS 9E Class", "slug": "stage-8", "kind": "stage"},
-    {"n": 9, "name": "HS Arabic Class", "slug": "stage-9", "kind": "stage"},
+    {"n": i, "name": name}
+    for i, name in enumerate([
+        "St. Antony's HSS Ground", "HS Hall", "GLPS Mala",
+        "HSS A1 B1 Classes", "HSS Seminar Hall", "Vyaapaara Bhavan",
+        "HSS 1st Floor Class", "HS 9E Class", "HS Arabic Class",
+    ], start=1)
 ]
 
 
@@ -192,22 +189,23 @@ def user_reset_password(email: str = typer.Option(..., "--email", "-e"), passwor
         typer.echo(f"New password: {used}")
 
 
-@app.command()
-def user_enable(email: str = typer.Option(..., "--email", "-e")) -> None:
+def _set_active(email: str, active: bool) -> None:
     _cfg, db = _init_db()
-    if not db.ex("UPDATE users SET is_active = 1 WHERE email = ?", (email.strip().lower(),)).rowcount:
+    bump = "" if active else ", token_version = token_version + 1"
+    if not db.ex(f"UPDATE users SET is_active = ?{bump} WHERE email = ?", (int(active), email.strip().lower())).rowcount:  # noqa: S608
         typer.echo("Failed: not_found", err=True)
         raise typer.Exit(1)
-    typer.echo(f"User {email} enabled.")
+    typer.echo(f"User {email} {'enabled' if active else 'disabled'}.")
+
+
+@app.command()
+def user_enable(email: str = typer.Option(..., "--email", "-e")) -> None:
+    _set_active(email, True)
 
 
 @app.command()
 def user_disable(email: str = typer.Option(..., "--email", "-e")) -> None:
-    _cfg, db = _init_db()
-    if not db.ex("UPDATE users SET is_active = 0, token_version = token_version + 1 WHERE email = ?", (email.strip().lower(),)).rowcount:
-        typer.echo("Failed: not_found", err=True)
-        raise typer.Exit(1)
-    typer.echo(f"User {email} disabled.")
+    _set_active(email, False)
 
 
 @app.command()

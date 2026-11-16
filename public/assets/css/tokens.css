@@ -172,3 +172,12 @@ html.dark {
   --tone-to: #3730A3;
   --tone-accent: #4F46E5;
 }
+
+/* Shared Utility Classes */
+.hidden{display:none!important}
+.row{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.muted,.text-muted{color:var(--muted)}
+.small,.sm{font-size:.875rem;line-height:1.5}
+.xs{font-size:.75rem;line-height:1.4}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.center,.text-center{text-align:center}

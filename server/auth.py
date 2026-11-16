@@ -211,6 +211,13 @@ class ChangePasswordIn(BaseModel):
     new_password: str = Field(min_length=12, max_length=256)
 
 
+def _audit_login(db, email: str, ip_h: str, event: str, detail: str) -> None:
+    db.ex(
+        "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
+        (db.now(), email, ip_h, event, detail),
+    )
+
+
 @router.post("/login")
 def login(body: LoginIn, request: Request):
     db, cfg = get_db(request), get_cfg(request)
@@ -218,28 +225,19 @@ def login(body: LoginIn, request: Request):
     ip_h = hash_ip(client_ip(request), cfg.secret_key)
     u = db.one("SELECT * FROM users WHERE email = ?", (email,))
     if not u or not u["is_active"]:
-        db.ex(
-            "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-            (db.now(), email, ip_h, "login_fail", "invalid_or_disabled"),
-        )
+        _audit_login(db, email, ip_h, "login_fail", "invalid_or_disabled")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_credentials")
     try:
         ph.verify(u["password_hash"], body.password)
     except VerifyMismatchError as exc:
-        db.ex(
-            "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-            (db.now(), email, ip_h, "login_fail", "bad_password"),
-        )
+        _audit_login(db, email, ip_h, "login_fail", "bad_password")
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_credentials") from exc
 
     with db.transaction():
         if ph.check_needs_rehash(u["password_hash"]):
             db.ex("UPDATE users SET password_hash = ? WHERE id = ?", (ph.hash(body.password), u["id"]))
         tokens = _issue_tokens(db, cfg, dict(u))
-        db.ex(
-            "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-            (db.now(), email, ip_h, "login_ok", "status=200"),
-        )
+        _audit_login(db, email, ip_h, "login_ok", "status=200")
     return tokens
 
 

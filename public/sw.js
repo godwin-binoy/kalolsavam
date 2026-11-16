@@ -30,7 +30,6 @@ const PRECACHE_FLEET = [
   'help/',
   'assets/css/tokens.css',
   'assets/js/common.js',
-  'assets/js/app.js',
   'assets/js/lang.js',
   'assets/img/logo.webp',
   'assets/img/master-logo.webp',

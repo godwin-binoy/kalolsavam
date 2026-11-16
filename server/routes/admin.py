@@ -161,6 +161,17 @@ def _audit(db, request: Request, user: dict, action: str, detail: str = "") -> N
         log.warning("audit_write_failed: %s", exc)
 
 
+def _patch(row, body: BaseModel, *cols: str, always_set_if_not_none: bool = False) -> list:
+    fields = body.model_fields_set
+    vals = []
+    for col in cols:
+        attr = "student_class" if col == "student_class" else col
+        val = getattr(body, attr)
+        use_new = (val is not None) if always_set_if_not_none else (attr in fields)
+        vals.append(val if use_new else row[col])
+    return vals
+
+
 def _row_or_404(db, table: str, row_id: int, err: str):
     row = db.one(f"SELECT * FROM {table} WHERE id = ?", (row_id,))  # noqa: S608
     if not row:
@@ -261,17 +272,11 @@ def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(r
     db = get_db(request)
     row = _row_or_404(db, "events", eid, "event_not_found")
     try:
+        code, title = _patch(row, body, "code", "title", always_set_if_not_none=True)
+        cat, ven, day, when = _patch(row, body, "category", "venue_id", "day", "scheduled_time")
         db.ex(
             "UPDATE events SET code = ?, title = ?, category = ?, venue_id = ?, day = ?, scheduled_time = ? WHERE id = ?",
-            (
-                body.code if body.code is not None else row["code"],
-                body.title if body.title is not None else row["title"],
-                body.category if "category" in body.model_fields_set else row["category"],
-                body.venue_id if "venue_id" in body.model_fields_set else row["venue_id"],
-                body.day if "day" in body.model_fields_set else row["day"],
-                body.scheduled_time if "scheduled_time" in body.model_fields_set else row["scheduled_time"],
-                eid,
-            ),
+            (code, title, cat, ven, day, when, eid),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_code_or_fk") from exc
@@ -493,20 +498,12 @@ def get_participant(pid: int, request: Request, user=Depends(require_admin)):
 def update_participant(pid: int, body: ParticipantUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     row = _get_participant_or_404(db, pid)
-    f = body.model_fields_set
     try:
+        reg, name, sname, scode, scls = _patch(row, body, "register_no", "name", "school_name", "school_code", "student_class", always_set_if_not_none=True)
         db.ex(
             "UPDATE participants SET register_no = ?, name = ?, school_name = ?, school_code = ?, student_class = ?, updated_at = ? "
             "WHERE id = ? AND deleted_at IS NULL",
-            (
-                body.register_no if "register_no" in f else row["register_no"],
-                body.name if "name" in f else row["name"],
-                body.school_name if "school_name" in f else row["school_name"],
-                body.school_code if "school_code" in f else row["school_code"],
-                body.student_class if "student_class" in f and body.student_class is not None else row["student_class"],
-                db.now(),
-                pid,
-            ),
+            (reg, name, sname, scode, scls, db.now(), pid),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "register_no_taken") from exc
@@ -553,18 +550,11 @@ def update_entry(pid: int, eid: int, body: ParticipantEntryUpdateIn, request: Re
     row = db.one("SELECT * FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid))
     if not row:
         raise HTTPException(404, "entry_not_found")
-    f = body.model_fields_set
     try:
+        ic, vid, vname, pd = _patch(row, body, "item_code", "venue_id", "venue_name", "perf_date", always_set_if_not_none=True)
         db.ex(
             "UPDATE participant_entries SET item_code = ?, venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
-            (
-                body.item_code if "item_code" in f and body.item_code else row["item_code"],
-                body.venue_id if "venue_id" in f and body.venue_id is not None else row["venue_id"],
-                body.venue_name if "venue_name" in f and body.venue_name else row["venue_name"],
-                body.perf_date if "perf_date" in f and body.perf_date else row["perf_date"],
-                db.now(),
-                eid,
-            ),
+            (ic, vid, vname, pd, db.now(), eid),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_item_for_participant") from exc

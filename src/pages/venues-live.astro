@@ -29,5 +29,50 @@ import stages from '../data/stages.json';
       ))}
     </div>
   </div>
-  <script is:inline src={BASE + 'assets/js/live.js'}></script>
+  <script is:inline>
+    (function(){
+      var K = window.Kal, root = K && K.el('live');
+      if (!root) return;
+      var _raw = parseInt(root.getAttribute('data-refresh-ms') || '10000', 10);
+      var refreshMs = Math.max(5000, Number.isFinite(_raw) ? _raw : 10000);
+      var cards = Array.from(root.querySelectorAll('.stage-live-card')).map(function(el){
+        return { el: el, slug: el.getAttribute('data-stage-slug') || '', name: el.getAttribute('data-stage-name') || '' };
+      });
+      function setState(el, state){
+        el.setAttribute('data-state', state);
+        var lbl = el.querySelector('.stage-state-label'); if (lbl) lbl.textContent = state;
+        el.classList.toggle('is-live', state === 'RUNNING' || state === 'ON-STAGE');
+      }
+      function render(d){
+        var venues = (d && d.venues) || [];
+        cards.forEach(function(item){
+          var card = item.el, v = venues.find(function(x){ return K.matchStage(x, item.slug, item.name); });
+          var st = card.querySelector('.stage-state'), ne = card.querySelector('.stage-now-item'),
+              ue = card.querySelector('.stage-upcoming-items'), nl = card.querySelector('.stage-now-label'), ul = card.querySelector('.stage-upcoming-label');
+          if (!v){ if (st) setState(st, 'IDLE'); nl.textContent = 'Live data:'; ne.innerHTML = '<span class="text-muted">not configured</span>'; ul.textContent = ''; ue.textContent = ''; return; }
+          if (st) setState(st, v.state || 'IDLE');
+          if (v.active === false || v.state === 'INACTIVE'){ nl.textContent = 'Status:'; ne.innerHTML = '<span class="text-muted">Stage inactive</span>'; ul.textContent = ''; ue.textContent = ''; return; }
+          nl.textContent = 'On stage:'; ul.textContent = 'Up next:';
+          if (v.now){
+            var parts = [];
+            if (v.now.roll) parts.push('<strong>Chest #' + K.esc(v.now.roll) + '</strong>');
+            if (v.now.event) parts.push(K.esc(v.now.event));
+            ne.innerHTML = parts.length ? parts.join(' · ') : '<span class="text-muted">on stage</span>';
+          } else ne.innerHTML = '<span class="text-muted">idle</span>';
+          var ups = (v.upcoming || []).slice(0, 4);
+          ue.innerHTML = ups.length ? ups.map(function(u){ return u.roll ? '<strong>#' + K.esc(u.roll) + '</strong>' : '—'; }).join(' &middot; ') : '—';
+        });
+      }
+      K.poll(function(){
+        K.fetchJSON('/api/v1/public/status').then(render).catch(function(){
+          cards.forEach(function(it){
+            it.el.querySelector('.stage-now-label').textContent = 'Live status:';
+            it.el.querySelector('.stage-now-item').innerHTML = '<span class="text-muted">unavailable</span>';
+            it.el.querySelector('.stage-upcoming-label').textContent = '';
+            it.el.querySelector('.stage-upcoming-items').textContent = '';
+          });
+        });
+      }, refreshMs);
+    })();
+  </script>
 </BaseLayout>

@@ -59,6 +59,19 @@ class PhotoLookupIn(BaseModel):
     name: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
 
 
+def _check_photo_stage(user: dict, venue_id: int) -> None:
+    if not has_role(user, "admin", "dataworker"):
+        check_stage(user, venue_id)
+
+
+def _batch_for_staff(db, batch_id: int, user: dict, err: str = "not_found"):
+    b = db.one("SELECT id, venue_id FROM photo_batches WHERE id = ?", (batch_id,))
+    if not b:
+        raise HTTPException(404, err)
+    _check_photo_stage(user, b["venue_id"])
+    return b
+
+
 def _storage_dir(request: Request) -> Path:
     p = Path(get_cfg(request).db_path).parent / "photos"
     p.mkdir(parents=True, exist_ok=True)
@@ -111,8 +124,7 @@ def _safe_asset_path(storage: Path, filename: str) -> Path:
 
 @router.post("/batches")
 def create_batch(body: PhotoBatchIn, request: Request, user=Depends(require_photo_staff)):
-    if not has_role(user, "admin", "dataworker"):
-        check_stage(user, body.venue_id)
+    _check_photo_stage(user, body.venue_id)
     db = get_db(request)
     if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
         raise HTTPException(404, "venue_not_found")
@@ -134,11 +146,7 @@ async def upload_file(
     user=Depends(require_photo_staff),
 ):
     db = get_db(request)
-    b = db.one("SELECT id, venue_id FROM photo_batches WHERE id = ?", (batch_id,))
-    if not b:
-        raise HTTPException(404, "batch_not_found")
-    if not has_role(user, "admin", "dataworker"):
-        check_stage(user, b["venue_id"])
+    _batch_for_staff(db, batch_id, user, "batch_not_found")
 
     storage = _storage_dir(request)
     fname = await _save_validated_image(file, storage)
@@ -261,8 +269,7 @@ def assign_photo_by_register(
     request: Request,
     user=Depends(require_photo_staff),
 ):
-    if not has_role(user, "admin", "dataworker"):
-        check_stage(user, body.venue_id)
+    _check_photo_stage(user, body.venue_id)
     db = get_db(request)
     asset = db.one("SELECT id, batch_id FROM photo_assets WHERE id = ?", (body.asset_id,))
     if not asset:
@@ -309,11 +316,7 @@ def assign_photo_by_register(
 @router.post("/batches/{batch_id}/publish")
 def publish_batch(batch_id: int, request: Request, user=Depends(require_photo_staff)):
     db = get_db(request)
-    b = db.one("SELECT id, venue_id FROM photo_batches WHERE id = ?", (batch_id,))
-    if not b:
-        raise HTTPException(404, "not_found")
-    if not has_role(user, "admin", "dataworker"):
-        check_stage(user, b["venue_id"])
+    _batch_for_staff(db, batch_id, user)
     db.ex("UPDATE photo_batches SET status = 'published' WHERE id = ?", (batch_id,))
     return {"ok": True}
 

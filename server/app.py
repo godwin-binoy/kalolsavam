@@ -1,4 +1,4 @@
-"""FastAPI app factory: security middleware, GZip, CORS, SSE, and route mounting."""
+"""FastAPI app factory: security middleware, GZip, CORS, SSE, and API routers."""
 from __future__ import annotations
 
 import asyncio
@@ -9,14 +9,12 @@ import sys
 import time
 import uuid
 from contextlib import asynccontextmanager
-from pathlib import Path
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse
 
 from . import __version__
 from .auth import check_rate_limit
@@ -32,6 +30,7 @@ SEC_HEADERS = {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Cross-Origin-Opener-Policy": "same-origin",
+    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'",
 }
 
 
@@ -118,34 +117,19 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
                     return JSONResponse({"error": "origin_mismatch"}, status_code=403)
 
         resp = await call_next(request)
-
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)
-        if request.url.path.startswith("/api/"):
-            resp.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
         resp.headers["X-Request-ID"] = request.state.request_id
-
-        path = request.url.path
-        if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")) or path in ("/healthz", "/readyz") or path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")):
+        if request.url.path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")) or request.url.path in ("/healthz", "/readyz"):
             resp.headers["Cache-Control"] = "no-store"
-            if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")):
-                resp.headers["X-Robots-Tag"] = "noindex, nofollow"
-        elif path.startswith("/assets/js/"):
-            resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
-        elif path.startswith("/assets/"):
-            resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        elif path == "/sw.js":
-            resp.headers["Cache-Control"] = "no-cache, must-revalidate"
-        elif "text/html" in resp.headers.get("content-type", ""):
-            resp.headers.setdefault("Cache-Control", "public, max-age=0, must-revalidate")
 
         dur = int((time.perf_counter() - start) * 1000)
-        log.info("req", extra={"request_id": request.state.request_id, "method": request.method, "path": path, "status": resp.status_code, "duration_ms": dur})
+        log.info("req", extra={"request_id": request.state.request_id, "method": request.method, "path": request.url.path, "status": resp.status_code, "duration_ms": dur})
         return resp
 
-    dist = Path(cfg.dist_path)
-    if (dist / "assets").exists():
-        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
+    @app.get("/")
+    async def root():
+        return {"service": "kalolsavam", "ok": True}
 
     @app.get("/healthz")
     async def healthz():
@@ -172,52 +156,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     app.include_router(photos_router, prefix="/api/v1/photos")
     app.include_router(internal_router, prefix="/api/v1/internal")
 
-    @app.get("/admin", include_in_schema=False)
-    async def _red_admin():
-        return RedirectResponse("/admin/", status_code=307)
-
-    @app.get("/stagemaster", include_in_schema=False)
-    async def _red_sm():
-        return RedirectResponse("/stagemaster/", status_code=307)
-
-    @app.get("/dataworker", include_in_schema=False)
-    async def _red_dw():
-        return RedirectResponse("/dataworker/", status_code=307)
-
-    @app.get("/{full_path:path}")
-    async def catch_all(full_path: str):
-        clean_path = full_path.strip("/")
-        if clean_path == "favicon.ico":
-            return Response(status_code=204)
-        if clean_path in ("api", "assets", "dashboard") or clean_path.startswith(("api/", "assets/", "dashboard/")):
-            return JSONResponse({"error": "not_found"}, status_code=404)
-
-        dist_root = dist.resolve()
-
-        def _safe(rel: str):
-            try:
-                c = (dist / rel).resolve()
-                if c.is_relative_to(dist_root) and c.is_file():
-                    return c
-            except (ValueError, OSError):
-                pass
-            return None
-
-        candidates = (
-            [clean_path, clean_path.rstrip("/") + "/index.html"]
-            + ([clean_path + ".html"] if "." not in clean_path.rsplit("/", 1)[-1] else [])
-            if clean_path
-            else ["index.html"]
-        )
-        for rel in candidates:
-            path = _safe(rel)
-            if path:
-                return FileResponse(path)
-        nf = _safe("404.html")
-        if nf:
-            return FileResponse(nf, status_code=404)
-        if not clean_path:
-            return JSONResponse({"service": "kalolsavam", "ok": True})
+    @app.api_route("/{full_path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+    async def not_found(full_path: str):
         return JSONResponse({"error": "not_found"}, status_code=404)
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)

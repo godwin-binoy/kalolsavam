@@ -24,13 +24,11 @@ class Settings(BaseSettings):
     session_ttl_min: int = Field(default=480, ge=1, le=10080)
     secret_key: str = Field(default="")
     db_path: str = Field(default=str(ROOT / "deployment" / "kalolsavam.db"))
-    results_url: str = "https://kalolsavam.kerala.gov.in/"
     server_host: str = "127.0.0.1"
     server_port: int = 8000
-    dist_path: str = Field(default=str(ROOT / "dist"))
     trust_proxy_headers: bool = False
 
-    @field_validator("db_path", "dist_path")
+    @field_validator("db_path")
     @classmethod
     def _absolute(cls, v: str) -> str:
         return str(Path(v).expanduser().resolve())
@@ -69,10 +67,3 @@ class Settings(BaseSettings):
         except Exception as exc:
             log.warning("Could not persist secret.key: %s", exc)
         return key
-
-    @field_validator("results_url")
-    @classmethod
-    def _valid_results(cls, v: str) -> str:
-        if not v.startswith("https://"):
-            raise ValueError("RESULTS_URL must be https")
-        return v
