@@ -107,17 +107,17 @@ def list_participants(
             entry_clauses.append("pe.perf_date = ?")
             entry_params.append(day)
         entry_filter = (
-            " AND p.id IN (SELECT participant_id FROM participant_entries pe "
-            "WHERE " + " AND ".join(entry_clauses) + ")"  # noqa: S608  # noqa: S608
+            " AND p.id IN (SELECT participant_id FROM participant_entries pe "  # noqa: S608
+            "WHERE " + " AND ".join(entry_clauses) + ")"
         )
         params.extend(entry_params)
 
     where = (" WHERE " + " AND ".join(clauses)) if clauses else ""
     sql = (
-        "SELECT p.*, "
+        "SELECT p.*, "  # noqa: S608
         "(SELECT COUNT(*) FROM participant_entries pe "
         " WHERE pe.participant_id = p.id AND pe.deleted_at IS NULL) AS entry_count "
-        "FROM participants p" + where + entry_filter +  # noqa: S608  # noqa: S608
+        "FROM participants p" + where + entry_filter +
         " ORDER BY p.school_code, p.register_no LIMIT ? OFFSET ?"
     )
     rows = db.q(sql, tuple(params) + (limit, offset))
