@@ -1,0 +1,522 @@
+[
+  {
+    "code": "101",
+    "title": "സംഘനൃത്തം LP",
+    "category": "LP General",
+    "venue_id": 1,
+    "day": "2026-11-17",
+    "scheduled_time": "10.30 am"
+  },
+  {
+    "code": "102",
+    "title": "ഭരതനാട്യം UP",
+    "category": "UP General",
+    "venue_id": 1,
+    "day": "2026-11-17",
+    "scheduled_time": "12.20 pm"
+  },
+  {
+    "code": "103",
+    "title": "ഭരതനാട്യം HS (G)",
+    "category": "HS General",
+    "venue_id": 1,
+    "day": "2026-11-17",
+    "scheduled_time": "01.50 pm"
+  },
+  {
+    "code": "104",
+    "title": "ഭരതനാട്യം HSS (G)",
+    "category": "HSS General",
+    "venue_id": 1,
+    "day": "2026-11-17",
+    "scheduled_time": "03.00 pm"
+  },
+  {
+    "code": "105",
+    "title": "നാടോടി നൃത്തം LP",
+    "category": "LP General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "106",
+    "title": "നാടോടിനൃത്തം HSS (G)",
+    "category": "HSS General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "12.30 pm"
+  },
+  {
+    "code": "107",
+    "title": "നാടോടിനൃത്തം HS (M)",
+    "category": "HS General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "01.30 pm"
+  },
+  {
+    "code": "108",
+    "title": "നാടോടിനൃത്തം UP",
+    "category": "UP General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "01.40 pm"
+  },
+  {
+    "code": "109",
+    "title": "നാടോടിനൃത്തം HSS (M)",
+    "category": "HSS General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "03.10 pm"
+  },
+  {
+    "code": "110",
+    "title": "നാടോടിനൃത്തം HS (G)",
+    "category": "HS General",
+    "venue_id": 2,
+    "day": "2026-11-17",
+    "scheduled_time": "04.10 pm"
+  },
+  {
+    "code": "111",
+    "title": "നാടകം HS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "112",
+    "title": "നാടകം HSS",
+    "category": "HSS General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "10.30 am"
+  },
+  {
+    "code": "113",
+    "title": "ചാക്യാർകൂത്ത് UP",
+    "category": "UP General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "12.30 pm"
+  },
+  {
+    "code": "114",
+    "title": "കൂടിയാട്ടം HSS",
+    "category": "HSS General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "01.10 pm"
+  },
+  {
+    "code": "115",
+    "title": "കൂടിയാട്ടം HS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "02.30 pm"
+  },
+  {
+    "code": "116",
+    "title": "മേളം HSS",
+    "category": "HSS General",
+    "venue_id": 3,
+    "day": "2026-11-17",
+    "scheduled_time": "03.00 pm"
+  },
+  {
+    "code": "117",
+    "title": "മോഹിനിയാട്ടം UP",
+    "category": "UP General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "10.00 am"
+  },
+  {
+    "code": "118",
+    "title": "കേരളനടനം UP",
+    "category": "UP General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "10.30 am"
+  },
+  {
+    "code": "119",
+    "title": "കേരളനടനം HS",
+    "category": "HS General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "11.00 am"
+  },
+  {
+    "code": "120",
+    "title": "മോഹിനിയാട്ടം HS",
+    "category": "HS General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "11.25 am"
+  },
+  {
+    "code": "121",
+    "title": "കേരളനടനം HSS",
+    "category": "HSS General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "11.50 am"
+  },
+  {
+    "code": "122",
+    "title": "മോഹിനിയാട്ടം HSS",
+    "category": "HSS General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "12.30 pm"
+  },
+  {
+    "code": "123",
+    "title": "വട്ടപ്പാട്ട് UP",
+    "category": "UP Arabic",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "01.00 pm"
+  },
+  {
+    "code": "124",
+    "title": "വട്ടപ്പാട്ട് HS",
+    "category": "HS Arabic",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "01.30 pm"
+  },
+  {
+    "code": "125",
+    "title": "വട്ടപ്പാട്ട് HSS",
+    "category": "HSS General",
+    "venue_id": 4,
+    "day": "2026-11-17",
+    "scheduled_time": "02.30 pm"
+  },
+  {
+    "code": "126",
+    "title": "കുച്ചുപ്പുടി UP",
+    "category": "UP General",
+    "venue_id": 5,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "127",
+    "title": "കുച്ചുപ്പുടി HS",
+    "category": "HS General",
+    "venue_id": 5,
+    "day": "2026-11-17",
+    "scheduled_time": "10.00 am"
+  },
+  {
+    "code": "128",
+    "title": "കുച്ചുപ്പുടി HSS",
+    "category": "HSS General",
+    "venue_id": 5,
+    "day": "2026-11-17",
+    "scheduled_time": "11.30 am"
+  },
+  {
+    "code": "129",
+    "title": "ചിത്രരചന (പെൻസിൽ / ജലച്ചായം / എണ്ണച്ചായം)",
+    "category": "HS General",
+    "venue_id": 10,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "130",
+    "title": "പെൻസിൽ ഡ്രോയിംഗ് LP/UP/HS/HSS",
+    "category": "LP General",
+    "venue_id": 11,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "131",
+    "title": "വാട്ടർ കളറിംഗ് UP/HS/HSS",
+    "category": "UP General",
+    "venue_id": 12,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "132",
+    "title": "കാർട്ടൂൺ രചന HS/HSS",
+    "category": "HS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "133",
+    "title": "കൊളാഷ് നിർമ്മാണം / ക്ലേ മോഡലിംഗ്",
+    "category": "HSS General",
+    "venue_id": 14,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "134",
+    "title": "സംസ്കൃതം പ്രശ്നോത്തരി UP/HS",
+    "category": "UP Sanskrit",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "135",
+    "title": "അറബിക് പ്രശ്നോത്തരി LP/UP/HS",
+    "category": "LP Arabic",
+    "venue_id": 16,
+    "day": "2026-11-17",
+    "scheduled_time": "09.30 am"
+  },
+  {
+    "code": "201",
+    "title": "സംഘഗാനം LP",
+    "category": "LP General",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "202",
+    "title": "സംഘഗാനം UP",
+    "category": "UP General",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "10.00 am"
+  },
+  {
+    "code": "203",
+    "title": "സംഘഗാനം HS",
+    "category": "HS General",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "11.00 am"
+  },
+  {
+    "code": "204",
+    "title": "സംഘഗാനം HSS",
+    "category": "HSS General",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "12.00 pm"
+  },
+  {
+    "code": "205",
+    "title": "മാപ്പിളപ്പാട്ട് സംഘം UP",
+    "category": "UP Arabic",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "01.00 pm"
+  },
+  {
+    "code": "206",
+    "title": "മാപ്പിളപ്പാട്ട് സംഘം HS",
+    "category": "HS Arabic",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "02.00 pm"
+  },
+  {
+    "code": "207",
+    "title": "മാപ്പിളപ്പാട്ട് സംഘം HSS",
+    "category": "HSS General",
+    "venue_id": 1,
+    "day": "2026-11-18",
+    "scheduled_time": "03.00 pm"
+  },
+  {
+    "code": "208",
+    "title": "ദേശഭക്തിഗാനം LP/UP/HS/HSS",
+    "category": "HS General",
+    "venue_id": 2,
+    "day": "2026-11-18",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "209",
+    "title": "ലളിതഗാനം LP/UP/HS/HSS",
+    "category": "UP General",
+    "venue_id": 2,
+    "day": "2026-11-18",
+    "scheduled_time": "11.00 am"
+  },
+  {
+    "code": "210",
+    "title": "ശാസ്തീയ സംഗീതം UP/HS/HSS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-18",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "211",
+    "title": "കഥകളി സംഗീതം / അഷ്ടപദി",
+    "category": "HS Sanskrit",
+    "venue_id": 3,
+    "day": "2026-11-18",
+    "scheduled_time": "01.00 pm"
+  },
+  {
+    "code": "212",
+    "title": "ഒപ്പന UP",
+    "category": "UP Arabic",
+    "venue_id": 4,
+    "day": "2026-11-18",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "213",
+    "title": "ഒപ്പന HS",
+    "category": "HS Arabic",
+    "venue_id": 4,
+    "day": "2026-11-18",
+    "scheduled_time": "11.30 am"
+  },
+  {
+    "code": "214",
+    "title": "ഒപ്പന HSS",
+    "category": "HSS General",
+    "venue_id": 4,
+    "day": "2026-11-18",
+    "scheduled_time": "02.00 pm"
+  },
+  {
+    "code": "215",
+    "title": "മാർഗ്ഗംകളി UP/HS/HSS",
+    "category": "HS General",
+    "venue_id": 5,
+    "day": "2026-11-18",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "301",
+    "title": "തിരുവാതിരക്കളി UP",
+    "category": "UP General",
+    "venue_id": 1,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "302",
+    "title": "തിരുവാതിരക്കളി HS",
+    "category": "HS General",
+    "venue_id": 1,
+    "day": "2026-11-19",
+    "scheduled_time": "11.00 am"
+  },
+  {
+    "code": "303",
+    "title": "തിരുവാതിരക്കളി HSS",
+    "category": "HSS General",
+    "venue_id": 1,
+    "day": "2026-11-19",
+    "scheduled_time": "01.30 pm"
+  },
+  {
+    "code": "304",
+    "title": "ഡഫ്മുട്ട് UP/HS/HSS",
+    "category": "HS Arabic",
+    "venue_id": 2,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "305",
+    "title": "കോൽക്കളി UP/HS/HSS",
+    "category": "HS Arabic",
+    "venue_id": 2,
+    "day": "2026-11-19",
+    "scheduled_time": "01.00 pm"
+  },
+  {
+    "code": "306",
+    "title": "പ്രസംഗം മലയാളം LP/UP/HS/HSS",
+    "category": "UP General",
+    "venue_id": 5,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "307",
+    "title": "പ്രസംഗം ഇംഗ്ലീഷ് UP/HS/HSS",
+    "category": "HS General",
+    "venue_id": 6,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "308",
+    "title": "പ്രസംഗം ഹിന്ദി UP/HS/HSS",
+    "category": "HSS General",
+    "venue_id": 7,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "309",
+    "title": "പ്രസംഗം സംസ്കൃതം UP/HS",
+    "category": "UP Sanskrit",
+    "venue_id": 8,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "310",
+    "title": "പ്രസംഗം അറബിക് LP/UP/HS",
+    "category": "LP Arabic",
+    "venue_id": 9,
+    "day": "2026-11-19",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "311",
+    "title": "ബാൻഡ് മേളം (Band Display)",
+    "category": "HS General",
+    "venue_id": 26,
+    "day": "2026-11-19",
+    "scheduled_time": "11.00 am"
+  },
+  {
+    "code": "401",
+    "title": "കവിതാപാരായണം മലയാളം LP/UP/HS/HSS",
+    "category": "LP General",
+    "venue_id": 1,
+    "day": "2026-11-20",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "402",
+    "title": "അക്ഷരശ്ലോകം / കാവ്യകേളി",
+    "category": "HS Sanskrit",
+    "venue_id": 2,
+    "day": "2026-11-20",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "403",
+    "title": "ഗാനാലാപനം / കവിത സംസ്കൃതം",
+    "category": "UP Sanskrit",
+    "venue_id": 3,
+    "day": "2026-11-20",
+    "scheduled_time": "09.00 am"
+  },
+  {
+    "code": "404",
+    "title": "ഖുർആൻ പാരായണം / അറബിക് ഗാനം",
+    "category": "UP Arabic",
+    "venue_id": 4,
+    "day": "2026-11-20",
+    "scheduled_time": "09.00 am"
+  }
+]

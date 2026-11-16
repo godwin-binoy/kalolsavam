@@ -116,3 +116,15 @@
 {"id": 20, "ts": 1794853464.9949222, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "wipe_database|all_festival_data_cleared"}
 {"id": 20, "ts": 1794853464.9949222, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "wipe_database|all_festival_data_cleared"}
 {"id": 21, "ts": 1794853479.5351377, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+100/p~0/e+197/e~0/err1"}
+{"id": 22, "ts": 1794855291.1059873, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "wipe_database|all_festival_data_cleared"}
+{"id": 23, "ts": 1794855300.7502217, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+69/p~0/e+150/e~0/err1"}
+{"id": 24, "ts": 1794856280.0291522, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "login_ok", "detail": "status=200"}
+{"id": 24, "ts": 1794856280.0291522, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "login_ok", "detail": "status=200"}
+{"id": 24, "ts": 1794856280.0291522, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "login_ok", "detail": "status=200"}
+{"id": 24, "ts": 1794856280.0291522, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "login_ok", "detail": "status=200"}
+{"id": 25, "ts": 1794856428.473286, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "admin_action", "detail": "participant_import|p+31/p~0/e+47/e~86/err1"}
+{"id": 26, "ts": 1794856722.0432942, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+3/p~0/e+6/e~0/err0"}
+{"id": 26, "ts": 1794856722.0432942, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+3/p~0/e+6/e~0/err0"}
+{"id": 26, "ts": 1794856722.0432942, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+3/p~0/e+6/e~0/err0"}
+{"id": 26, "ts": 1794856722.0432942, "username": "admin@kalolsavam.example.com", "ip_hash": "91c91daa3f4817174a962d52e7cc7391", "event": "admin_action", "detail": "participant_import|p+3/p~0/e+6/e~0/err0"}
+{"id": 27, "ts": 1794856900.6285777, "username": "admin@kalolsavam.example.com", "ip_hash": "59c4c411ea6f9b41f2ac081d0b2e87e2", "event": "admin_action", "detail": "participant_import|p+0/p~0/e+0/e~3/err0"}

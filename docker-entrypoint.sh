@@ -24,6 +24,8 @@ fi
 
 log "Seeding stages..."
 python -m server seed-stages
+log "Seeding full schedule..."
+python -m server seed-schedule
 
 log "Launching server on ${SERVER_HOST:-0.0.0.0}:${SERVER_PORT:-8000}"
 exec python -m server serve --host "${SERVER_HOST:-0.0.0.0}" --port "${SERVER_PORT:-8000}"

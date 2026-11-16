@@ -1,92 +1,262 @@
 [
   {
     "n": 1,
-    "name": "St. Antony's HSS Ground",
-    "short": "Main open-air stage on the school ground.",
+    "name": "School Ground (സ്കൂൾ ഗ്രൗണ്ട്)",
+    "kind": "stage",
+    "short": "On-stage program · St. Antony's HSS · Main Ground",
     "banner": "banner-blue",
     "icon": "map-pin.svg",
     "loc": "St. Antony's HSS · Main Ground",
-    "capacity": "~1,500 seated · ~3,000 standing",
-    "slug": "stage-1"
+    "slug": "venue-1"
   },
   {
     "n": 2,
-    "name": "HS Hall",
-    "short": "High School main hall — large indoor stage.",
+    "name": "HS Hall (H.S. ഹാൾ)",
+    "kind": "stage",
+    "short": "On-stage program · HS Block · Main Auditorium",
     "banner": "banner-teal",
-    "icon": "building.svg",
-    "loc": "HS Block · Main Hall",
-    "capacity": "~400 seated",
-    "slug": "stage-2"
+    "icon": "map-pin.svg",
+    "loc": "HS Block · Main Auditorium",
+    "slug": "venue-2"
   },
   {
     "n": 3,
-    "name": "GLPS Mala",
-    "short": "Stage at the Government Lower Primary School, Mala.",
+    "name": "GMLPS Mala (GMLPS, MALA)",
+    "kind": "stage",
+    "short": "On-stage program · GMLPS Mala School Compound",
     "banner": "banner-purple",
     "icon": "map-pin.svg",
-    "loc": "GLPS Mala (adjacent compound)",
-    "capacity": "~200 seated",
-    "slug": "stage-3"
+    "loc": "GMLPS Mala School Compound",
+    "slug": "venue-3"
   },
   {
     "n": 4,
-    "name": "HSS A1 B1 Classes",
-    "short": "Combined classrooms A1 and B1 — Higher Secondary block.",
+    "name": "HSS Hall II Floor (HSS, HALL IInd FLOOR)",
+    "kind": "stage",
+    "short": "On-stage program · HSS Block · 2nd Floor Hall",
     "banner": "banner-orange",
-    "icon": "building.svg",
-    "loc": "HSS Block · Rooms A1 / B1",
-    "capacity": "~120 seated",
-    "slug": "stage-4"
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · 2nd Floor Hall",
+    "slug": "venue-4"
   },
   {
     "n": 5,
-    "name": "HSS Seminar Hall",
-    "short": "Seminar hall in the HSS block, first floor.",
+    "name": "Silver Jubilee Hall III Floor (SILVER JUBILEE HALL, IIIrd FLOOR)",
+    "kind": "stage",
+    "short": "On-stage program · Silver Jubilee Block · 3rd Floor",
     "banner": "banner-pink",
-    "icon": "building.svg",
-    "loc": "HSS Block · Seminar Hall, 1st Floor",
-    "capacity": "~150 seated",
-    "slug": "stage-5"
+    "icon": "map-pin.svg",
+    "loc": "Silver Jubilee Block · 3rd Floor",
+    "slug": "venue-5"
   },
   {
     "n": 6,
-    "name": "Vyaapaara Bhavan",
-    "short": "Stage at the Traders' Bhavan near the school.",
+    "name": "HSS Hall III Floor East (HSS, HALL IIIrd FLOOR, EAST)",
+    "kind": "stage",
+    "short": "On-stage program · HSS Block · 3rd Floor East Wing",
     "banner": "banner-rose",
-    "icon": "building.svg",
-    "loc": "Vyaapaara Bhavan (off-campus)",
-    "capacity": "~180 seated",
-    "slug": "stage-6"
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · 3rd Floor East Wing",
+    "slug": "venue-6"
   },
   {
     "n": 7,
-    "name": "HSS 1st Floor Class",
-    "short": "First-floor classroom stage in the HSS block.",
+    "name": "വ്യാപാരഭവൻ Old (Vyaapaara Bhavan Old)",
+    "kind": "stage",
+    "short": "On-stage program · Vyaapaara Bhavan (Off-campus)",
     "banner": "banner-blue",
-    "icon": "building.svg",
-    "loc": "HSS Block · 1st Floor Classroom",
-    "capacity": "~60 seated",
-    "slug": "stage-7"
+    "icon": "map-pin.svg",
+    "loc": "Vyaapaara Bhavan (Off-campus)",
+    "slug": "venue-7"
   },
   {
     "n": 8,
-    "name": "HS 9E Class",
-    "short": "Classroom 9E in the High School block.",
+    "name": "HSS Class (HSS ക്ലാസ്സ്)",
+    "kind": "stage",
+    "short": "On-stage program · HSS Block · Ground Floor Room",
     "banner": "banner-teal",
-    "icon": "building.svg",
-    "loc": "HS Block · Room 9E",
-    "capacity": "~60 seated",
-    "slug": "stage-8"
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · Ground Floor Room",
+    "slug": "venue-8"
   },
   {
     "n": 9,
-    "name": "HS Arabic Class",
-    "short": "Arabic classroom in the High School block.",
+    "name": "HS Arabic IInd Floor (HS ARABIC - IInd FLOOR)",
+    "kind": "stage",
+    "short": "On-stage program · HS Block · 2nd Floor Arabic Room",
     "banner": "banner-purple",
-    "icon": "building.svg",
-    "loc": "HS Block · Arabic Room",
-    "capacity": "~60 seated",
-    "slug": "stage-9"
+    "icon": "map-pin.svg",
+    "loc": "HS Block · 2nd Floor Arabic Room",
+    "slug": "venue-9"
+  },
+  {
+    "n": 10,
+    "name": "Room 5 A",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 5 A",
+    "banner": "banner-blue",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 5 A",
+    "slug": "venue-10"
+  },
+  {
+    "n": 11,
+    "name": "Room 5 B",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 5 B",
+    "banner": "banner-teal",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 5 B",
+    "slug": "venue-11"
+  },
+  {
+    "n": 12,
+    "name": "Room 6 A (സെമിനാർ ഹാൾ)",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 6 A · Seminar Hall",
+    "banner": "banner-purple",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 6 A · Seminar Hall",
+    "slug": "venue-12"
+  },
+  {
+    "n": 13,
+    "name": "Room 6 B",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 6 B",
+    "banner": "banner-orange",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 6 B",
+    "slug": "venue-13"
+  },
+  {
+    "n": 14,
+    "name": "Room 7 A",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 7 A",
+    "banner": "banner-pink",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 7 A",
+    "slug": "venue-14"
+  },
+  {
+    "n": 15,
+    "name": "Room 7 B",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 7 B",
+    "banner": "banner-rose",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 7 B",
+    "slug": "venue-15"
+  },
+  {
+    "n": 16,
+    "name": "Room 10 A",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 10 A",
+    "banner": "banner-blue",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 10 A",
+    "slug": "venue-16"
+  },
+  {
+    "n": 17,
+    "name": "Room 10 B",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 10 B",
+    "banner": "banner-teal",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 10 B",
+    "slug": "venue-17"
+  },
+  {
+    "n": 18,
+    "name": "Room 10 C",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 10 C",
+    "banner": "banner-purple",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 10 C",
+    "slug": "venue-18"
+  },
+  {
+    "n": 19,
+    "name": "Room 10 D",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 10 D",
+    "banner": "banner-orange",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 10 D",
+    "slug": "venue-19"
+  },
+  {
+    "n": 20,
+    "name": "Room 9 D",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 9 D",
+    "banner": "banner-pink",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 9 D",
+    "slug": "venue-20"
+  },
+  {
+    "n": 21,
+    "name": "Room 9 C",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 9 C",
+    "banner": "banner-rose",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 9 C",
+    "slug": "venue-21"
+  },
+  {
+    "n": 22,
+    "name": "Room 8 A",
+    "kind": "off-stage",
+    "short": "Off-stage program · Classroom 8 A",
+    "banner": "banner-blue",
+    "icon": "map-pin.svg",
+    "loc": "Classroom 8 A",
+    "slug": "venue-22"
+  },
+  {
+    "n": 23,
+    "name": "HSS Class (അറബിക്)",
+    "kind": "off-stage",
+    "short": "Off-stage program · HSS Block · Arabic Classroom",
+    "banner": "banner-teal",
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · Arabic Classroom",
+    "slug": "venue-23"
+  },
+  {
+    "n": 24,
+    "name": "HSS Class (സ്മാർട്ട് ക്ലാസ്സ്)",
+    "kind": "off-stage",
+    "short": "Off-stage program · HSS Block · Smart Classroom",
+    "banner": "banner-purple",
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · Smart Classroom",
+    "slug": "venue-24"
+  },
+  {
+    "n": 25,
+    "name": "HSS Class (ജനറൽ)",
+    "kind": "off-stage",
+    "short": "Off-stage program · HSS Block · General Classroom",
+    "banner": "banner-orange",
+    "icon": "map-pin.svg",
+    "loc": "HSS Block · General Classroom",
+    "slug": "venue-25"
+  },
+  {
+    "n": 26,
+    "name": "സെന്റ് ആന്റണീസ് ഗ്രൗണ്ട് പവലിയൻ",
+    "kind": "stage",
+    "short": "On-stage program · St. Antony's Ground Pavilion",
+    "banner": "banner-rose",
+    "icon": "map-pin.svg",
+    "loc": "St. Antony's Ground Pavilion",
+    "slug": "venue-26"
   }
 ]
