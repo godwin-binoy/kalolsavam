@@ -354,3 +354,6 @@ html.dark .stage-blueprint{border-color:var(--border);background:#141A17}
 /* Scroll-hide header & layout helpers */
 .hdr{transition:transform .3s var(--ease)}
 .hdr.hdr-hidden{transform:translateY(-100%)}
+.grid-3{align-items:stretch}
+.fest-card{height:100%}
+@media(min-width:900px){.stage-live-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}}

@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 from server.app import create_app
 from server.config import Settings
 from server.db import Database
+from server.deps import _RATE_BUCKETS
 from server.schema import upgrade_to_head
 
 
@@ -31,6 +32,7 @@ def _write_stub_dist(dist_root):
 
 @pytest.fixture
 def client(tmp_path, monkeypatch):
+    _RATE_BUCKETS.clear()
     db_path = tmp_path / "test_kalolsavam.db"
     dist_path = tmp_path / "dist"
     dist_path.mkdir()
@@ -48,5 +50,8 @@ def client(tmp_path, monkeypatch):
     db = Database(db_path)
     app = create_app(cfg, db)
 
-    with TestClient(app) as c:
-        yield c
+    try:
+        with TestClient(app) as c:
+            yield c
+    finally:
+        _RATE_BUCKETS.clear()

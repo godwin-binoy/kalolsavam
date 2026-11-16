@@ -4,14 +4,6 @@ The legacy `participants` table (event-scoped: school/student_name/roll) is
 renamed to `_deprecated_participants` per the project retirement pattern.
 SQLite 3.25+ propagates the FK rename to `queue_items.participant_id`.
 
-New tables:
-  * participants          — one row per student, soft-deletable, 5-digit register
-  * participant_entries   — up to 7 rows per student (item/venue/date), soft-deletable
-
-New queue columns:
-  * chest_no              — set live by stagemaster at run time
-  * participant_entry_id  — modern link; legacy participant_id kept for compat
-
 Revision ID: 0004_participant_registry
 Revises: 0003_drop_scores
 """
@@ -32,7 +24,11 @@ def upgrade() -> None:
     tables = set(insp.get_table_names())
 
     if "participants" in tables and "_deprecated_participants" not in tables:
-        op.rename_table("participants", "_deprecated_participants")
+        p_cols = {c["name"] for c in insp.get_columns("participants")}
+        if "register_no" not in p_cols:
+            op.rename_table("participants", "_deprecated_participants")
+            tables.discard("participants")
+            tables.add("_deprecated_participants")
 
     if "participants" not in tables:
         op.create_table(
