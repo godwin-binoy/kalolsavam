@@ -43,7 +43,7 @@ _SCHOOL_RE = re.compile(r"^\d{5,6}$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CSV_COLS = (
     "register_no", "name", "school_name", "school_code", "class",
-    "item_code", "item_name", "venue_id", "venue_name", "perf_date",
+    "item_code", "item_name", "venue_id", "perf_date",
 )
 
 
@@ -409,11 +409,13 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                     continue
                 v_kind = "stage" if venue_id in _ON_STAGE_IDS else "off-stage"
                 v_slug = f"stage-{venue_id}" if venue_id in _ON_STAGE_IDS else f"venue-{venue_id}"
-                db.ex(
-                    "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1) "
-                    "ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind",
-                    (venue_id, row["venue_name"], v_kind, v_slug),
-                )
+                existing_v = db.one("SELECT name FROM venues WHERE id = ?", (venue_id,))
+                derived_vname = existing_v["name"] if existing_v else f"Venue {venue_id}"
+                if not existing_v:
+                    db.ex(
+                        "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1)",
+                        (venue_id, derived_vname, v_kind, v_slug),
+                    )
                 ev_title = row.get("item_name") or row.get("title") or f"Item {item_code}"
                 db.ex(
                     "INSERT INTO events(code, title, venue_id, day) VALUES (?,?,?,?) "
@@ -445,13 +447,12 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                 if ex_e:
                     if (
                         ex_e["venue_id"] != venue_id
-                        or ex_e["venue_name"] != row["venue_name"]
                         or ex_e["perf_date"] != perf_date
                         or (row.get("item_name") and ex_e["item_name"] != row["item_name"])
                     ):
                         db.ex(
                             "UPDATE participant_entries SET item_name = COALESCE(?, item_name), venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
-                            (row.get("item_name"), venue_id, row["venue_name"], perf_date, now, ex_e["id"]),
+                            (row.get("item_name"), venue_id, derived_vname, perf_date, now, ex_e["id"]),
                         )
                         ue += 1
                 else:
@@ -461,7 +462,7 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                     db.ex(
                         "INSERT INTO participant_entries(participant_id, item_code, item_name, venue_id, venue_name, perf_date, created_at, updated_at) "
                         "VALUES (?,?,?,?,?,?,?,?)",
-                        (pid, item_code, row.get("item_name"), venue_id, row["venue_name"], perf_date, now, now),
+                        (pid, item_code, row.get("item_name"), venue_id, derived_vname, perf_date, now, now),
                     )
                     ce += 1
     except Exception as exc:
@@ -501,7 +502,6 @@ def export_participants_csv(request: Request, user=Depends(require_admin)):
             csv_cell(r["item_code"]),
             csv_cell(r["item_name"]),
             r["venue_id"],
-            csv_cell(r["venue_name"]),
             csv_cell(r["perf_date"]),
         ])
     return Response(
