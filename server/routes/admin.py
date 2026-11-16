@@ -310,22 +310,6 @@ def list_queue(request: Request, venue_id: int | None = None, user=Depends(requi
     return {"items": [dict(r) for r in db.q(q, params)]}
 
 
-@router.get("/queue/{item_id}")
-def get_queue_item(item_id: int, request: Request, user=Depends(require_admin)):
-    row = get_db(request).one("""
-        SELECT q.*, e.title AS event_title, e.code AS event_code,
-               p.school_name AS school, p.name AS student_name, p.register_no AS roll
-        FROM queue_items q
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
-        LEFT JOIN participants p ON p.id = pe.participant_id
-        WHERE q.id = ?
-    """, (item_id,))
-    if not row:
-        raise HTTPException(404, "not_found")
-    return {"item": dict(row)}
-
-
 @router.put("/queue/{item_id}")
 def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
@@ -610,62 +594,6 @@ def backup(request: Request, user=Depends(require_admin)):
 
     _admin_log(db, request, user, "backup", f"file={dst.name}")
     return {"ok": True, "backups": [str(dst)]}
-
-
-@router.get("/dashboard")
-def dashboard(request: Request, user=Depends(require_admin)):
-    db, cfg = get_db(request), get_cfg(request)
-    s = _collect_stats(db)
-    overall = {
-        "venues": s["venues"],
-        "active_venues": s["active_venues"],
-        "categories": s["categories"],
-        "events": s["events"],
-        "participants": s["participants"],
-        "queue_items": s["queue_items"],
-        "queue_waiting": s["queue_waiting"],
-        "queue_onstage": s["queue_active"],
-        "queue_complete": s["queue_complete"],
-        "queue_skipped": s["queue_skipped"],
-    }
-    per_venue = [
-        dict(r) for r in db.q("""
-            SELECT v.id, v.name, v.kind, v.slug, v.active,
-                   COUNT(q.id) AS total,
-                   COALESCE(SUM(CASE WHEN q.status='WAITING' THEN 1 ELSE 0 END), 0) AS waiting,
-                   COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE','PAUSED') THEN 1 ELSE 0 END), 0) AS onstage,
-                   COALESCE(SUM(CASE WHEN q.status='COMPLETE' THEN 1 ELSE 0 END), 0) AS complete,
-                   COALESCE(SUM(CASE WHEN q.status='SKIPPED' THEN 1 ELSE 0 END), 0) AS skipped
-            FROM venues v
-            LEFT JOIN queue_items q ON q.venue_id = v.id
-            GROUP BY v.id ORDER BY v.id
-        """)
-    ]
-    recent_completed = [
-        dict(r) for r in db.q("""
-            SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
-                   p.school_name AS school, p.name AS student_name
-            FROM queue_items q
-            JOIN events e ON e.id = q.event_id
-            LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
-            LEFT JOIN participants p ON p.id = pe.participant_id
-            WHERE q.status='COMPLETE' AND q.completed_at IS NOT NULL
-            ORDER BY q.completed_at DESC LIMIT 20
-        """)
-    ]
-    h = _collect_health(db, cfg, len(request.app.state.subscribers), 86400)
-    return {
-        "updated_at": db.now(),
-        "overall": overall,
-        "per_venue": per_venue,
-        "recent_completed": recent_completed,
-        "health": {
-            "db_bytes": h["db_bytes"],
-            "disk_free_bytes": h["disk_free_bytes"],
-            "sse_connections": h["sse_connections"],
-            "auth_failures_24h": h["auth_failures"],
-        },
-    }
 
 
 @router.get("/export/participants.csv")

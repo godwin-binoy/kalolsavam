@@ -208,7 +208,8 @@ def test_full_admin_workflow_and_security(client):
     assert pub_status["venues"][0]["now"]["chest_no"] == "C101"
     assert pub_status["venues"][0]["now"]["school"] == "=CMD()"
 
-    assert client.get("/api/v1/admin/dashboard", headers=headers).status_code == 200
+    assert client.get("/api/v1/admin/stats", headers=headers).status_code == 200
+    assert client.get("/api/v1/admin/health", headers=headers).status_code == 200
     assert len(client.get("/api/v1/admin/audit", headers=headers).json()["items"]) > 0
 
 

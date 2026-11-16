@@ -44,10 +44,6 @@
       "card.results.sub": "Official Government Portal",
       "card.results.check": "Check Official Results",
       "card.results.hint": "Tap to open the government portal",
-      "results.title": "Results",
-      "results.subtitle": "Official Government Portal",
-      "results.check": "Check Official Results",
-      "results.hint": "Tap to open the government portal",
       "card.trans.title": "Transportation",
       "card.trans.sub": "Bus & Auto",
       "card.trans.bus": "Bus Timings",
@@ -107,10 +103,6 @@
       "card.results.sub": "ഔദ്യോഗിക സർക്കാർ പോർട്ടൽ",
       "card.results.check": "ഔദ്യോഗിക ഫലങ്ങൾ പരിശോധിക്കുക",
       "card.results.hint": "സർക്കാർ പോർട്ടൽ തുറക്കാൻ ടാപ്പ് ചെയ്യുക",
-      "results.title": "ഫലങ്ങൾ",
-      "results.subtitle": "ഔദ്യോഗിക സർക്കാർ പോർട്ടൽ",
-      "results.check": "ഔദ്യോഗിക ഫലങ്ങൾ പരിശോധിക്കുക",
-      "results.hint": "സർക്കാർ പോർട്ടൽ തുറക്കാൻ ടാപ്പ് ചെയ്യുക",
       "card.trans.title": "ഗതാഗതം",
       "card.trans.sub": "ബസ് & ഓട്ടോ",
       "card.trans.bus": "ബസ് സമയങ്ങൾ",
@@ -273,22 +265,6 @@
         toggleLang();
       }
     });
-
-    if (window.MutationObserver) {
-      var observer = new MutationObserver(function(mutations){
-        var shouldUpdate = mutations.some(function(m){
-          return m.type === 'childList' && m.addedNodes.length > 0;
-        });
-        if (shouldUpdate && getLang() === 'ml') {
-          observer.disconnect();
-          applyLang('ml');
-          var main = document.getElementById('main');
-          if (main) observer.observe(main, { childList: true, subtree: true });
-        }
-      });
-      var mainEl = document.getElementById('main');
-      if (mainEl) observer.observe(mainEl, { childList: true, subtree: true });
-    }
   }
 
   if (document.readyState === 'loading'){
