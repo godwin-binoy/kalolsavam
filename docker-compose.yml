@@ -14,7 +14,10 @@ services:
       SERVER_HOST: "0.0.0.0"
       SERVER_PORT: "8000"
       DB_PATH: "/app/deployment/kalolsavam.db"
+      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-https://mala-subdistrict-kalolsavam.pages.dev}"
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-}"
       SECRET_KEY: "${SECRET_KEY:-}"
+      TRUST_PROXY_HEADERS: "${TRUST_PROXY_HEADERS:-true}"
       ADMIN_EMAIL: "${ADMIN_EMAIL:-}"
       ADMIN_PASSWORD: "${ADMIN_PASSWORD:-}"
 
@@ -31,9 +34,13 @@ services:
       dockerfile: Dockerfile.photos
     image: kalolsavam-photos:latest
     restart: unless-stopped
+    profiles: ["photos"]
+    volumes:
+      - ./deployment/photos_archive:/app/archive:Z
     environment:
-      CORE_URL: "https://api.yourdomain.com"
+      CORE_URL: "${CORE_URL:-http://backend:8000}"
       SECRET_KEY: "${SECRET_KEY:-}"
+      ARCHIVE_ORIGINALS: "${ARCHIVE_ORIGINALS:-false}"
 
   obs:
     build:
@@ -41,8 +48,9 @@ services:
       dockerfile: Dockerfile.obs
     image: kalolsavam-obs:latest
     restart: unless-stopped
+    profiles: ["obs"]
     volumes:
       - ./deployment/obs_backups:/app/backups:Z
     environment:
-      CORE_URL: "https://api.yourdomain.com"
+      CORE_URL: "${CORE_URL:-http://backend:8000}"
       SECRET_KEY: "${SECRET_KEY:-}"

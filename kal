@@ -169,10 +169,13 @@ def recreate_tunnel():
         return False
     return state == "running"
 
-def compose_up(tunnel=False, build=True):
+def compose_up(tunnel=False, workers=False, build=True):
     ensure_docker()
     compose = get_compose()
-    cmd = compose + (["--profile", "tunnel", "up", "-d"] if tunnel else ["up", "-d"])
+    profiles = []
+    if tunnel: profiles += ["--profile", "tunnel"]
+    if workers: profiles += ["--profile", "photos", "--profile", "obs"]
+    cmd = compose + profiles + ["up", "-d"]
     if build: cmd.append("--build")
     info(f"$ {' '.join(cmd)}")
     if run(cmd, capture=False).returncode != 0: die("docker compose up failed.")
@@ -432,6 +435,7 @@ def cmd_up(args):
     banner()
     ensure_docker(); _ensure_env(); _ensure_secret()
     tunnel = getattr(args, "tunnel", False)
+    workers = getattr(args, "workers", False)
     build = not getattr(args, "no_build", False)
     if tunnel:
         tok = EnvFile(ENV_FILE).get("CLOUDFLARE_TUNNEL_TOKEN", "").strip()
@@ -439,7 +443,7 @@ def cmd_up(args):
             die("--tunnel requested but CLOUDFLARE_TUNNEL_TOKEN is empty.\n  run: kal token set '<token>'")
         good, why = validate_token(tok)
         if not good: die(f"CLOUDFLARE_TUNNEL_TOKEN is invalid: {why}")
-    compose_up(tunnel=tunnel, build=build)
+    compose_up(tunnel=tunnel, workers=workers, build=build)
     if tunnel and not recreate_tunnel(): return 1
     if not wait_healthy(): return 1
     _print_urls()
@@ -707,7 +711,7 @@ def cmd_deploy(args):
         if not tok: die("--tunnel requested but CLOUDFLARE_TUNNEL_TOKEN is empty.")
         good, why = validate_token(tok)
         if not good: die(f"CLOUDFLARE_TUNNEL_TOKEN is invalid: {why}")
-    compose_up(tunnel=tunnel, build=True)
+    compose_up(tunnel=tunnel, workers=getattr(args, 'workers', False), build=True)
     if tunnel and not recreate_tunnel(): return 1
     if not wait_healthy(): return 1
     _print_urls(); return 0
@@ -777,6 +781,7 @@ def build_parser():
     p_init.add_argument("--admin-password", help="admin password (skips prompt)")
     p_up = sub.add_parser("up", help="start the stack")
     p_up.add_argument("--tunnel", action="store_true")
+    p_up.add_argument("--workers", action="store_true", help="also start photos and obs workers locally")
     p_up.add_argument("--no-build", action="store_true")
     sub.add_parser("down"); sub.add_parser("restart"); sub.add_parser("status")
     p_logs = sub.add_parser("logs"); p_logs.add_argument("service", nargs="?", default="backend"); p_logs.add_argument("-f", "--follow", action="store_true")
@@ -789,7 +794,7 @@ def build_parser():
     t_logs = tun.add_parser("logs"); t_logs.add_argument("-f", "--follow", action="store_true")
     p_admin = sub.add_parser("admin"); adm = p_admin.add_subparsers(dest="admin_action")
     adm.add_parser("list")
-    a_create = adm.add_parser("create"); a_create.add_argument("email"); a_create.add_argument("--password", "-p"); a_create.add_argument("--role", default="admin", choices=["admin", "stagemaster"]); a_create.add_argument("--stages", help="comma-separated stage numbers (e.g. 1,2,3)")
+    a_create = adm.add_parser("create"); a_create.add_argument("email"); a_create.add_argument("--password", "-p"); a_create.add_argument("--role", default="admin", choices=["admin", "stagemaster", "dataworker"]); a_create.add_argument("--stages", help="comma-separated stage numbers (e.g. 1,2,3)")
     a_pass = adm.add_parser("password"); a_pass.add_argument("email"); a_pass.add_argument("--password", "-p")
     a_del = adm.add_parser("delete"); a_del.add_argument("email"); a_del.add_argument("--yes", "-y", action="store_true")
     a_ena = adm.add_parser("enable"); a_ena.add_argument("email")
@@ -799,6 +804,7 @@ def build_parser():
     d_restore = db.add_parser("restore"); d_restore.add_argument("file"); d_restore.add_argument("--yes", "-y", action="store_true")
     d_reset = db.add_parser("reset"); d_reset.add_argument("--yes", "-y", action="store_true")
     p_dep = sub.add_parser("deploy"); p_dep.add_argument("--tunnel", action="store_true")
+    p_dep.add_argument("--workers", action="store_true", help="also start photos and obs workers locally")
     sub.add_parser("rebuild"); sub.add_parser("health"); sub.add_parser("doctor"); sub.add_parser("version")
     p_env = sub.add_parser("env"); env = p_env.add_subparsers(dest="env_action")
     env.add_parser("show")
