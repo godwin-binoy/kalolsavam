@@ -248,20 +248,25 @@ def refresh(body: RefreshIn, request: Request):
     db, cfg = get_db(request), get_cfg(request)
     rhash = hashlib.sha256(body.refresh_token.strip().encode("utf-8")).hexdigest()
     now = db.now()
+    reused = False
+    tokens: dict[str, str] = {}
     with db.transaction():
         row = db.one("SELECT * FROM refresh_tokens WHERE token_hash = ?", (rhash,))
         if not row or row["expires_at"] < now:
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "invalid_refresh_token")
         if row["revoked"]:
-            # Reuse detection: invalidate all sessions for this user
             db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?", (row["user_id"],))
             db.ex("UPDATE users SET token_version = token_version + 1 WHERE id = ?", (row["user_id"],))
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "refresh_token_reused")
-        u = db.one("SELECT * FROM users WHERE id = ?", (row["user_id"],))
-        if not u or not u["is_active"]:
-            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "account_disabled")
-        db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE id = ?", (row["id"],))
-        return _issue_tokens(db, cfg, dict(u))
+            reused = True
+        else:
+            u = db.one("SELECT * FROM users WHERE id = ?", (row["user_id"],))
+            if not u or not u["is_active"]:
+                raise HTTPException(status.HTTP_401_UNAUTHORIZED, "account_disabled")
+            db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE id = ?", (row["id"],))
+            tokens = _issue_tokens(db, cfg, dict(u))
+    if reused:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "refresh_token_reused")
+    return tokens
 
 
 @router.post("/logout")

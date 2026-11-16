@@ -350,112 +350,6 @@ def create_participant(body: ParticipantIn, request: Request, user=Depends(requi
     return dict(db.one("SELECT * FROM participants WHERE id = ?", (cur.lastrowid,)))
 
 
-@router.get("/participants/{pid}")
-def get_participant(pid: int, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    row = _get_participant_or_404(db, pid)
-    entries = db.q(
-        "SELECT * FROM participant_entries WHERE participant_id = ? AND deleted_at IS NULL ORDER BY perf_date, item_code",
-        (pid,),
-    )
-    return {"participant": dict(row), "entries": [dict(e) for e in entries]}
-
-
-@router.put("/participants/{pid}")
-def update_participant(pid: int, body: ParticipantUpdateIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    row = _get_participant_or_404(db, pid)
-    f = body.model_fields_set
-    try:
-        db.ex(
-            "UPDATE participants SET register_no = ?, name = ?, school_name = ?, school_code = ?, student_class = ?, updated_at = ? "
-            "WHERE id = ? AND deleted_at IS NULL",
-            (
-                body.register_no if "register_no" in f else row["register_no"],
-                body.name if "name" in f else row["name"],
-                body.school_name if "school_name" in f else row["school_name"],
-                body.school_code if "school_code" in f else row["school_code"],
-                body.student_class if "student_class" in f and body.student_class is not None else row["student_class"],
-                db.now(),
-                pid,
-            ),
-        )
-    except sqlite3.IntegrityError as exc:
-        raise HTTPException(409, "register_no_taken") from exc
-    _audit(db, request, user, "participant_update", f"id={pid}")
-    return dict(db.one("SELECT * FROM participants WHERE id = ?", (pid,)))
-
-
-@router.delete("/participants/{pid}")
-def delete_participant(pid: int, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    _get_participant_or_404(db, pid)
-    now = db.now()
-    with db.transaction():
-        db.ex("UPDATE participants SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, pid))
-        db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE participant_id = ? AND deleted_at IS NULL", (now, now, pid))
-    invalidate_public_cache(request.app)
-    _audit(db, request, user, "participant_delete", f"id={pid}")
-    return {"ok": True}
-
-
-@router.post("/participants/{pid}/entries")
-def add_entry(pid: int, body: ParticipantEntryIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    _get_participant_or_404(db, pid)
-    if _active_entry_count(db, pid) >= MAX_ITEMS_PER_PARTICIPANT:
-        raise HTTPException(409, f"participant_at_{MAX_ITEMS_PER_PARTICIPANT}_items")
-    now = db.now()
-    try:
-        cur = db.ex(
-            "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?)",
-            (pid, body.item_code, body.venue_id, body.venue_name, body.perf_date, now, now),
-        )
-    except sqlite3.IntegrityError as exc:
-        raise HTTPException(409, "duplicate_item_for_participant") from exc
-    invalidate_public_cache(request.app)
-    _audit(db, request, user, "entry_add", f"pid={pid},eid={cur.lastrowid}")
-    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (cur.lastrowid,)))
-
-
-@router.put("/participants/{pid}/entries/{eid}")
-def update_entry(pid: int, eid: int, body: ParticipantEntryUpdateIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    row = db.one("SELECT * FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid))
-    if not row:
-        raise HTTPException(404, "entry_not_found")
-    f = body.model_fields_set
-    try:
-        db.ex(
-            "UPDATE participant_entries SET item_code = ?, venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
-            (
-                body.item_code if "item_code" in f and body.item_code else row["item_code"],
-                body.venue_id if "venue_id" in f and body.venue_id is not None else row["venue_id"],
-                body.venue_name if "venue_name" in f and body.venue_name else row["venue_name"],
-                body.perf_date if "perf_date" in f and body.perf_date else row["perf_date"],
-                db.now(),
-                eid,
-            ),
-        )
-    except sqlite3.IntegrityError as exc:
-        raise HTTPException(409, "duplicate_item_for_participant") from exc
-    _audit(db, request, user, "entry_update", f"pid={pid},eid={eid}")
-    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (eid,)))
-
-
-@router.delete("/participants/{pid}/entries/{eid}")
-def delete_entry(pid: int, eid: int, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    if not db.one("SELECT id FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid)):
-        raise HTTPException(404, "entry_not_found")
-    now = db.now()
-    db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, eid))
-    invalidate_public_cache(request.app)
-    _audit(db, request, user, "entry_delete", f"pid={pid},eid={eid}")
-    return {"ok": True}
-
-
 @router.post("/participants/import")
 async def import_csv(request: Request, file: UploadFile = File(...), user=Depends(require_admin)):
     db = get_db(request)
@@ -582,6 +476,112 @@ def export_participants_csv(request: Request, user=Depends(require_admin)):
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=participants.csv"},
     )
+
+
+@router.get("/participants/{pid}")
+def get_participant(pid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = _get_participant_or_404(db, pid)
+    entries = db.q(
+        "SELECT * FROM participant_entries WHERE participant_id = ? AND deleted_at IS NULL ORDER BY perf_date, item_code",
+        (pid,),
+    )
+    return {"participant": dict(row), "entries": [dict(e) for e in entries]}
+
+
+@router.put("/participants/{pid}")
+def update_participant(pid: int, body: ParticipantUpdateIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = _get_participant_or_404(db, pid)
+    f = body.model_fields_set
+    try:
+        db.ex(
+            "UPDATE participants SET register_no = ?, name = ?, school_name = ?, school_code = ?, student_class = ?, updated_at = ? "
+            "WHERE id = ? AND deleted_at IS NULL",
+            (
+                body.register_no if "register_no" in f else row["register_no"],
+                body.name if "name" in f else row["name"],
+                body.school_name if "school_name" in f else row["school_name"],
+                body.school_code if "school_code" in f else row["school_code"],
+                body.student_class if "student_class" in f and body.student_class is not None else row["student_class"],
+                db.now(),
+                pid,
+            ),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "register_no_taken") from exc
+    _audit(db, request, user, "participant_update", f"id={pid}")
+    return dict(db.one("SELECT * FROM participants WHERE id = ?", (pid,)))
+
+
+@router.delete("/participants/{pid}")
+def delete_participant(pid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    _get_participant_or_404(db, pid)
+    now = db.now()
+    with db.transaction():
+        db.ex("UPDATE participants SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, pid))
+        db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE participant_id = ? AND deleted_at IS NULL", (now, now, pid))
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "participant_delete", f"id={pid}")
+    return {"ok": True}
+
+
+@router.post("/participants/{pid}/entries")
+def add_entry(pid: int, body: ParticipantEntryIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    _get_participant_or_404(db, pid)
+    if _active_entry_count(db, pid) >= MAX_ITEMS_PER_PARTICIPANT:
+        raise HTTPException(409, f"participant_at_{MAX_ITEMS_PER_PARTICIPANT}_items")
+    now = db.now()
+    try:
+        cur = db.ex(
+            "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (pid, body.item_code, body.venue_id, body.venue_name, body.perf_date, now, now),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_item_for_participant") from exc
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "entry_add", f"pid={pid},eid={cur.lastrowid}")
+    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (cur.lastrowid,)))
+
+
+@router.put("/participants/{pid}/entries/{eid}")
+def update_entry(pid: int, eid: int, body: ParticipantEntryUpdateIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = db.one("SELECT * FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid))
+    if not row:
+        raise HTTPException(404, "entry_not_found")
+    f = body.model_fields_set
+    try:
+        db.ex(
+            "UPDATE participant_entries SET item_code = ?, venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
+            (
+                body.item_code if "item_code" in f and body.item_code else row["item_code"],
+                body.venue_id if "venue_id" in f and body.venue_id is not None else row["venue_id"],
+                body.venue_name if "venue_name" in f and body.venue_name else row["venue_name"],
+                body.perf_date if "perf_date" in f and body.perf_date else row["perf_date"],
+                db.now(),
+                eid,
+            ),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_item_for_participant") from exc
+    _audit(db, request, user, "entry_update", f"pid={pid},eid={eid}")
+    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (eid,)))
+
+
+@router.delete("/participants/{pid}/entries/{eid}")
+def delete_entry(pid: int, eid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    if not db.one("SELECT id FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid)):
+        raise HTTPException(404, "entry_not_found")
+    now = db.now()
+    db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, eid))
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "entry_delete", f"pid={pid},eid={eid}")
+    return {"ok": True}
 
 
 # ── Staff Users Administration ────────────────────────────────────────────────
