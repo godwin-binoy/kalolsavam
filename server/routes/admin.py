@@ -37,6 +37,7 @@ internal_router = APIRouter()
 log = logging.getLogger("kalolsavam")
 
 MAX_ITEMS_PER_PARTICIPANT = 7
+_ON_STAGE_IDS = {1, 2, 3, 4, 5, 6, 7, 8, 9, 26}
 _REG_RE = re.compile(r"^\d{4,5}$")
 _SCHOOL_RE = re.compile(r"^\d{5,6}$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -395,9 +396,19 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                 if not 1 <= cls <= 12 or not _DATE_RE.match(perf_date) or not item_code:
                     errors.append(f"line {lineno}: invalid class, perf_date, or item_code")
                     continue
-                if not db.one("SELECT id FROM venues WHERE id = ?", (venue_id,)):
-                    errors.append(f"line {lineno}: unknown venue_id {venue_id}")
-                    continue
+                v_kind = "stage" if venue_id in _ON_STAGE_IDS else "off-stage"
+                v_slug = f"stage-{venue_id}" if venue_id in _ON_STAGE_IDS else f"venue-{venue_id}"
+                db.ex(
+                    "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1) "
+                    "ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind",
+                    (venue_id, row["venue_name"], v_kind, v_slug),
+                )
+                ev_title = row.get("item_name") or row.get("title") or f"Item {item_code}"
+                db.ex(
+                    "INSERT INTO events(code, title, venue_id, day) VALUES (?,?,?,?) "
+                    "ON CONFLICT(code) DO UPDATE SET venue_id = excluded.venue_id, day = COALESCE(events.day, excluded.day)",
+                    (item_code, ev_title, venue_id, perf_date),
+                )
 
                 ex_p = db.one("SELECT * FROM participants WHERE register_no = ? AND deleted_at IS NULL", (reg,))
                 if ex_p:
@@ -731,6 +742,28 @@ def backup(request: Request, user=Depends(require_admin)):
             pass
     _audit(db, request, user, "backup", f"file={dst.name}")
     return {"ok": True, "backups": [str(dst)]}
+
+
+
+
+@router.post("/wipe")
+def wipe_database(request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    with db.transaction():
+        for tbl in (
+            "photo_asset_entries",
+            "photo_assets",
+            "photo_batches",
+            "participant_entries",
+            "participants",
+            "events",
+            "live_state",
+            "venues",
+        ):
+            db.ex(f"DELETE FROM {tbl}")  # noqa: S608
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "wipe_database", "all_festival_data_cleared")
+    return {"ok": True}
 
 
 # ── Device 3 Obs Worker Internal Endpoints ────────────────────────────────────

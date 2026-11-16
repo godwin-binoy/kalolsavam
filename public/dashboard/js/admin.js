@@ -173,12 +173,20 @@
       '<span>Disk free</span><b>' + (h.disk_free_bytes / 1e9).toFixed(2) + ' GB</b><span>SSE connections</span><b>' + h.sse_connections + '</b>' +
       '<span>Auth failures (1h)</span><b>' + h.recent_auth_failures + '</b></div></div>' +
       '<div class="panel"><h2>Operations</h2><div class="row"><button id="op-backup" class="primary">💾 Backup database</button>' +
-      '<a class="btn" href="' + esc(A.url('/api/v1/admin/participants/export.csv')) + '" download>⬇ Registry CSV</a></div></div>';
+      '<a class="btn" href="' + esc(A.url('/api/v1/admin/participants/export.csv')) + '" download>⬇ Registry CSV</a>' +
+      '<button id="op-wipe" class="danger">🗑️ Hard Wipe Database</button></div></div>';
   };
   MOUNTS.ops = function(){
     el('op-backup').addEventListener('click', async function(){
       this.disabled = true;
       try { await req('/backup', { method: 'POST' }, 'Backup saved.'); } finally { this.disabled = false; }
+    });
+    el('op-wipe').addEventListener('click', async function(){
+      if (prompt('Type WIPE to permanently delete all venues, events, participants, and photos:') !== 'WIPE') return;
+      this.disabled = true;
+      try {
+        if (await req('/wipe', { method: 'POST' }, 'Database wiped.')) show('ops');
+      } finally { this.disabled = false; }
     });
   };
 
