@@ -244,8 +244,6 @@ html.dark .c-emerald{color:#34d399} html.dark .c-indigo{color:#818cf8} html.dark
 @keyframes kal-dropdown-pop{from{opacity:0;transform:translateY(-4px) scale(.99)}to{opacity:1;transform:translateY(0) scale(1)}}
 .search-result-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.75rem 1rem;border-radius:.75rem;text-decoration:none;color:inherit;border:1px solid transparent;transition:background var(--dur-fast) ease,border-color var(--dur-fast) ease,transform var(--dur-fast) var(--ease)}
 .search-result-item:hover,.search-result-item.selected{background:var(--bg-alt);border-color:var(--border);transform:translateX(3px)}
-.search-result-item mark{background:rgba(234,179,8,.25);color:var(--text-heading);font-weight:700;border-radius:2px;padding:0 2px}
-html.dark .search-result-item mark{background:rgba(234,179,8,.35);color:#fff}
 
 /* Grids, Tables & Cards */
 .card-base{background-color:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-card);padding:1.75rem;box-shadow:var(--shadow-card);transition:transform .25s var(--ease),box-shadow .25s var(--ease)}
