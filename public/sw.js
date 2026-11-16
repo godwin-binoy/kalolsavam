@@ -16,6 +16,7 @@ const PRECACHE_FLEET = [
   'venues-stage/7/',
   'venues-stage/8/',
   'venues-stage/9/',
+  'venues-stage/26/',
   'facilities/',
   'facilities-green-room/',
   'facilities-toilet/',
