@@ -2,28 +2,175 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
 import Card from '../components/Card.astro';
-import { BUS_SCHEDULE } from '../data/festival';
+import { MALA_TO_ALUVA_BUSES, ALUVA_TO_MALA_BUSES, OTHER_BUS_ROUTES } from '../data/festival';
 ---
 <BaseLayout title="Bus Timings | Mala Kalolsavam" active="transportation">
   <div class="main-container">
-    <PageHead badge="Transportation · Bus" title="Bus Timings" intro="KSRTC and private departures from Mala Bus Stand." />
-    <Card title="Mala Bus Stand" subtitle="KSRTC & Private · Daily" tone="blue">
-      <div style="overflow-x:auto">
-        <table class="tbl">
-          <thead><tr><th>Departure</th><th>Route</th><th>Type</th><th>Notes</th></tr></thead>
-          <tbody>
-            {BUS_SCHEDULE.map((b) => (
+    <PageHead badge="KSRTC & Private" title="Bus Timings & Chronology" intro="Official KSRTC chronology for Mala ↔ Aluva (MLA-ALV), plus direct routes to Thrissur, Chalakudy, and Kodungallur." />
+
+    <!-- Route Switcher Buttons -->
+    <div class="row" style="margin-bottom:1.5rem;gap:.5rem" id="route-tabs">
+      <button type="button" class="btn-primary sm active" data-tab="mla-alv">Mala → Aluva ({MALA_TO_ALUVA_BUSES.length})</button>
+      <button type="button" class="btn-primary sm ghost" data-tab="alv-mla">Aluva → Mala ({ALUVA_TO_MALA_BUSES.length})</button>
+      <button type="button" class="btn-primary sm ghost" data-tab="other">Other Routes ({OTHER_BUS_ROUTES.length})</button>
+    </div>
+
+    <!-- Quick Search -->
+    <div class="card-base" style="margin-bottom:1.75rem;padding:1.15rem">
+      <input id="bus-search" type="search" class="inp" placeholder="Search time, route, or duty number (e.g. 07:00, TVM, Duty 18, EKM)..." autocomplete="off">
+    </div>
+
+    <!-- Tab 1: Mala to Aluva -->
+    <div id="tab-mla-alv" class="bus-tab-content">
+      <Card title="Mala → Aluva (KSRTC MLA-ALV)" subtitle="Official Depot Schedule" tone="blue">
+        <div style="overflow-x:auto">
+          <table class="tbl bus-table">
+            <thead>
               <tr>
-                <td class="mono">{b.time}</td>
-                <td>{b.route}</td>
-                <td>{b.type}</td>
-                <td class="text-muted">{b.notes}</td>
+                <th style="width:4rem">#</th>
+                <th style="width:7rem">Time</th>
+                <th>Destination / Route</th>
+                <th style="width:6rem">Duty</th>
+                <th>Notes</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <p class="text-muted sm" style="margin-top:.75rem">Schedules are indicative. Confirm at the bus stand enquiry counter (0480 2890 500).</p>
-    </Card>
+            </thead>
+            <tbody>
+              {MALA_TO_ALUVA_BUSES.map((b) => (
+                <tr data-bus-text={`${b.time} ${b.route} ${b.duty || ''} ${b.notes || ''}`.toLowerCase()}>
+                  <td class="mono text-muted">{b.sl}</td>
+                  <td class="mono" style="font-weight:700;color:var(--brand)">{b.time}</td>
+                  <td><strong>{b.route}</strong></td>
+                  <td class="mono"><span class="badge-gov">Duty {b.duty}</span></td>
+                  <td class="text-muted sm">{b.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+
+    <!-- Tab 2: Aluva to Mala -->
+    <div id="tab-alv-mla" class="bus-tab-content" style="display:none">
+      <Card title="Aluva → Mala (KSRTC ALV-MLA Return)" subtitle="Official Return Chronology" tone="teal">
+        <div style="overflow-x:auto">
+          <table class="tbl bus-table">
+            <thead>
+              <tr>
+                <th style="width:4rem">#</th>
+                <th style="width:7rem">Time</th>
+                <th>Service / Type</th>
+                <th style="width:6rem">Duty</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ALUVA_TO_MALA_BUSES.map((b) => (
+                <tr data-bus-text={`${b.time} ${b.route} ${b.type} ${b.duty || ''} ${b.notes || ''}`.toLowerCase()}>
+                  <td class="mono text-muted">{b.sl}</td>
+                  <td class="mono" style="font-weight:700;color:var(--accent)">{b.time}</td>
+                  <td><strong>{b.route}</strong> <span class="text-muted xs">({b.type})</span></td>
+                  <td class="mono"><span class="badge-gov">Duty {b.duty}</span></td>
+                  <td class="text-muted sm">{b.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </Card>
+    </div>
+
+    <!-- Tab 3: Other Routes -->
+    <div id="tab-other" class="bus-tab-content" style="display:none">
+      <Card title="Mala Bus Stand (Regional Routes)" subtitle="Thrissur, Chalakudy & Kodungallur" tone="indigo">
+        <div style="overflow-x:auto">
+          <table class="tbl bus-table">
+            <thead>
+              <tr>
+                <th style="width:7rem">Time</th>
+                <th>Route</th>
+                <th>Type</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              {OTHER_BUS_ROUTES.map((b) => (
+                <tr data-bus-text={`${b.time} ${b.route} ${b.type} ${b.notes}`.toLowerCase()}>
+                  <td class="mono" style="font-weight:700">{b.time}</td>
+                  <td><strong>{b.route}</strong></td>
+                  <td><span class="badge-gov">{b.type}</span></td>
+                  <td class="text-muted sm">{b.notes}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="text-muted sm" style="margin-top:1rem">Confirm timings at the Mala Bus Stand enquiry counter (0480 2890 500).</p>
+      </Card>
+    </div>
+
+    <p id="empty-bus-msg" class="text-muted center" style="margin-top:2.5rem" hidden>No bus services match your search.</p>
   </div>
+
+  <style>
+    .btn-primary.sm.ghost { background: var(--surface); color: var(--text-heading); border: 1px solid var(--border); }
+    .btn-primary.sm.active { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+  </style>
+
+  <script is:inline>
+    (function(){
+      var tabContainer = document.getElementById('route-tabs');
+      var tabs = ['mla-alv', 'alv-mla', 'other'];
+      var searchInp = document.getElementById('bus-search');
+      var emptyMsg = document.getElementById('empty-bus-msg');
+      var activeTab = 'mla-alv';
+
+      function switchTab(target){
+        activeTab = target;
+        tabContainer.querySelectorAll('button').forEach(function(btn){
+          var isCur = btn.getAttribute('data-tab') === target;
+          btn.classList.toggle('active', isCur);
+          btn.classList.toggle('ghost', !isCur);
+        });
+        tabs.forEach(function(t){
+          var el = document.getElementById('tab-' + t);
+          if (el) el.style.display = (t === target) ? '' : 'none';
+        });
+        filterRows();
+      }
+
+      function filterRows(){
+        var q = (searchInp ? searchInp.value : '').trim().toLowerCase();
+        var tokens = q.split(/\s+/).filter(Boolean);
+        var activeSec = document.getElementById('tab-' + activeTab);
+        if (!activeSec) return;
+        var rows = Array.from(activeSec.querySelectorAll('tbody tr'));
+        var visibleCount = 0;
+
+        rows.forEach(function(row){
+          var txt = row.getAttribute('data-bus-text') || '';
+          var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
+          if (matches){
+            row.style.display = '';
+            visibleCount++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        if (emptyMsg) emptyMsg.hidden = visibleCount > 0;
+      }
+
+      if (tabContainer){
+        tabContainer.addEventListener('click', function(ev){
+          var btn = ev.target.closest('button[data-tab]');
+          if (btn) switchTab(btn.getAttribute('data-tab'));
+        });
+      }
+
+      if (searchInp){
+        searchInp.addEventListener('input', filterRows);
+      }
+    })();
+  </script>
 </BaseLayout>

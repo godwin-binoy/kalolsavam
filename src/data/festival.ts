@@ -45,16 +45,86 @@ export interface VolunteerGroup {
   desc: string;
 }
 
-export const BUS_SCHEDULE: BusRoute[] = [
-  { time: "06:30", route: "Mala → Thrissur", type: "Private", notes: "First bus" },
+export interface BusService {
+  sl: number;
+  time: string;
+  route: string;
+  type: string;
+  duty?: string;
+  notes?: string;
+}
+
+export const MALA_TO_ALUVA_BUSES: BusService[] = [
+  { sl: 1, time: "03:45", route: "Mala → Aluva → Thiruvananthapuram (TVM)", type: "KSRTC", duty: "2", notes: "Via Aluva" },
+  { sl: 2, time: "04:40", route: "Mala → Aluva → Thiruvananthapuram (TVM)", type: "KSRTC", duty: "4", notes: "Via Aluva" },
+  { sl: 3, time: "05:10", route: "Mala → Aluva → Ernakulam (EKM)", type: "KSRTC", duty: "56", notes: "Via Aluva" },
+  { sl: 4, time: "05:40", route: "Mala → Aluva → Kollam (KLM/CLD)", type: "KSRTC", duty: "3", notes: "Via Chalakudy" },
+  { sl: 5, time: "06:10", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "17", notes: "EVTR service" },
+  { sl: 6, time: "06:30", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "18", notes: "Regular" },
+  { sl: 7, time: "07:00", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "21", notes: "Regular" },
+  { sl: 8, time: "07:10", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "25", notes: "EVTR service" },
+  { sl: 9, time: "07:45", route: "Mala → Aluva → Ernakulam (EKM)", type: "KSRTC Fast", duty: "5", notes: "To Ernakulam" },
+  { sl: 10, time: "08:10", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "32", notes: "Morning peak" },
+  { sl: 11, time: "09:15", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "18", notes: "Regular" },
+  { sl: 12, time: "10:10", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "21", notes: "Regular" },
+  { sl: 13, time: "10:25", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "29", notes: "EVTR service" },
+  { sl: 14, time: "10:40", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "17", notes: "Regular" },
+  { sl: 15, time: "11:20", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "32", notes: "EVTR service" },
+  { sl: 16, time: "12:20", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "18", notes: "Midday" },
+  { sl: 17, time: "13:20", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "11", notes: "EVTR service" },
+  { sl: 18, time: "13:35", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "21", notes: "Regular" },
+  { sl: 19, time: "14:00", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "29", notes: "Regular" },
+  { sl: 20, time: "14:40", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "32", notes: "EVTR service" },
+  { sl: 21, time: "15:00", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "34", notes: "Afternoon" },
+  { sl: 22, time: "15:50", route: "Mala → Aluva (VNR)", type: "KSRTC", duty: "18", notes: "VNR service" },
+  { sl: 23, time: "16:15", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "13", notes: "Evening" },
+  { sl: 24, time: "16:25", route: "Mala → Aluva (ANDA)", type: "KSRTC", duty: "25", notes: "Via Annamanada" },
+  { sl: 25, time: "17:00", route: "Mala → Aluva → Thiruvananthapuram (TVM)", type: "KSRTC Fast", duty: "1", notes: "Evening limited stop" },
+  { sl: 26, time: "17:10", route: "Mala → Aluva", type: "KSRTC Ordinary", duty: "12", notes: "Evening rush" },
+  { sl: 27, time: "17:20", route: "Mala → Aluva (EVTR)", type: "KSRTC", duty: "17", notes: "EVTR service" },
+];
+
+export const ALUVA_TO_MALA_BUSES: BusService[] = [
+  { sl: 1, time: "07:30", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "17", notes: "Morning first" },
+  { sl: 2, time: "07:55", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "18", notes: "Regular" },
+  { sl: 3, time: "08:25", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "21", notes: "Morning peak" },
+  { sl: 4, time: "08:50", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "25", notes: "Regular" },
+  { sl: 5, time: "09:50", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "32", notes: "Regular" },
+  { sl: 6, time: "10:40", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "18", notes: "Regular" },
+  { sl: 7, time: "11:35", route: "Aluva → Mala", type: "KSRTC Super Fast (SFP)", duty: "1", notes: "Fast service" },
+  { sl: 8, time: "11:45", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "21", notes: "Regular" },
+  { sl: 9, time: "11:50", route: "Aluva → Mala (EVTR)", type: "KSRTC", duty: "29", notes: "EVTR service" },
+  { sl: 10, time: "12:05", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "17", notes: "Midday" },
+  { sl: 11, time: "12:45", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "32", notes: "Regular" },
+  { sl: 12, time: "13:50", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "18", notes: "Afternoon" },
+  { sl: 13, time: "14:45", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "11", notes: "Regular" },
+  { sl: 14, time: "15:00", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "21", notes: "Regular" },
+  { sl: 15, time: "15:25", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "29", notes: "Regular" },
+  { sl: 16, time: "16:10", route: "Aluva → Mala (EVTR)", type: "KSRTC", duty: "32", notes: "EVTR service" },
+  { sl: 17, time: "17:05", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "25", notes: "Evening rush" },
+  { sl: 18, time: "17:15", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "18", notes: "Evening" },
+  { sl: 19, time: "17:35", route: "Aluva → Mala (EVTR)", type: "KSRTC", duty: "13", notes: "EVTR service" },
+  { sl: 20, time: "18:05", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "56", notes: "Evening" },
+  { sl: 21, time: "18:45", route: "Aluva → Mala", type: "KSRTC Ordinary", duty: "12", notes: "Night service" },
+  { sl: 22, time: "19:10", route: "Aluva → Mala (EVTR)", type: "KSRTC", duty: "17", notes: "EVTR service" },
+  { sl: 23, time: "19:30", route: "Aluva → Mala", type: "KSRTC Super Fast (SFP)", duty: "2", notes: "Fast service" },
+  { sl: 24, time: "20:45", route: "Aluva → Mala", type: "KSRTC Super Fast (SFP)", duty: "3", notes: "Late night fast" },
+  { sl: 25, time: "21:00", route: "Aluva → Mala", type: "KSRTC Fast Passenger (FP)", duty: "5", notes: "Night service" },
+  { sl: 26, time: "21:50", route: "Aluva → Mala", type: "KSRTC Super Fast (SFP)", duty: "4", notes: "Last bus to Mala" },
+];
+
+export const OTHER_BUS_ROUTES: BusRoute[] = [
+  { time: "06:30", route: "Mala → Thrissur", type: "Private", notes: "First morning bus" },
   { time: "07:15", route: "Mala → Chalakudy", type: "Private", notes: "Via Annamanada" },
   { time: "08:00", route: "Mala → Thrissur", type: "KSRTC Fast", notes: "Limited stop" },
   { time: "09:30", route: "Mala → Kodungallur", type: "Private", notes: "Regular" },
   { time: "12:00", route: "Mala → Thrissur", type: "KSRTC Ordinary", notes: "Midday" },
   { time: "15:00", route: "Mala → Chalakudy", type: "Private", notes: "Return service" },
   { time: "17:30", route: "Mala → Thrissur", type: "KSRTC Fast", notes: "Evening rush" },
-  { time: "19:45", route: "Mala → Thrissur", type: "Private", notes: "Last bus" },
+  { time: "19:45", route: "Mala → Thrissur", type: "Private", notes: "Last bus to Thrissur" },
 ];
+
+export const BUS_SCHEDULE = OTHER_BUS_ROUTES;
 
 export const AUTO_DRIVERS: AutoDriver[] = [
   { name: "Anil T. V.", sub: "Auto · Mala Junction", desc: "Quick hops to bus stand and railway station. Meter + ₹10 festival surcharge.", phone: "+919999000103" },
