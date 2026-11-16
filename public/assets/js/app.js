@@ -49,14 +49,16 @@
   }
 
 
-  if (header) {
+  var dock = document.querySelector('.utility-dock');
+  if (dock) {
     var lastScroll = 0;
     window.addEventListener('scroll', function() {
       var currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+      if (Math.abs(currentScroll - lastScroll) < 6) return;
       if (currentScroll > lastScroll && currentScroll > 80) {
-        header.classList.add('hdr-hidden');
+        dock.classList.add('dock-hidden');
       } else {
-        header.classList.remove('hdr-hidden');
+        dock.classList.remove('dock-hidden');
       }
       lastScroll = currentScroll <= 0 ? 0 : currentScroll;
     }, { passive: true });

@@ -10,7 +10,7 @@ import stages from '../data/stages.json';
     <PageHead badge="Location" title="Venue Locations" intro="All 9 stages at the Mala Sub-District Kalolsavam. Tap a stage for its blueprint, directions, live status, and schedule." />
     <div class="grid-3">
       {stages.map((s) => (
-        <Card href={`/venues-stage/${s.n}`} title={s.name} badge={`Stage ${s.n}`} tone={s.banner ? s.banner.replace('banner-', '') : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'}>
+        <Card title={s.name} badge={`Stage ${s.n}`} tone={s.banner ? s.banner.replace('banner-', '') : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'}>
           <p class="text-muted sm">{s.short}</p>
           <ActionItem href={`/venues-stage/${s.n}`} icon="map-pin" iconTone="c-emerald" title={s.loc} />
         </Card>
