@@ -7,11 +7,8 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
-
-from ..deps import rate_limit
 
 router = APIRouter()
 _CACHE_LOCK = threading.Lock()
@@ -242,23 +239,3 @@ def dashboard_stats(request: Request):
     )
 
 
-class LookupIn(BaseModel):
-    register_no: str = Field(pattern=r"^\d{5}$")
-    name: str = Field(min_length=1, max_length=200)
-
-
-@router.post("/participant-lookup", dependencies=[Depends(rate_limit("lookup", 12, 60))])
-def participant_lookup(body: LookupIn, request: Request):
-    db = request.app.state.db
-    p = db.one(
-        "SELECT id, name FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL",
-        (body.register_no.strip(), body.name.strip()),
-    )
-    if not p:
-        raise HTTPException(404, "not_found")
-    entries = db.q(
-        "SELECT id, item_code, venue_name, perf_date FROM participant_entries "
-        "WHERE participant_id = ? AND deleted_at IS NULL ORDER BY perf_date, item_code",
-        (p["id"],),
-    )
-    return {"valid": True, "participant": dict(p), "entries": [dict(e) for e in entries]}

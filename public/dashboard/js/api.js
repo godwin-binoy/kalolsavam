@@ -60,21 +60,15 @@
     });
   }
 
-  function hasOwn(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
-  function shallow(o) {
-    var out = {};
-    if (o) for (var k in o) if (hasOwn(o, k)) out[k] = o[k];
-    return out;
-  }
-  function findHeader(headers, name) {
+  function shallow(o) { return Object.assign({}, o || {}); }
+  function findHeader(h, name) {
     var lower = name.toLowerCase();
-    for (var k in headers) if (hasOwn(headers, k) && k.toLowerCase() === lower) return k;
-    return null;
+    return Object.keys(h).find(function (k) { return k.toLowerCase() === lower; }) || null;
   }
-  function setHeader(headers, name, value) {
-    var existing = findHeader(headers, name);
-    if (existing) delete headers[existing];
-    if (value != null && value !== '') headers[name] = value;
+  function setHeader(h, name, val) {
+    var prev = findHeader(h, name);
+    if (prev) delete h[prev];
+    if (val != null && val !== '') h[name] = val;
   }
 
   /* Build the request ONCE (body serialised here), then clone per attempt so a

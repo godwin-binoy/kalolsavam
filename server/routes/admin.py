@@ -53,6 +53,13 @@ def _admin_log(db, request: Request, user: object, action: str, detail: str = ""
         log.warning("audit_write_failed: %s", exc)
 
 
+def _row_or_404(db, table: str, row_id: int, err: str):
+    row = db.one(f"SELECT * FROM {table} WHERE id = ?", (row_id,))  # noqa: S608
+    if not row:
+        raise HTTPException(404, err)
+    return row
+
+
 def _parse_uid(uid: str) -> _uuid.UUID | int | str:
     try:
         return _uuid.UUID(uid)
@@ -145,9 +152,7 @@ def create_venue(body: VenueIn, request: Request, user=Depends(require_admin)):
 @router.put("/venues/{vid}")
 def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    row = db.one("SELECT * FROM venues WHERE id = ?", (vid,))
-    if not row:
-        raise HTTPException(404, "venue_not_found")
+    row = _row_or_404(db, "venues", vid, "venue_not_found")
     name = body.name if body.name is not None else row["name"]
     kind = body.kind if body.kind is not None else row["kind"]
     slug = body.slug if "slug" in body.model_fields_set else row["slug"]
@@ -167,8 +172,7 @@ def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(r
 @router.delete("/venues/{vid}")
 def delete_venue(vid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    if not db.one("SELECT id FROM venues WHERE id = ?", (vid,)):
-        raise HTTPException(404, "venue_not_found")
+    _row_or_404(db, "venues", vid, "venue_not_found")
     if db.one("SELECT COUNT(*) c FROM events WHERE venue_id = ?", (vid,))["c"]:
         raise HTTPException(409, "venue_has_events")
     if db.one("SELECT COUNT(*) c FROM queue_items WHERE venue_id = ?", (vid,))["c"]:
@@ -199,9 +203,7 @@ def create_category(body: CategoryIn, request: Request, user=Depends(require_adm
 @router.put("/categories/{cid}")
 def update_category(cid: int, body: CategoryUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    row = db.one("SELECT * FROM categories WHERE id = ?", (cid,))
-    if not row:
-        raise HTTPException(404, "category_not_found")
+    row = _row_or_404(db, "categories", cid, "category_not_found")
     name = body.name if body.name is not None else row["name"]
     group = body.group if body.group is not None else row["grp"]
     db.ex("UPDATE categories SET name = ?, grp = ? WHERE id = ?", (name, group, cid))
@@ -213,8 +215,7 @@ def update_category(cid: int, body: CategoryUpdateIn, request: Request, user=Dep
 @router.delete("/categories/{cid}")
 def delete_category(cid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    if not db.one("SELECT id FROM categories WHERE id = ?", (cid,)):
-        raise HTTPException(404, "category_not_found")
+    _row_or_404(db, "categories", cid, "category_not_found")
     if db.one("SELECT COUNT(*) c FROM events WHERE category_id = ?", (cid,))["c"]:
         raise HTTPException(409, "category_has_events")
     db.ex("DELETE FROM categories WHERE id = ?", (cid,))
@@ -253,9 +254,7 @@ def create_event(body: EventIn, request: Request, user=Depends(require_admin)):
 @router.put("/events/{eid}")
 def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    row = db.one("SELECT * FROM events WHERE id = ?", (eid,))
-    if not row:
-        raise HTTPException(404, "event_not_found")
+    row = _row_or_404(db, "events", eid, "event_not_found")
     code = body.code if body.code is not None else row["code"]
     title = body.title if body.title is not None else row["title"]
     cat = body.category_id if body.category_id is not None else row["category_id"]
@@ -278,8 +277,7 @@ def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(r
 @router.delete("/events/{eid}")
 def delete_event(eid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    if not db.one("SELECT id FROM events WHERE id = ?", (eid,)):
-        raise HTTPException(404, "event_not_found")
+    _row_or_404(db, "events", eid, "event_not_found")
     if db.one("SELECT COUNT(*) c FROM queue_items WHERE event_id = ?", (eid,))["c"]:
         raise HTTPException(409, "event_has_queue_items")
     db.ex("DELETE FROM events WHERE id = ?", (eid,))

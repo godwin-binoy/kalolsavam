@@ -4,6 +4,7 @@ Do NOT add `from __future__ import annotations` here: SQLModel's Relationship()
 inspects string annotations at class creation time.
 """
 import re
+from typing import Annotated
 
 from fastapi_fullauth import UserSchema
 from fastapi_fullauth.models.sqlmodel import (
@@ -12,30 +13,32 @@ from fastapi_fullauth.models.sqlmodel import (
     UserMixin,
     UserRoleMixin,
 )
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field
 from sqlalchemy import Column, ForeignKey, Index, Integer, UniqueConstraint, text
 from sqlmodel import Field as SQLField
 from sqlmodel import Relationship, SQLModel
 
 
-def _require_non_blank(v: str | None) -> str | None:
-    if v is None:
-        return None
-    stripped = v.strip()
-    if not stripped:
-        raise ValueError("must not be blank")
-    return stripped
+def _strip(v: object) -> object:
+    return v.strip() if isinstance(v, str) else v
 
 
-def _clean_slug_val(v: str | None) -> str | None:
+def _clean_slug(v: object) -> str | None:
     if v is None:
         return None
-    s = v.strip().lower()
+    s = str(v).strip().lower()
     if not s:
         return None
     if not re.fullmatch(r"[a-z0-9-]+", s) or len(s) > 64:
         raise ValueError("invalid slug")
     return s
+
+
+CleanSlug = Annotated[str | None, BeforeValidator(_clean_slug)]
+ReqStr = Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
+OptStr = Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
+ReqShort = Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=120)]
+OptShort = Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=120)]
 
 
 # ── Auth Tables (fastapi-fullauth SQLModel) ───────────────────────────────────
@@ -69,19 +72,16 @@ class KalUserSchema(UserSchema):
 
 
 # ── Festival Tables (SQLModel) ────────────────────────────────────────────────
-class VenueBase(SQLModel):
-    name: str = SQLField(min_length=1, max_length=120)
-    kind: str = SQLField(default="stage", max_length=32)
-    slug: str | None = SQLField(default=None, max_length=64)
-    active: bool = SQLField(default=True)
-
-
-class Venue(VenueBase, table=True):
+class Venue(SQLModel, table=True):
     __tablename__ = "venues"
     __table_args__ = (
         Index("idx_venues_slug", "slug", unique=True, sqlite_where=text("slug IS NOT NULL")),
     )
     id: int | None = SQLField(default=None, primary_key=True)
+    name: str = SQLField(min_length=1, max_length=120)
+    kind: str = SQLField(default="stage", max_length=32)
+    slug: str | None = SQLField(default=None, max_length=64)
+    active: bool = SQLField(default=True)
 
 
 class Category(SQLModel, table=True):
@@ -91,16 +91,7 @@ class Category(SQLModel, table=True):
     grp: str = SQLField(default="HSS GENERAL", max_length=64)
 
 
-class EventBase(SQLModel):
-    code: str = SQLField(min_length=1, max_length=32)
-    title: str = SQLField(min_length=1, max_length=200)
-    category_id: int | None = SQLField(default=None, foreign_key="categories.id")
-    venue_id: int | None = SQLField(default=None, foreign_key="venues.id")
-    day: str | None = SQLField(default=None, max_length=32)
-    scheduled_time: str | None = SQLField(default=None, max_length=16)
-
-
-class Event(EventBase, table=True):
+class Event(SQLModel, table=True):
     __tablename__ = "events"
     __table_args__ = (
         UniqueConstraint("code", name="uq_events_code"),
@@ -108,6 +99,12 @@ class Event(EventBase, table=True):
         Index("idx_events_day_time", "day", "scheduled_time"),
     )
     id: int | None = SQLField(default=None, primary_key=True)
+    code: str = SQLField(min_length=1, max_length=32)
+    title: str = SQLField(min_length=1, max_length=200)
+    category_id: int | None = SQLField(default=None, foreign_key="categories.id")
+    venue_id: int | None = SQLField(default=None, foreign_key="venues.id")
+    day: str | None = SQLField(default=None, max_length=32)
+    scheduled_time: str | None = SQLField(default=None, max_length=16)
 
 
 class Participant(SQLModel, table=True):
@@ -217,7 +214,7 @@ class AuthAudit(SQLModel, table=True):
     detail: str | None = SQLField(default=None)
 
 
-# ── Request Validation DTOs (Pydantic v2 BaseModel) ───────────────────────────
+# ── Request Validation DTOs ───────────────────────────────────────────────────
 class StateIn(BaseModel):
     venue_id: int
     active: bool | None = None
@@ -236,74 +233,46 @@ class AdvanceIn(BaseModel):
     chest_no: str | None = Field(default=None, max_length=16)
 
 
-class VenueIn(VenueBase):
-    @field_validator("slug", mode="before")
-    @classmethod
-    def _clean_slug(cls, v: str | None) -> str | None:
-        return _clean_slug_val(v)
-
-    @field_validator("name", "kind")
-    @classmethod
-    def _clean(cls, v: str) -> str:
-        return _require_non_blank(v)  # type: ignore[return-value]
+class VenueIn(BaseModel):
+    name: ReqShort
+    kind: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = "stage"
+    slug: CleanSlug = None
+    active: bool = True
 
 
 class VenueUpdateIn(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    kind: str | None = Field(default=None, max_length=32)
-    slug: str | None = Field(default=None, max_length=64)
+    name: OptShort = None
+    kind: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    slug: CleanSlug = None
     active: bool | None = None
-
-    @field_validator("slug", mode="before")
-    @classmethod
-    def _clean_slug(cls, v: str | None) -> str | None:
-        return _clean_slug_val(v)
-
-    @field_validator("name", "kind")
-    @classmethod
-    def _clean(cls, v: str | None) -> str:
-        return _require_non_blank(v)
 
 
 class CategoryIn(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-    group: str = Field(default="HSS GENERAL", max_length=64)
-
-    @field_validator("name", "group")
-    @classmethod
-    def _clean(cls, v: str) -> str:
-        return _require_non_blank(v)  # type: ignore[return-value]
+    name: ReqShort
+    group: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=64)] = "HSS GENERAL"
 
 
 class CategoryUpdateIn(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=120)
-    group: str | None = Field(default=None, max_length=64)
-
-    @field_validator("name", "group")
-    @classmethod
-    def _clean(cls, v: str | None) -> str:
-        return _require_non_blank(v)
+    name: OptShort = None
+    group: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=64)] = None
 
 
-class EventIn(EventBase):
-    @field_validator("code", "title")
-    @classmethod
-    def _clean(cls, v: str) -> str:
-        return _require_non_blank(v)  # type: ignore[return-value]
-
-
-class EventUpdateIn(BaseModel):
-    code: str | None = Field(default=None, min_length=1, max_length=32)
-    title: str | None = Field(default=None, min_length=1, max_length=200)
+class EventIn(BaseModel):
+    code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
+    title: ReqStr
     category_id: int | None = None
     venue_id: int | None = None
     day: str | None = Field(default=None, max_length=32)
     scheduled_time: str | None = Field(default=None, max_length=16)
 
-    @field_validator("code", "title")
-    @classmethod
-    def _clean(cls, v: str | None) -> str:
-        return _require_non_blank(v)
+
+class EventUpdateIn(BaseModel):
+    code: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    title: OptStr = None
+    category_id: int | None = None
+    venue_id: int | None = None
+    day: str | None = Field(default=None, max_length=32)
+    scheduled_time: str | None = Field(default=None, max_length=16)
 
 
 class UserIn(BaseModel):
@@ -340,8 +309,8 @@ class QueueMoveIn(BaseModel):
 
 class ParticipantIn(BaseModel):
     register_no: str = Field(pattern=r"^\d{5}$")
-    name: str = Field(min_length=1, max_length=200)
-    school_name: str = Field(min_length=1, max_length=200)
+    name: ReqStr
+    school_name: ReqStr
     school_code: str = Field(pattern=r"^\d{5,6}$")
     student_class: int = Field(alias="class", ge=1, le=12)
 
@@ -350,8 +319,8 @@ class ParticipantIn(BaseModel):
 
 class ParticipantUpdateIn(BaseModel):
     register_no: str | None = Field(default=None, pattern=r"^\d{5}$")
-    name: str | None = Field(default=None, min_length=1, max_length=200)
-    school_name: str | None = Field(default=None, min_length=1, max_length=200)
+    name: OptStr = None
+    school_name: OptStr = None
     school_code: str | None = Field(default=None, pattern=r"^\d{5,6}$")
     student_class: int | None = Field(default=None, alias="class", ge=1, le=12)
 
@@ -359,16 +328,16 @@ class ParticipantUpdateIn(BaseModel):
 
 
 class ParticipantEntryIn(BaseModel):
-    item_code: str = Field(min_length=1, max_length=32)
+    item_code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
     venue_id: int
-    venue_name: str = Field(min_length=1, max_length=120)
+    venue_name: ReqShort
     perf_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
 class ParticipantEntryUpdateIn(BaseModel):
-    item_code: str | None = Field(default=None, min_length=1, max_length=32)
+    item_code: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
     venue_id: int | None = None
-    venue_name: str | None = Field(default=None, min_length=1, max_length=120)
+    venue_name: OptShort = None
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
@@ -387,11 +356,11 @@ class PhotoAssignIn(BaseModel):
 class PhotoAssignByRegisterIn(BaseModel):
     asset_id: int
     venue_id: int
-    item_code: str = Field(min_length=1, max_length=32)
+    item_code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
     register_nos: list[str] = Field(min_length=1, max_length=30)
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
 class PhotoLookupIn(BaseModel):
     register_no: str = Field(pattern=r"^\d{5}$")
-    name: str = Field(min_length=1, max_length=200)
+    name: ReqStr

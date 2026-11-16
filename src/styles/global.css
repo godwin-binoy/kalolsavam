@@ -168,6 +168,7 @@ html.dark .btn-primary.dark:hover{background-color:#FFFFFF;box-shadow:0 8px 24px
 
 /* Cards & Action Items */
 .fest-card{
+  height:100%;
   background-color:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-card);
   overflow:hidden;box-shadow:var(--shadow-card);display:flex;flex-direction:column;
   transition:transform var(--dur-mid) var(--ease),box-shadow var(--dur-mid) var(--ease),border-color var(--dur-fast) ease;
@@ -203,13 +204,6 @@ a.fest-action-item{cursor:pointer}
 .c-emerald{color:#059669} .c-indigo{color:#4f46e5} .c-rose{color:#e11d48} .c-blue{color:#2563eb} .c-teal{color:#0d9488} .c-amber{color:#d97706}
 html.dark .c-emerald{color:#34d399} html.dark .c-indigo{color:#818cf8} html.dark .c-rose{color:#fb7185} html.dark .c-blue{color:#60a5fa} html.dark .c-teal{color:#2dd4bf} html.dark .c-amber{color:#fbbf24}
 
-.banner-blue  {background:linear-gradient(135deg,var(--banner-blue-from),var(--banner-blue-to))}
-.banner-purple{background:linear-gradient(135deg,var(--banner-purple-from),var(--banner-purple-to))}
-.banner-indigo{background:linear-gradient(135deg,var(--banner-indigo-from),var(--banner-indigo-to))}
-.banner-pink  {background:linear-gradient(135deg,var(--banner-pink-from),var(--banner-pink-to))}
-.banner-teal  {background:linear-gradient(135deg,var(--banner-teal-from),var(--banner-teal-to))}
-.banner-orange{background:linear-gradient(135deg,var(--banner-orange-from),var(--banner-orange-to))}
-.banner-rose  {background:linear-gradient(135deg,var(--banner-rose-from),var(--banner-rose-to))}
 
 /* Hero */
 .hero{padding:1.5rem 1rem;display:flex;align-items:center;justify-content:center;min-height:calc(100svh - 4.25rem)}
@@ -260,7 +254,7 @@ html.dark .search-result-item mark{background:rgba(234,179,8,.35);color:#fff}
 .sec-head{margin-bottom:2rem;border-bottom:1px solid var(--border);padding-bottom:1.25rem} .sec-head h2{font-size:1.75rem;margin-bottom:.4rem}
 @media(min-width:960px){.sec-head h2{font-size:2rem}} .sec-head p{color:var(--muted);font-size:1rem;margin:0}
 
-.grid-2,.grid-3{display:grid;gap:1.5rem;grid-template-columns:1fr}
+.grid-2,.grid-3{display:grid;gap:1.5rem;grid-template-columns:1fr;align-items:stretch}
 @media(min-width:640px){.grid-2{grid-template-columns:repeat(2,1fr)}.grid-3{grid-template-columns:repeat(2,1fr)}}
 @media(min-width:960px){.grid-3{grid-template-columns:repeat(3,1fr)}}
 
@@ -338,8 +332,6 @@ html.dark .stage-live-card .stage-state[data-state="BREAK"]{background:rgba(146,
 
 /* Scroll-hide header & layout helpers */
 .hdr{transition:transform .3s var(--ease)}
-.grid-3{align-items:stretch}
-.fest-card{height:100%}
 @media(min-width:900px){.stage-live-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}}
 .utility-dock.dock-hidden{opacity:0 !important;transform:translateY(-12px) scale(.94) !important;pointer-events:none !important}
 
