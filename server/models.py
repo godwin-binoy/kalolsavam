@@ -220,7 +220,11 @@ class AuthAudit(SQLModel, table=True):
 # ── Request Validation DTOs (Pydantic v2 BaseModel) ───────────────────────────
 class StateIn(BaseModel):
     venue_id: int
+    active: bool | None = None
     state: str = Field(pattern=r"^(IDLE|RUNNING|PAUSED|BREAK|FINISHED)$")
+    current_item: str | None = Field(default=None, max_length=200)
+    current_chest: str | None = Field(default=None, max_length=32)
+    upcoming_chests: str | None = Field(default=None, max_length=280)
     announcement: str = Field(default="", max_length=280)
 
 
@@ -257,7 +261,7 @@ class VenueUpdateIn(BaseModel):
 
     @field_validator("name", "kind")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: str | None) -> str:
         return _require_non_blank(v)
 
 
@@ -277,7 +281,7 @@ class CategoryUpdateIn(BaseModel):
 
     @field_validator("name", "group")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: str | None) -> str:
         return _require_non_blank(v)
 
 
@@ -298,7 +302,7 @@ class EventUpdateIn(BaseModel):
 
     @field_validator("code", "title")
     @classmethod
-    def _clean(cls, v: str | None) -> str | None:
+    def _clean(cls, v: str | None) -> str:
         return _require_non_blank(v)
 
 
@@ -375,17 +379,17 @@ class PhotoBatchIn(BaseModel):
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 
+class PhotoAssignIn(BaseModel):
+    asset_id: int
+    participant_entry_ids: list[int] = Field(min_length=1, max_length=30)
+
+
 class PhotoAssignByRegisterIn(BaseModel):
     asset_id: int
     venue_id: int
     item_code: str = Field(min_length=1, max_length=32)
     register_nos: list[str] = Field(min_length=1, max_length=30)
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
-
-
-class PhotoAssignIn(BaseModel):
-    asset_id: int
-    participant_entry_ids: list[int] = Field(min_length=1, max_length=30)
 
 
 class PhotoLookupIn(BaseModel):
