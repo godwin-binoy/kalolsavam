@@ -1,0 +1,110 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHead from '../../components/PageHead.astro';
+import Card from '../../components/Card.astro';
+import { FESTIVAL_SCHEDULE } from '../../data/schedule';
+import stages from '../../data/stages.json';
+import { url } from '../../lib/url';
+
+export function getStaticPaths() {
+  const CATEGORIES = [
+    { slug: "lp-general", name: "LP General", tone: "blue", desc: "Lower Primary General Competitions" },
+    { slug: "up-general", name: "UP General", tone: "teal", desc: "Upper Primary General Competitions" },
+    { slug: "hs-general", name: "HS General", tone: "indigo", desc: "High School General Competitions" },
+    { slug: "hss-general", name: "HSS General", tone: "purple", desc: "Higher Secondary General Competitions" },
+    { slug: "up-sanskrit", name: "UP Sanskrit", tone: "orange", desc: "Upper Primary Sanskrit Kalolsavam" },
+    { slug: "hs-sanskrit", name: "HS Sanskrit", tone: "pink", desc: "High School Sanskrit Kalolsavam" },
+    { slug: "lp-arabic", name: "LP Arabic", tone: "rose", desc: "Lower Primary Arabic Sahithyolsavam" },
+    { slug: "up-arabic", name: "UP Arabic", tone: "teal", desc: "Upper Primary Arabic Sahithyolsavam" },
+    { slug: "hs-arabic", name: "HS Arabic", tone: "blue", desc: "High School Arabic Sahithyolsavam" },
+  ];
+
+  return CATEGORIES.map((c) => ({
+    params: { cat: c.slug },
+    props: { ...c },
+  }));
+}
+
+const { slug, name, tone, desc } = Astro.props;
+
+const venueMap: Record<number, { name: string; loc: string }> = {};
+for (const s of stages) {
+  venueMap[s.n] = { name: s.name, loc: s.loc };
+}
+
+const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
+  ...it,
+  venue_name: venueMap[it.venue_n]?.name || `Venue ${it.venue_n}`,
+  venue_loc: venueMap[it.venue_n]?.loc || '',
+}));
+---
+<BaseLayout title={`${name} Competitions | Mala Kalolsavam`} active="venues">
+  <div class="main-container">
+    <div style="margin-bottom:1.5rem">
+      <a href={url('/venues-find')} class="btn-link" style="display:inline-flex;align-items:center;gap:.35rem;padding:0;color:var(--brand);font-weight:700">
+        &larr; Back to All Categories
+      </a>
+    </div>
+
+    <PageHead badge="Competition Category" title={name} intro={`${desc} · ${items.length} events scheduled.`} />
+
+    <!-- Live Search within Category -->
+    <div class="card-base" style="margin-bottom:2rem">
+      <input id="q-cat" type="search" class="inp" placeholder={`Filter ${name} items by name, venue or timing…`} autocomplete="off">
+    </div>
+
+    <div id="items-grid" class="grid-3" style="gap:1.25rem">
+      {items.map((it) => (
+        <div class="fest-card single-item-card" data-search-txt={`${it.item} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time}`.toLowerCase()}>
+          <div class={`fest-header banner-${tone}`} style="padding:1rem 1.25rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
+              <span style="font-size:.72rem;padding:.2rem .65rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">
+                Venue #{it.venue_n}
+              </span>
+              <span style="font-size:.72rem;opacity:.9">{it.day.split(' ')[0]}</span>
+            </div>
+            <h3 class="fest-title" style="font-size:1.15rem;line-height:1.25">{it.item}</h3>
+          </div>
+          <div class="fest-body" style="padding:1rem 1.15rem;gap:.5rem;font-size:.88rem">
+            <div><strong>Venue:</strong> {it.venue_name}</div>
+            <div class="text-muted xs">{it.venue_loc}</div>
+            <div style="margin-top:.4rem;color:var(--accent);font-weight:600">
+              ⏱ {it.day} · {it.time}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <p id="empty-cat" class="text-muted center" style="margin-top:3rem" hidden>No matching items in this category.</p>
+  </div>
+
+  <script is:inline>
+    (function(){
+      var q = document.getElementById('q-cat');
+      var grid = document.getElementById('items-grid');
+      var emp = document.getElementById('empty-cat');
+      if (!q || !grid) return;
+      var cards = Array.from(grid.querySelectorAll('.single-item-card'));
+
+      q.addEventListener('input', function(){
+        var val = q.value.trim().toLowerCase();
+        var tokens = val.split(/\s+/).filter(Boolean);
+        var visibleCount = 0;
+
+        cards.forEach(function(card){
+          var txt = card.getAttribute('data-search-txt') || '';
+          var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
+          if (matches){
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
+
+        if (emp) emp.hidden = visibleCount > 0;
+      });
+    })();
+  </script>
+</BaseLayout>

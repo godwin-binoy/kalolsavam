@@ -1,155 +1,89 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
+import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
 import { FESTIVAL_SCHEDULE } from '../data/schedule';
-import stages from '../data/stages.json';
+import { url } from '../lib/url';
 
 const CATEGORIES = [
-  "LP General",
-  "UP General",
-  "HS General",
-  "HSS General",
-  "UP Sanskrit",
-  "HS Sanskrit",
-  "LP Arabic",
-  "UP Arabic",
-  "HS Arabic",
+  { slug: "lp-general", name: "LP General", tone: "blue", icon: "sparkle", desc: "Lower Primary General (Classes 1–4)" },
+  { slug: "up-general", name: "UP General", tone: "teal", icon: "user", desc: "Upper Primary General (Classes 5–7)" },
+  { slug: "hs-general", name: "HS General", tone: "indigo", icon: "building", desc: "High School General (Classes 8–10)" },
+  { slug: "hss-general", name: "HSS General", tone: "purple", icon: "grid", desc: "Higher Secondary General (Classes 11–12)" },
+  { slug: "up-sanskrit", name: "UP Sanskrit", tone: "orange", icon: "clipboard-check", desc: "UP Sanskrit Sahithyolsavam" },
+  { slug: "hs-sanskrit", name: "HS Sanskrit", tone: "pink", icon: "clipboard-check", desc: "HS Sanskrit Sahithyolsavam" },
+  { slug: "lp-arabic", name: "LP Arabic", tone: "rose", icon: "sparkle", desc: "LP Arabic Sahithyolsavam" },
+  { slug: "up-arabic", name: "UP Arabic", tone: "teal", icon: "user", desc: "UP Arabic Sahithyolsavam" },
+  { slug: "hs-arabic", name: "HS Arabic", tone: "blue", icon: "building", desc: "HS Arabic Sahithyolsavam" },
 ];
 
-const venueMap: Record<number, { name: string; loc: string }> = {};
-for (const s of stages) {
-  venueMap[s.n] = { name: s.name, loc: s.loc };
-}
-
-const scheduleWithDetails = FESTIVAL_SCHEDULE.map((it) => ({
-  ...it,
-  venue_name: venueMap[it.venue_n]?.name || `Venue ${it.venue_n}`,
-  venue_loc: venueMap[it.venue_n]?.loc || '',
-}));
-
-const categoryGroups = CATEGORIES.map((cat) => ({
-  name: cat,
-  count: scheduleWithDetails.filter((it) => it.cat === cat).length,
-  items: scheduleWithDetails.filter((it) => it.cat === cat),
-}));
+const categoryCards = CATEGORIES.map((c) => {
+  const count = FESTIVAL_SCHEDULE.filter((it) => it.cat === c.name).length;
+  const sampleItems = FESTIVAL_SCHEDULE.filter((it) => it.cat === c.name).slice(0, 3).map((x) => x.item);
+  return {
+    ...c,
+    count,
+    sample: sampleItems.join(", "),
+  };
+});
 ---
 <BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Item & Category Finder" title="Find Venue by Item" intro="Browse by category or type an item name. Every competition is listed with its assigned venue number and schedule." />
+    <PageHead badge="Item Categories" title="Find Venue by Item" intro="Select any category below to view all competitions, assigned venues, locations, and timings." />
 
-    <!-- Live Search Bar -->
-    <div class="card-base" style="margin-bottom:1.5rem">
-      <input id="q" type="search" class="inp" placeholder="Search item or category — e.g. Oppana, Bharathanatyam, Sanghanritham, Sanskrit, Arabic…" autocomplete="off">
-      <div class="row" style="margin-top:.75rem;gap:.4rem" id="cat-chips">
-        <button type="button" class="btn-primary sm ghost active" data-cat="all">All</button>
-        {CATEGORIES.map((cat) => (
-          <button type="button" class="btn-primary sm ghost" data-cat={cat}>{cat}</button>
-        ))}
-      </div>
+    <!-- Instant Search across all Categories -->
+    <div class="card-base" style="margin-bottom:2.5rem">
+      <label for="q-global" class="text-muted sm" style="display:block;margin-bottom:.5rem;font-weight:600">Quick Search Any Category or Item Name:</label>
+      <input id="q-global" type="search" class="inp" placeholder="Type category or item name — e.g. LP, Sanskrit, Oppana, Bharathanatyam…" autocomplete="off">
     </div>
 
-    <!-- Category Sections & Cards -->
-    <div id="category-sections" style="display:flex;flex-direction:column;gap:2rem">
-      {categoryGroups.map((grp) => (
-        <section class="cat-section" data-cat-name={grp.name}>
-          <div class="sec-head" style="margin-bottom:1rem;display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap">
-            <h2 style="font-size:1.35rem;margin:0">{grp.name}</h2>
-            <span class="badge-gov">{grp.count} events</span>
-          </div>
-
-          <div class="grid-3 item-grid" style="gap:1rem">
-            {grp.items.map((it) => (
-              <div class="fest-card item-card" data-item-text={`${it.item} ${it.cat} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time}`.toLowerCase()}>
-                <div class="fest-header banner-blue" style="padding:.9rem 1.1rem">
-                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem">
-                    <span style="font-size:.72rem;padding:.15rem .55rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">
-                      Venue #{it.venue_n}
-                    </span>
-                    <span style="font-size:.72rem;opacity:.9">{it.day.split(' ')[0]}</span>
-                  </div>
-                  <h3 class="fest-title" style="font-size:1.05rem;line-height:1.2">{it.item}</h3>
-                </div>
-                <div class="fest-body" style="padding:.85rem 1rem;gap:.45rem;font-size:.85rem">
-                  <div><strong>Venue:</strong> {it.venue_name}</div>
-                  <div class="text-muted xs">{it.venue_loc}</div>
-                  <div style="margin-top:.3rem;color:var(--accent);font-weight:600">
-                    ⏱ {it.day} · {it.time}
-                  </div>
-                </div>
+    <!-- Category Cards Grid -->
+    <div id="cat-cards-grid" class="grid-3" style="gap:1.5rem">
+      {categoryCards.map((c) => (
+        <div class="cat-card-wrapper" data-cat-text={`${c.name} ${c.slug} ${c.desc} ${c.sample}`.toLowerCase()}>
+          <Card title={c.name} badge={`${c.count} Events`} tone={c.tone} icon={c.icon} href={`/category/${c.slug}`}>
+            <p class="text-muted sm" style="margin:0 0 .5rem">{c.desc}</p>
+            {c.sample && (
+              <div class="text-muted xs" style="line-height:1.4;margin-bottom:.75rem">
+                <strong>Includes:</strong> {c.sample}...
               </div>
-            ))}
-          </div>
-        </section>
+            )}
+            <ActionItem href={`/category/${c.slug}`} title={`View ${c.name} Schedule`} iconTone={`c-${c.tone}`} />
+          </Card>
+        </div>
       ))}
     </div>
 
-    <p id="empty-state" class="text-muted center" style="margin-top:3rem" hidden>No matching items found.</p>
+    <p id="empty-cat-cards" class="text-muted center" style="margin-top:3rem" hidden>No matching categories found.</p>
   </div>
-
-  <style>
-    .cat-section { transition: opacity .2s ease; }
-    .item-card { border-radius: var(--radius-inner); }
-    .btn-primary.sm.ghost.active { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
-  </style>
 
   <script is:inline>
     (function(){
-      var q = document.getElementById('q');
-      var chipContainer = document.getElementById('cat-chips');
-      var sections = Array.from(document.querySelectorAll('.cat-section'));
-      var emptyState = document.getElementById('empty-state');
-      var activeCat = 'all';
+      var q = document.getElementById('q-global');
+      var grid = document.getElementById('cat-cards-grid');
+      var emp = document.getElementById('empty-cat-cards');
+      if (!q || !grid) return;
+      var cards = Array.from(grid.querySelectorAll('.cat-card-wrapper'));
 
-      function applyFilter(){
-        var searchVal = (q ? q.value : '').trim().toLowerCase();
-        var tokens = searchVal.split(/\s+/).filter(Boolean);
-        var anyVisible = false;
+      q.addEventListener('input', function(){
+        var val = q.value.trim().toLowerCase();
+        var tokens = val.split(/\s+/).filter(Boolean);
+        var visibleCount = 0;
 
-        sections.forEach(function(sec){
-          var secCat = sec.getAttribute('data-cat-name');
-          var catMatches = (activeCat === 'all' || activeCat === secCat);
-          var items = Array.from(sec.querySelectorAll('.item-card'));
-          var visibleItemsInSec = 0;
-
-          items.forEach(function(card){
-            var text = card.getAttribute('data-item-text') || '';
-            var matchesSearch = (!tokens.length) || tokens.every(function(t){ return text.indexOf(t) >= 0; });
-
-            if (catMatches && matchesSearch){
-              card.style.display = '';
-              visibleItemsInSec++;
-            } else {
-              card.style.display = 'none';
-            }
-          });
-
-          if (catMatches && visibleItemsInSec > 0){
-            sec.style.display = '';
-            anyVisible = true;
+        cards.forEach(function(card){
+          var txt = card.getAttribute('data-cat-text') || '';
+          var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
+          if (matches){
+            card.style.display = '';
+            visibleCount++;
           } else {
-            sec.style.display = 'none';
+            card.style.display = 'none';
           }
         });
 
-        if (emptyState){
-          emptyState.hidden = anyVisible;
-        }
-      }
-
-      if (q){
-        q.addEventListener('input', applyFilter);
-      }
-
-      if (chipContainer){
-        chipContainer.addEventListener('click', function(ev){
-          var btn = ev.target.closest('button[data-cat]');
-          if (!btn) return;
-          chipContainer.querySelectorAll('button').forEach(function(b){ b.classList.remove('active'); });
-          btn.classList.add('active');
-          activeCat = btn.getAttribute('data-cat') || 'all';
-          applyFilter();
-        });
-      }
+        if (emp) emp.hidden = visibleCount > 0;
+      });
     })();
   </script>
 </BaseLayout>
