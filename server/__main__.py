@@ -219,6 +219,35 @@ def user_delete(email: str = typer.Option(..., "--email", "-e"), yes: bool = typ
     typer.echo(f"User {email} deleted.")
 
 
+
+@app.command("seed-schedule")
+def seed_schedule() -> None:
+    """Seed or update all 26 venues and the complete official festival schedule without duplicates."""
+    _cfg, db = _init_db()
+    stages_file = Path("src/data/stages.json")
+    events_file = Path("src/data/events.json")
+
+    stages = json.loads(stages_file.read_text(encoding="utf-8")) if stages_file.is_file() else []
+    events = json.loads(events_file.read_text(encoding="utf-8")) if events_file.is_file() else []
+
+    with db.transaction():
+        for s in stages:
+            vid = int(s["n"])
+            db.ex(
+                "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1) "
+                "ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind, slug = excluded.slug",
+                (vid, s["name"], s.get("kind", "stage"), s.get("slug", f"venue-{vid}")),
+            )
+        for e in events:
+            db.ex(
+                "INSERT INTO events(code, title, category, venue_id, day, scheduled_time) VALUES (?,?,?,?,?,?) "
+                "ON CONFLICT(code) DO UPDATE SET title = excluded.title, category = excluded.category, "
+                "venue_id = excluded.venue_id, day = excluded.day, scheduled_time = excluded.scheduled_time",
+                (str(e["code"]), e["title"], e.get("category"), int(e["venue_id"]), e.get("day"), e.get("scheduled_time")),
+            )
+    typer.echo(f"Seeded {len(stages)} venues and {len(events)} schedule items successfully.")
+
+
 @app.callback(invoke_without_command=True)
 def default_main(ctx: typer.Context) -> None:
     if ctx.invoked_subcommand is None:
