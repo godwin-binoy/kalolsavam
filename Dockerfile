@@ -20,6 +20,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY server ./server
 COPY src/data/stages.json ./src/data/stages.json
+COPY src/data/events.json ./src/data/events.json
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh && mkdir -p /app/deployment
 
