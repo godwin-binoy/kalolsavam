@@ -5,7 +5,39 @@
   var boardsEl, connEl, whoEl;
   var feed = null;
   var boardData = [];
+  var scheduleEvents = [];
   var lastAction = {};
+
+  // Photo intake state
+  var photoFiles = { w1Slips: [], w1Stage: [], w2Stage: [] };
+  var previewUrls = { w1Slips: [], w1Stage: [], w2Stage: [] };
+  var w2SelectedRegs = []; // [{ register_no, label }]
+
+  async function loadSchedule(){
+    var r = await A.api('/api/v1/public/schedule');
+    if (r.ok && r.data && Array.isArray(r.data.events)){
+      scheduleEvents = r.data.events;
+      populateW2Items();
+    }
+  }
+
+  function populateW2Items(){
+    var sel = document.getElementById('w2-item');
+    var custom = document.getElementById('w2-item-custom');
+    if (!sel) return;
+    var prev = sel.value;
+    var opts = '<option value="">-- Select item --</option>' +
+      scheduleEvents.map(function(e){
+        return '<option value="' + esc(e.code) + '">' + esc(e.code) + ' · ' + esc(e.title) + '</option>';
+      }).join('') +
+      '<option value="__custom__">Other / Enter item code…</option>';
+    sel.innerHTML = opts;
+    if (prev) sel.value = prev;
+    if (!scheduleEvents.length){
+      sel.value = '__custom__';
+    }
+    if (custom) custom.style.display = sel.value === '__custom__' ? 'block' : 'none';
+  }
 
   async function loadBoard(){
     var r = await A.api('/api/v1/live/board');
@@ -22,23 +54,18 @@
     boardsEl.innerHTML = '';
 
     var photoSec = document.getElementById('photo-intake');
-    var sel = document.getElementById('photo-item-select');
-    if (photoSec && sel){
+    var vSel = document.getElementById('photo-venue-select');
+    if (photoSec && vSel){
       photoSec.style.display = board.length ? 'block' : 'none';
-      var prev = sel.value;
-      sel.innerHTML = '<option value="">-- Choose an item --</option>';
-      board.forEach(function(v){
-        v.items.filter(function(i){
-          return i.status === 'ON-STAGE' || i.status === 'PAUSED' || i.status === 'WAITING';
-        }).forEach(function(i){
-          var o = document.createElement('option');
-          o.value = i.id;
-          o.textContent = v.venue.name + ' - ' + (i.chest_no ? 'Chest ' + i.chest_no + ' - ' : '') + i.event;
-          sel.appendChild(o);
-        });
-      });
-      if (prev) sel.value = prev;
+      var prevV = vSel.value;
+      vSel.innerHTML = board.map(function(b){
+        return '<option value="' + b.venue.id + '">' + esc(b.venue.name) + '</option>';
+      }).join('');
+      if (prevV && board.some(function(b){ return String(b.venue.id) === String(prevV); })){
+        vSel.value = prevV;
+      }
     }
+
     if (!board.length){
       boardsEl.innerHTML = '<div class="panel"><p class="muted">No stages are assigned to your account.</p></div>';
       return;
@@ -47,199 +74,249 @@
   }
 
   function venuePanel(v){
-    var venue = v.venue, state = v.state || { state: 'IDLE' }, items = v.items || [];
+    var venue = v.venue;
+    var st = v.state || {};
+    var isActive = venue.active !== 0 && venue.active !== false;
+    var stateName = st.state || 'IDLE';
+
     var p = document.createElement('section');
     p.className = 'panel';
     p.dataset.venue = venue.id;
 
-    var cur = items.find(function(i){ return i.status === 'ON-STAGE' || i.status === 'PAUSED'; });
-    var next = items.find(function(i){ return i.status === 'WAITING'; });
-    var rows = items.map(function(i){
-      var rowClass = i.status === 'ON-STAGE' ? ' class="onstage"' : '';
-      var actions = i.status === 'COMPLETE'
-        ? ' <button data-act="recall" data-id="' + esc(i.id) + '" data-ver="' + esc(i.version) + '">Recall</button>'
-        : '';
-      return '<tr' + rowClass + ' data-status="' + esc(i.status) + '" data-ver="' + esc(i.version) + '">' +
-        '<td>' + (i.chest_no ? '<strong>' + esc(i.chest_no) + '</strong>' : '—') + '</td>' +
-        '<td>' + esc(i.event || '') + '<br><span class="muted small">' + esc(i.category || '') + '</span></td>' +
-        '<td>' + esc(i.school || '—') + '<br><span class="muted small">' + esc(i.student_name || '') + '</span></td>' +
-        '<td><span class="status ' + esc(i.status) + '">' + esc(i.status) + '</span></td>' +
-        '<td>' + actions + '</td></tr>';
-    }).join('');
-
     p.innerHTML =
-      '<div class="row"><h2>' + esc(venue.name) + '</h2>' +
-        '<span class="state-pill state-' + esc(state.state) + '">' + esc(state.state) + '</span>' +
-        '<span class="spacer" style="flex:1"></span></div>' +
-      (state.announcement ? '<p class="small muted">📣 ' + esc(state.announcement) + '</p>' : '') +
-      '<div class="row" style="margin:.6rem 0">' +
-        '<button data-act="START_NEXT" class="primary"' + (next ? '' : ' disabled') + '>▶ Start next' +
-          (next ? ' (' + esc(next.student_name || next.event || '') + ')' : '') + '</button>' +
-        '<button data-act="COMPLETE_CURRENT"' + (cur && cur.status === 'ON-STAGE' ? '' : ' disabled') + '>✔ Complete</button>' +
-        '<button data-act="PAUSE"' + (cur && cur.status === 'ON-STAGE' ? '' : ' disabled') + '>⏸ Pause</button>' +
-        '<button data-act="RESUME"' + (cur && cur.status === 'PAUSED' ? '' : ' disabled') + '>⏵ Resume</button>' +
-        '<button data-act="SKIP"' + (next ? '' : ' disabled') + '>⏭ Skip next</button>' +
+      '<div class="row">' +
+        '<h2>' + esc(venue.name) + '</h2>' +
+        '<span class="pill ' + (isActive ? 'ok' : 'err') + '">' + (isActive ? 'Active' : 'Inactive') + '</span>' +
+        '<span class="state-pill state-' + esc(stateName) + '">' + esc(stateName) + '</span>' +
       '</div>' +
-      '<div class="row" style="margin-bottom:.6rem">' +
-        '<select id="vstate-' + venue.id + '">' +
-          ['IDLE','RUNNING','PAUSED','BREAK','FINISHED'].map(function(s){
-            return '<option' + (s === state.state ? ' selected' : '') + '>' + s + '</option>';
-          }).join('') +
-        '</select>' +
-        '<input id="vann-' + venue.id + '" placeholder="Announcement" maxlength="280" value="' + esc(state.announcement || '') + '" style="flex:1">' +
-        '<button data-act="pushstate">Post</button>' +
-      '</div>' +
-      '<table><thead><tr><th>Chest</th><th>Event</th><th>Performer</th><th>Status</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">No items queued.</td></tr>') + '</tbody></table>';
+      '<form class="stage-control-form">' +
+        '<div class="split">' +
+          '<label>Stage Active' +
+            '<select name="active">' +
+              '<option value="1"' + (isActive ? ' selected' : '') + '>Active</option>' +
+              '<option value="0"' + (!isActive ? ' selected' : '') + '>Inactive</option>' +
+            '</select>' +
+          '</label>' +
+          '<label>Stage Status' +
+            '<select name="state">' +
+              ['IDLE', 'RUNNING', 'PAUSED', 'BREAK', 'FINISHED'].map(function(s){
+                return '<option' + (s === stateName ? ' selected' : '') + '>' + s + '</option>';
+              }).join('') +
+            '</select>' +
+          '</label>' +
+        '</div>' +
+        '<label>Current Item (optional)' +
+          '<input name="current_item" maxlength="200" placeholder="Not defined" value="' + esc(st.current_item || '') + '">' +
+        '</label>' +
+        '<div class="split">' +
+          '<label>Current Chest Number (optional)' +
+            '<input name="current_chest" maxlength="32" placeholder="Not defined" value="' + esc(st.current_chest || '') + '">' +
+          '</label>' +
+          '<label>Upcoming Chest Numbers (optional)' +
+            '<input name="upcoming_chests" maxlength="280" placeholder="Not defined (e.g. 105, 106, 107)" value="' + esc(st.upcoming_chests || '') + '">' +
+          '</label>' +
+        '</div>' +
+        '<label>Announcements (optional)' +
+          '<textarea name="announcement" rows="2" maxlength="280" placeholder="No announcement">' + esc(st.announcement || '') + '</textarea>' +
+        '</label>' +
+        '<div class="row" style="margin-top:.9rem">' +
+          '<button type="submit" class="primary">Save Stage</button>' +
+        '</div>' +
+      '</form>';
 
-    p.addEventListener('click', function(ev){
-      var b = ev.target.closest('button[data-act]');
-      if (!b || b.disabled) return;
-      var act = b.dataset.act;
-      if (act === 'recall'){ advance(venue.id, 'RECALL', Number(b.dataset.id), Number(b.dataset.ver)); return; }
-      if (act === 'pushstate'){
-        postState(venue.id, p.querySelector('#vstate-' + venue.id).value, p.querySelector('#vann-' + venue.id).value);
-        return;
+    var form = p.querySelector('form');
+    form.addEventListener('submit', async function(ev){
+      ev.preventDefault();
+      var btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      lastAction[venue.id] = Date.now();
+      try {
+        var r = await A.api('/api/v1/live/state', {
+          method: 'POST',
+          body: {
+            venue_id: Number(venue.id),
+            active: form.elements.active.value === '1',
+            state: form.elements.state.value,
+            current_item: form.elements.current_item.value.trim() || null,
+            current_chest: form.elements.current_chest.value.trim() || null,
+            upcoming_chests: form.elements.upcoming_chests.value.trim() || null,
+            announcement: form.elements.announcement.value.trim()
+          }
+        });
+        if (!r.ok){
+          A.toast('Save failed: ' + (r.detail || r.status), true);
+          return;
+        }
+        A.toast(venue.name + ' updated.');
+        await loadBoard();
+      } finally {
+        btn.disabled = false;
       }
-      if (act === 'START_NEXT'){
-        var defaultChest = (next && (next.chest_no || next.roll)) || '';
-        var chest = prompt('Enter chest number for the starting item:', defaultChest);
-        if (chest === null) return;
-        advance(venue.id, act, null, null, chest.trim() || null);
-        return;
-      }
-      advance(venue.id, act);
     });
     return p;
   }
 
-  function idemKey(){
-    return 'sm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+  // ── Photo Preview & Removal Helpers ───────────────────────────────────────
+  function renderPreview(key, containerId){
+    previewUrls[key].forEach(function(u){ try { URL.revokeObjectURL(u); } catch(e){} });
+    previewUrls[key] = [];
+    var box = document.getElementById(containerId);
+    if (!box) return;
+    box.innerHTML = photoFiles[key].map(function(f, idx){
+      var u = URL.createObjectURL(f);
+      previewUrls[key].push(u);
+      return '<div class="photo-thumb">' +
+        '<img src="' + u + '" alt="' + esc(f.name) + '">' +
+        '<button type="button" class="rm-btn" data-rm-key="' + key + '" data-rm-idx="' + idx + '" title="Remove photo">&times;</button>' +
+        '<div class="meta">' + esc(f.name) + '</div>' +
+      '</div>';
+    }).join('');
   }
 
-  var FROM_STATUS = {
-    START_NEXT: 'WAITING', COMPLETE_CURRENT: 'ON-STAGE', PAUSE: 'ON-STAGE',
-    RESUME: 'PAUSED', SKIP: 'WAITING', RECALL: 'COMPLETE'
-  };
-
-  async function advance(venueId, action, itemId, itemVersion, chestNo){
-    lastAction[venueId] = Date.now();
-    var panel = document.querySelector('.panel[data-venue="' + venueId + '"]');
-    var prevStates = [];
-    if (panel){
-      panel.querySelectorAll('button').forEach(function(b){
-        prevStates.push([b, b.disabled]); b.disabled = true;
-      });
-    }
-    var version = (typeof itemVersion === 'number') ? itemVersion : null;
-    if (version == null && panel && FROM_STATUS[action]){
-      var tr = panel.querySelector('tr[data-status="' + FROM_STATUS[action] + '"]');
-      if (tr && tr.dataset.ver) version = Number(tr.dataset.ver);
-    }
-    var payload = { venue_id: Number(venueId), action: action, version: version };
-    if (chestNo) payload.chest_no = chestNo;
-    if (typeof itemId === 'number') payload.item_id = itemId;
-
-    try {
-      var r = await A.api('/api/v1/live/advance', {
-        method: 'POST', headers: { 'Idempotency-Key': idemKey() }, body: payload
-      });
-      if (!r.ok){
-        if (r.detail === 'version_conflict' || r.detail === 'no_item_in_state' || r.detail === 'state_changed'){
-          A.toast('Board changed — re-syncing.'); await loadBoard();
-        } else {
-          A.toast('Action failed: ' + (r.detail || r.status), true);
-        }
-        return;
+  function appendFiles(key, containerId, fileList){
+    var added = Array.from(fileList || []);
+    for (var i = 0; i < added.length; i++){
+      var f = added[i];
+      if (f.size > 10 * 1024 * 1024){
+        A.toast('Skipped ' + f.name + ' (exceeds 10 MB)', true);
+        continue;
       }
-      await loadBoard();
-    } finally {
-      if (panel && document.body.contains(panel)){
-        prevStates.forEach(function(pair){ pair[0].disabled = pair[1]; });
-      }
+      photoFiles[key].push(f);
     }
+    renderPreview(key, containerId);
   }
 
-  async function postState(venueId, state, announcement){
-    var r = await A.api('/api/v1/live/state', {
-      method: 'POST', body: { venue_id: Number(venueId), state: state, announcement: announcement || '' }
-    });
-    if (!r.ok) A.toast('Status update failed', true);
-    else { A.toast('Posted.'); loadBoard(); }
+  // ── Workflow 2 Register Number Chips & Suggestions ────────────────────────
+  function renderRegChips(){
+    var box = document.getElementById('w2-reg-chips');
+    if (!box) return;
+    box.innerHTML = w2SelectedRegs.map(function(item, idx){
+      return '<span class="chip">' +
+        '<strong>' + esc(item.register_no) + '</strong>' +
+        (item.name ? ' · ' + esc(item.name) : '') +
+        '<button type="button" data-rm-reg="' + idx + '" title="Remove">&times;</button>' +
+      '</span>';
+    }).join('');
   }
 
-  async function uploadPhotos(workflow, btn){
-    var sel = document.getElementById('photo-item-select');
-    var itemId = Number(sel.value);
-    if (!itemId){ A.toast('Select an item first.', true); return; }
-
-    var currentVenue = null, currentItem = null;
-    for (var i = 0; i < boardData.length; i++){
-      var it = boardData[i].items.find(function(x){ return x.id === itemId; });
-      if (it){ currentVenue = boardData[i].venue; currentItem = it; break; }
-    }
-    if (!currentVenue || !currentItem) return;
-    if (workflow === 'quick' && !currentItem.participant_entry_id){
-      A.toast('This queue item has no linked participant entry — use Bulk workflow instead.', true);
+  function addRegChip(reg, name){
+    reg = String(reg || '').trim();
+    if (!/^\d{5}$/.test(reg)){
+      A.toast('Register number must be 5 digits.', true);
       return;
     }
+    if (w2SelectedRegs.some(function(x){ return x.register_no === reg; })) return;
+    w2SelectedRegs.push({ register_no: reg, name: name || '' });
+    renderRegChips();
+  }
 
-    var files = [];
-    if (workflow === 'bulk'){
-      Array.from(document.getElementById('w1-slips').files).forEach(function(f){ files.push({ kind: 'slip', file: f }); });
-      Array.from(document.getElementById('w1-stage').files).forEach(function(f){ files.push({ kind: 'stage', file: f }); });
-    } else {
-      Array.from(document.getElementById('w2-stage').files).forEach(function(f){ files.push({ kind: 'stage', file: f }); });
-    }
-    if (!files.length){ A.toast('Choose at least one photo first.', true); return; }
-    for (var j = 0; j < files.length; j++){
-      if (files[j].file.size > 10 * 1024 * 1024){
-        A.toast('File too large (max 10 MB): ' + files[j].file.name, true);
-        return;
-      }
-    }
+  function currentW2ItemCode(){
+    var sel = document.getElementById('w2-item');
+    var custom = document.getElementById('w2-item-custom');
+    if (!sel) return '';
+    return sel.value === '__custom__' ? (custom ? custom.value.trim() : '') : sel.value.trim();
+  }
 
-    if (btn) btn.disabled = true;
+  async function fetchSuggestions(query, itemCode){
+    var params = [];
+    if (query && query.length >= 2) params.push('q=' + encodeURIComponent(query));
+    if (itemCode) params.push('item_code=' + encodeURIComponent(itemCode));
+    var sugBox = document.getElementById('w2-reg-suggestions');
+    if (!params.length){ if (sugBox) sugBox.innerHTML = ''; return; }
+    var r = await A.api('/api/v1/photos/participants/search?' + params.join('&'));
+    if (!r.ok || !sugBox) return;
+    var parts = r.data.participants || [];
+    sugBox.innerHTML = parts.slice(0, 8).map(function(p){
+      return '<button type="button" class="small" style="margin:.15rem .3rem .15rem 0" ' +
+        'data-pick-reg="' + esc(p.register_no) + '" data-pick-name="' + esc(p.name) + '">' +
+        '+ ' + esc(p.register_no) + ' · ' + esc(p.name) + '</button>';
+    }).join('') || '<span class="muted xs">No matching registered students.</span>';
+  }
+
+  // ── Photo Upload Execution ────────────────────────────────────────────────
+  async function uploadBulk(btn){
+    var venueId = Number(document.getElementById('photo-venue-select').value);
+    if (!venueId){ A.toast('Select a stage first.', true); return; }
+    var files = photoFiles.w1Slips.map(function(f){ return { kind: 'slip', file: f }; })
+      .concat(photoFiles.w1Stage.map(function(f){ return { kind: 'stage', file: f }; }));
+    if (!files.length){ A.toast('Add at least one photo first.', true); return; }
+
+    btn.disabled = true;
     try {
       var batchReq = await A.api('/api/v1/photos/batches', {
         method: 'POST',
-        body: {
-          queue_item_id: itemId,
-          venue_id: currentVenue.id,
-          perf_date: new Date().toISOString().split('T')[0],
-          workflow: workflow
-        }
+        body: { venue_id: venueId, workflow: 'bulk', perf_date: new Date().toISOString().split('T')[0] }
       });
-      if (!batchReq.ok){ A.toast('Batch creation failed: ' + (batchReq.detail || batchReq.status), true); return; }
+      if (!batchReq.ok){ A.toast('Batch error: ' + (batchReq.detail || batchReq.status), true); return; }
       var batchId = batchReq.data.batch_id;
       A.toast('Uploading ' + files.length + ' photo(s)…');
 
-      for (var k = 0; k < files.length; k++){
+      for (var i = 0; i < files.length; i++){
         var fd = new FormData();
-        fd.append('kind', files[k].kind);
-        fd.append('file', files[k].file);
+        fd.append('kind', files[i].kind);
+        fd.append('file', files[i].file);
         var up = await A.api('/api/v1/photos/batches/' + batchId + '/upload', { method: 'POST', body: fd });
         if (!up.ok){ A.toast('Upload failed: ' + (up.detail || up.status), true); return; }
-        if (workflow === 'quick'){
-          var asg = await A.api('/api/v1/photos/assign', {
-            method: 'POST',
-            body: { asset_id: up.data.asset_id, participant_entry_ids: [currentItem.participant_entry_id] }
-          });
-          if (!asg.ok){ A.toast('Assign failed: ' + (asg.detail || asg.status), true); return; }
-        }
+      }
+      photoFiles.w1Slips = [];
+      photoFiles.w1Stage = [];
+      renderPreview('w1Slips', 'w1-slips-preview');
+      renderPreview('w1Stage', 'w1-stage-preview');
+      A.toast('Queued batch #' + batchId + ' for Data Worker.');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  async function uploadQuick(btn){
+    var venueId = Number(document.getElementById('photo-venue-select').value);
+    var itemCode = currentW2ItemCode();
+    if (!venueId){ A.toast('Select a stage first.', true); return; }
+    if (!itemCode){ A.toast('Select or enter an item first.', true); return; }
+    if (!w2SelectedRegs.length){ A.toast('Add at least one register number.', true); return; }
+    if (!photoFiles.w2Stage.length){ A.toast('Add at least one stage photo.', true); return; }
+
+    var regs = w2SelectedRegs.map(function(x){ return x.register_no; });
+    var today = new Date().toISOString().split('T')[0];
+
+    btn.disabled = true;
+    try {
+      var batchReq = await A.api('/api/v1/photos/batches', {
+        method: 'POST',
+        body: { venue_id: venueId, workflow: 'quick', perf_date: today }
+      });
+      if (!batchReq.ok){ A.toast('Batch error: ' + (batchReq.detail || batchReq.status), true); return; }
+      var batchId = batchReq.data.batch_id;
+      A.toast('Uploading & assigning ' + photoFiles.w2Stage.length + ' photo(s)…');
+
+      for (var i = 0; i < photoFiles.w2Stage.length; i++){
+        var fd = new FormData();
+        fd.append('kind', 'stage');
+        fd.append('file', photoFiles.w2Stage[i]);
+        var up = await A.api('/api/v1/photos/batches/' + batchId + '/upload', { method: 'POST', body: fd });
+        if (!up.ok){ A.toast('Upload failed: ' + (up.detail || up.status), true); return; }
+
+        var asg = await A.api('/api/v1/photos/assign-by-register', {
+          method: 'POST',
+          body: {
+            asset_id: up.data.asset_id,
+            venue_id: venueId,
+            item_code: itemCode,
+            register_nos: regs,
+            perf_date: today
+          }
+        });
+        if (!asg.ok){ A.toast('Assign failed: ' + (asg.detail || asg.status), true); return; }
       }
 
-      if (workflow === 'quick'){
-        var pub = await A.api('/api/v1/photos/batches/' + batchId + '/publish', { method: 'POST' });
-        if (!pub.ok){ A.toast('Publish failed', true); return; }
-        document.getElementById('w2-stage').value = '';
-      } else {
-        document.getElementById('w1-slips').value = '';
-        document.getElementById('w1-stage').value = '';
-      }
-      A.toast('Upload complete.');
+      var pub = await A.api('/api/v1/photos/batches/' + batchId + '/publish', { method: 'POST' });
+      if (!pub.ok){ A.toast('Publish failed', true); return; }
+
+      photoFiles.w2Stage = [];
+      renderPreview('w2Stage', 'w2-stage-preview');
+      A.toast('Uploaded & published ' + regs.join(', ') + ' (' + itemCode + ').');
     } finally {
-      if (btn) btn.disabled = false;
+      btn.disabled = false;
     }
   }
 
@@ -261,6 +338,7 @@
     document.getElementById('app').classList.remove('hidden');
     whoEl.textContent = (info.username || info.email || 'staff') + ' · ' + (info.role || 'stagemaster');
     loadBoard();
+    loadSchedule();
     startFeed();
   };
 
@@ -268,11 +346,75 @@
     boardsEl = document.getElementById('boards');
     connEl = document.getElementById('conn');
     whoEl = document.getElementById('who');
+
     document.getElementById('logout-btn').addEventListener('click', window.KalAuth.logout);
     document.getElementById('sync-btn').addEventListener('click', loadBoard);
-    document.querySelectorAll('[data-photo-workflow]').forEach(function(btn){
-      btn.addEventListener('click', function(){ uploadPhotos(btn.dataset.photoWorkflow, btn); });
+
+    document.getElementById('w1-slips').addEventListener('change', function(){
+      appendFiles('w1Slips', 'w1-slips-preview', this.files); this.value = '';
     });
+    document.getElementById('w1-stage').addEventListener('change', function(){
+      appendFiles('w1Stage', 'w1-stage-preview', this.files); this.value = '';
+    });
+    document.getElementById('w2-stage').addEventListener('change', function(){
+      appendFiles('w2Stage', 'w2-stage-preview', this.files); this.value = '';
+    });
+
+    document.getElementById('photo-intake').addEventListener('click', function(ev){
+      var rmPhoto = ev.target.closest('[data-rm-key]');
+      if (rmPhoto){
+        var k = rmPhoto.dataset.rmKey;
+        photoFiles[k].splice(Number(rmPhoto.dataset.rmIdx), 1);
+        var map = { w1Slips: 'w1-slips-preview', w1Stage: 'w1-stage-preview', w2Stage: 'w2-stage-preview' };
+        renderPreview(k, map[k]);
+        return;
+      }
+      var pickReg = ev.target.closest('[data-pick-reg]');
+      if (pickReg){
+        addRegChip(pickReg.dataset.pickReg, pickReg.dataset.pickName);
+        return;
+      }
+      var rmReg = ev.target.closest('[data-rm-reg]');
+      if (rmReg){
+        w2SelectedRegs.splice(Number(rmReg.dataset.rmReg), 1);
+        renderRegChips();
+      }
+    });
+
+    var w2ItemSel = document.getElementById('w2-item');
+    var w2Custom = document.getElementById('w2-item-custom');
+    if (w2ItemSel){
+      w2ItemSel.addEventListener('change', function(){
+        if (w2Custom) w2Custom.style.display = this.value === '__custom__' ? 'block' : 'none';
+        fetchSuggestions(document.getElementById('w2-reg-search').value.trim(), currentW2ItemCode());
+      });
+    }
+
+    var sugTmr;
+    var regSearch = document.getElementById('w2-reg-search');
+    if (regSearch){
+      regSearch.addEventListener('input', function(){
+        clearTimeout(sugTmr);
+        var q = this.value.trim();
+        sugTmr = setTimeout(function(){ fetchSuggestions(q, currentW2ItemCode()); }, 240);
+      });
+      regSearch.addEventListener('keydown', function(ev){
+        if (ev.key === 'Enter'){
+          ev.preventDefault();
+          if (/^\d{5}$/.test(this.value.trim())){ addRegChip(this.value.trim(), ''); this.value = ''; }
+        }
+      });
+    }
+
+    document.getElementById('w2-reg-add').addEventListener('click', function(){
+      var val = regSearch ? regSearch.value.trim() : '';
+      if (/^\d{5}$/.test(val)){ addRegChip(val, ''); regSearch.value = ''; }
+      else A.toast('Type a 5-digit register number or pick from suggestions.', true);
+    });
+
+    document.getElementById('w1-submit').addEventListener('click', function(){ uploadBulk(this); });
+    document.getElementById('w2-submit').addEventListener('click', function(){ uploadQuick(this); });
+
     window.KalAuth.init();
   });
 })();

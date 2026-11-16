@@ -35,25 +35,48 @@
 
     <section id="photo-intake" class="panel" style="margin-top:2rem;display:none">
       <h2>Photo Intake</h2>
-      <p class="muted small">Upload photos for a stage queue item (max 10 MB per image).</p>
+      <p class="muted small">Upload stage photos (max 10 MB per image). You can remove individual photos before uploading.</p>
+
       <div class="row" style="margin-bottom:1rem">
-        <label style="margin:0;display:flex;align-items:center;gap:0.5rem">
-          Select Item: <select id="photo-item-select" style="width:auto;margin:0"></select>
+        <label style="margin:0;display:flex;align-items:center;gap:.5rem">
+          Stage:
+          <select id="photo-venue-select" style="width:auto;margin:0"></select>
         </label>
       </div>
-      <div class="grid" style="grid-template-columns:1fr 1fr">
-        <div class="card-base">
+
+      <div class="split">
+        <!-- Workflow 1 -->
+        <div class="panel">
           <h3>Workflow 1 (Bulk)</h3>
           <p class="small muted">Upload slip photos + raw stage photos for Data Workers to assign.</p>
           <label>Slip Photos<input type="file" id="w1-slips" multiple accept="image/jpeg,image/png,image/webp"></label>
+          <div id="w1-slips-preview" class="photo-preview-grid"></div>
           <label>Stage Photos<input type="file" id="w1-stage" multiple accept="image/jpeg,image/png,image/webp"></label>
-          <button class="primary" type="button" data-photo-workflow="bulk" style="margin-top:.75rem">Queue for Data Worker</button>
+          <div id="w1-stage-preview" class="photo-preview-grid"></div>
+          <button class="primary" type="button" id="w1-submit" style="margin-top:.5rem">Queue for Data Worker</button>
         </div>
-        <div class="card-base">
+
+        <!-- Workflow 2 -->
+        <div class="panel">
           <h3>Workflow 2 (Quick)</h3>
-          <p class="small muted">Upload stage photos directly to the selected participant.</p>
+          <p class="small muted">Select item and any register number(s), preview photos, then upload &amp; publish.</p>
+          <label>Select Item
+            <select id="w2-item"></select>
+          </label>
+          <input id="w2-item-custom" placeholder="Enter item code (e.g. 101)" maxlength="32" style="margin-top:.4rem;display:none">
+
+          <label>Register Number(s)
+            <div class="row">
+              <input id="w2-reg-search" placeholder="Search reg no or name…" autocomplete="off" style="flex:1">
+              <button type="button" id="w2-reg-add" class="small">+ Add Reg #</button>
+            </div>
+          </label>
+          <div id="w2-reg-suggestions" style="margin-top:.35rem"></div>
+          <div id="w2-reg-chips" class="chip-list"></div>
+
           <label>Stage Photos<input type="file" id="w2-stage" multiple accept="image/jpeg,image/png,image/webp"></label>
-          <button class="primary" type="button" data-photo-workflow="quick" style="margin-top:.75rem">Upload &amp; Publish</button>
+          <div id="w2-stage-preview" class="photo-preview-grid"></div>
+          <button class="primary" type="button" id="w2-submit" style="margin-top:.5rem">Upload &amp; Publish</button>
         </div>
       </div>
     </section>

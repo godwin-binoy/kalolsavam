@@ -49,12 +49,12 @@ def _broadcast_sync(request: Request, msg: dict) -> None:
         log.debug("SSE broadcast failed: %s", exc)
 
 
-def _active_venues_for_user(db, user):
-    all_active = db.q("SELECT * FROM venues WHERE active = 1 ORDER BY id")
+def _assigned_venues_for_user(db, user):
+    all_venues = db.q("SELECT * FROM venues ORDER BY id")
     if has_role(user, "admin"):
-        return all_active
+        return all_venues
     stages = set(get_user_stages(user))
-    return [v for v in all_active if v["id"] in stages]
+    return [v for v in all_venues if v["id"] in stages]
 
 
 def _require_active_venue(db, venue_id: int):
@@ -69,7 +69,7 @@ def _require_active_venue(db, venue_id: int):
 @router.get("/board")
 def board(request: Request, user=Depends(require_staff)):
     db = get_db(request)
-    venues = _active_venues_for_user(db, user)
+    venues = _assigned_venues_for_user(db, user)
     if not venues:
         return {"board": []}
 
@@ -86,7 +86,7 @@ def board(request: Request, user=Depends(require_staff)):
         "ORDER BY q.venue_id, "
         "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position"
     )
-    states = db.q("SELECT venue_id, state, announcement FROM live_state")
+    states = db.q("SELECT venue_id, state, current_item, current_chest, upcoming_chests, announcement FROM live_state")
     state_map = {s["venue_id"]: dict(s) for s in states if s["venue_id"] in vid_set}
     by_venue: dict[int, list[dict]] = {}
     for it in items:
@@ -97,7 +97,7 @@ def board(request: Request, user=Depends(require_staff)):
         "board": [
             {
                 "venue": dict(v),
-                "state": state_map.get(v["id"], {"state": "IDLE", "announcement": ""}),
+                "state": state_map.get(v["id"], {"state": "IDLE", "current_item": None, "current_chest": None, "upcoming_chests": None, "announcement": ""}),
                 "items": by_venue.get(v["id"], []),
             }
             for v in venues
@@ -133,18 +133,39 @@ async def stream(request: Request, user=Depends(require_staff)):
     )
 
 
+def _clean_opt(val: str | None) -> str | None:
+    if val is None:
+        return None
+    cleaned = val.strip()
+    return cleaned or None
+
+
 @router.post("/state")
 def set_state(body: StateIn, request: Request, user=Depends(require_staff)):
     check_stage(user, body.venue_id)
     db = get_db(request)
-    _require_active_venue(db, body.venue_id)
-    db.ex(
-        "INSERT INTO live_state(venue_id, state, announcement, updated_at) "
-        "VALUES (?,?,?,?) ON CONFLICT(venue_id) DO UPDATE SET "
-        " state = excluded.state, announcement = excluded.announcement, "
-        " updated_at = excluded.updated_at",
-        (body.venue_id, body.state, body.announcement, db.now()),
-    )
+    if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
+        raise HTTPException(404, "venue_not_found")
+    now = db.now()
+    with db.transaction():
+        if body.active is not None:
+            db.ex("UPDATE venues SET active = ? WHERE id = ?", (int(body.active), body.venue_id))
+        db.ex(
+            "INSERT INTO live_state(venue_id, state, current_item, current_chest, upcoming_chests, announcement, updated_at) "
+            "VALUES (?,?,?,?,?,?,?) ON CONFLICT(venue_id) DO UPDATE SET "
+            " state = excluded.state, current_item = excluded.current_item, "
+            " current_chest = excluded.current_chest, upcoming_chests = excluded.upcoming_chests, "
+            " announcement = excluded.announcement, updated_at = excluded.updated_at",
+            (
+                body.venue_id,
+                body.state,
+                _clean_opt(body.current_item),
+                _clean_opt(body.current_chest),
+                _clean_opt(body.upcoming_chests),
+                (body.announcement or "").strip(),
+                now,
+            ),
+        )
     invalidate_public_cache(request.app)
     _broadcast_sync(request, {"entity": "state", "venue_id": body.venue_id})
     return {"ok": True}

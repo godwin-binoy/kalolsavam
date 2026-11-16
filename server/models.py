@@ -189,6 +189,9 @@ class LiveState(SQLModel, table=True):
     __tablename__ = "live_state"
     venue_id: int = SQLField(primary_key=True, foreign_key="venues.id")
     state: str = SQLField(default="IDLE", max_length=16)
+    current_item: str | None = SQLField(default=None, max_length=200)
+    current_chest: str | None = SQLField(default=None, max_length=32)
+    upcoming_chests: str | None = SQLField(default=None, max_length=280)
     announcement: str = SQLField(default="", max_length=280)
     updated_at: float
 
@@ -366,9 +369,17 @@ class ParticipantEntryUpdateIn(BaseModel):
 
 
 class PhotoBatchIn(BaseModel):
-    queue_item_id: int
+    queue_item_id: int | None = None
     venue_id: int
     workflow: str = Field(pattern=r"^(bulk|quick)$")
+    perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class PhotoAssignByRegisterIn(BaseModel):
+    asset_id: int
+    venue_id: int
+    item_code: str = Field(min_length=1, max_length=32)
+    register_nos: list[str] = Field(min_length=1, max_length=30)
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
 

@@ -1,6 +1,7 @@
 """Public read-only endpoints with short write-invalidated memory caching."""
 from __future__ import annotations
 
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -47,13 +48,13 @@ def status(request: Request):
 
     def build() -> dict[str, Any]:
         venues_rows = db.q("""
-            SELECT v.id, v.name, v.kind, v.slug, ls.state, ls.announcement,
+            SELECT v.id, v.name, v.kind, v.slug, v.active,
+                   ls.state, ls.current_item, ls.current_chest, ls.upcoming_chests, ls.announcement,
                    COUNT(q.id) AS total,
                    SUM(CASE WHEN q.status = 'COMPLETE' THEN 1 ELSE 0 END) AS complete
             FROM venues v
             LEFT JOIN live_state ls ON ls.venue_id = v.id
             LEFT JOIN queue_items q ON q.venue_id = v.id
-            WHERE v.active = 1
             GROUP BY v.id
             ORDER BY v.id
         """)
@@ -91,19 +92,45 @@ def status(request: Request):
 
         out = []
         for v in venues_rows:
+            is_active = bool(v["active"])
             vitems = by_venue.get(v["id"], [])
             cur = next((x for x in vitems if x["status"] in ("ON-STAGE", "PAUSED")), None)
             waiting = [x for x in vitems if x["status"] == "WAITING"]
+
+            if not is_active:
+                now_obj = None
+                upcoming_list: list[dict[str, Any]] = []
+                state_str = "INACTIVE"
+            else:
+                state_str = v["state"] or "IDLE"
+                if v["current_item"] or v["current_chest"]:
+                    now_obj = {
+                        "event": v["current_item"] or "",
+                        "roll": v["current_chest"] or "",
+                        "chest_no": v["current_chest"],
+                        "student_name": None,
+                        "school": None,
+                    }
+                else:
+                    now_obj = cur
+
+                if v["upcoming_chests"]:
+                    tokens = [t for t in re.split(r"[\s,;]+", v["upcoming_chests"].strip()) if t]
+                    upcoming_list = [{"roll": t} for t in tokens[:8]]
+                else:
+                    upcoming_list = waiting[:5]
+
             out.append({
                 "id": v["id"],
                 "name": v["name"],
                 "kind": v["kind"],
                 "slug": v["slug"],
-                "state": v["state"] or "IDLE",
+                "active": is_active,
+                "state": state_str,
                 "announcement": v["announcement"] or "",
-                "now": cur,
-                "next": waiting[0] if waiting else None,
-                "upcoming": waiting[:5],
+                "now": now_obj,
+                "next": upcoming_list[0] if upcoming_list else None,
+                "upcoming": upcoming_list,
                 "progress": {"complete": v["complete"] or 0, "total": v["total"] or 0},
             })
         return {"updated_at": db.now(), "venues": out}

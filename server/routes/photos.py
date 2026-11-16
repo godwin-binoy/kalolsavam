@@ -20,7 +20,7 @@ from ..deps import (
     require_photo_staff,
     require_worker,
 )
-from ..models import PhotoAssignIn, PhotoBatchIn, PhotoLookupIn
+from ..models import PhotoAssignByRegisterIn, PhotoAssignIn, PhotoBatchIn, PhotoLookupIn
 
 router = APIRouter()
 
@@ -87,9 +87,12 @@ def create_batch(body: PhotoBatchIn, request: Request, user=Depends(require_phot
     if not has_role(user, "admin", "dataworker"):
         check_stage(user, body.venue_id)
     db = get_db(request)
-    qi = db.one("SELECT id, venue_id FROM queue_items WHERE id = ?", (body.queue_item_id,))
-    if not qi or qi["venue_id"] != body.venue_id:
-        raise HTTPException(404, "queue_item_not_found")
+    if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
+        raise HTTPException(404, "venue_not_found")
+    if body.queue_item_id is not None:
+        qi = db.one("SELECT id, venue_id FROM queue_items WHERE id = ?", (body.queue_item_id,))
+        if not qi or qi["venue_id"] != body.venue_id:
+            raise HTTPException(404, "queue_item_not_found")
     status = "staging" if body.workflow == "quick" else "queued"
     with db.transaction():
         cur = db.ex(
@@ -173,18 +176,34 @@ def get_batch(batch_id: int, request: Request, user=Depends(require_photo_staff)
 
 
 @router.get("/participants/search")
-def search_participants_for_photos(request: Request, q: str = "", user=Depends(require_photo_staff)):
+def search_participants_for_photos(
+    request: Request,
+    q: str = "",
+    item_code: str = "",
+    user=Depends(require_photo_staff),
+):
     term = q.strip()
-    if len(term) < 2:
+    icode = item_code.strip()
+    if len(term) < 2 and not icode:
         return {"participants": []}
-    safe_q = escape_like(term)
     db = get_db(request)
-    parts = db.q(
-        "SELECT id, register_no, name, school_name FROM participants "
-        "WHERE deleted_at IS NULL AND (register_no LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\') "
-        "ORDER BY register_no LIMIT 15",
-        (f"%{safe_q}%", f"%{safe_q}%"),
-    )
+    if len(term) >= 2:
+        safe_q = escape_like(term)
+        parts = db.q(
+            "SELECT id, register_no, name, school_name FROM participants "
+            "WHERE deleted_at IS NULL AND (register_no LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\') "
+            "ORDER BY register_no LIMIT 20",
+            (f"%{safe_q}%", f"%{safe_q}%"),
+        )
+    else:
+        parts = db.q(
+            "SELECT DISTINCT p.id, p.register_no, p.name, p.school_name "
+            "FROM participants p "
+            "JOIN participant_entries pe ON pe.participant_id = p.id "
+            "WHERE p.deleted_at IS NULL AND pe.deleted_at IS NULL AND pe.item_code = ? "
+            "ORDER BY p.register_no LIMIT 30",
+            (icode,),
+        )
     if not parts:
         return {"participants": []}
     pids = [p["id"] for p in parts]
@@ -227,6 +246,68 @@ def assign_photo(body: PhotoAssignIn, request: Request, user=Depends(require_pho
             )
     return {"ok": True, "batch_id": asset["batch_id"]}
 
+
+
+
+@router.post("/assign-by-register")
+def assign_photo_by_register(
+    body: PhotoAssignByRegisterIn,
+    request: Request,
+    user=Depends(require_photo_staff),
+):
+    if not has_role(user, "admin", "dataworker"):
+        check_stage(user, body.venue_id)
+    db = get_db(request)
+    asset = db.one("SELECT id, batch_id FROM photo_assets WHERE id = ?", (body.asset_id,))
+    if not asset:
+        raise HTTPException(404, "asset_not_found")
+    venue = db.one("SELECT id, name FROM venues WHERE id = ?", (body.venue_id,))
+    if not venue:
+        raise HTTPException(404, "venue_not_found")
+
+    item_code = body.item_code.strip()
+    perf_date = body.perf_date or time.strftime("%Y-%m-%d")
+    now = db.now()
+    entry_ids: list[int] = []
+
+    with db.transaction():
+        for raw_reg in body.register_nos:
+            reg = raw_reg.strip()
+            p = db.one(
+                "SELECT id FROM participants WHERE register_no = ? AND deleted_at IS NULL",
+                (reg,),
+            )
+            if not p:
+                raise HTTPException(404, f"participant_not_found:{reg}")
+            entry = db.one(
+                "SELECT id FROM participant_entries "
+                "WHERE participant_id = ? AND item_code = ? AND deleted_at IS NULL",
+                (p["id"], item_code),
+            )
+            if entry:
+                eid = entry["id"]
+            else:
+                cnt = db.one(
+                    "SELECT COUNT(*) c FROM participant_entries "
+                    "WHERE participant_id = ? AND deleted_at IS NULL",
+                    (p["id"],),
+                )["c"]
+                if cnt >= 7:
+                    raise HTTPException(409, f"participant_at_7_items:{reg}")
+                cur_e = db.ex(
+                    "INSERT INTO participant_entries(participant_id, item_code, venue_id, "
+                    " venue_name, perf_date, created_at, updated_at) VALUES (?,?,?,?,?,?,?)",
+                    (p["id"], item_code, venue["id"], venue["name"], perf_date, now, now),
+                )
+                eid = cur_e.lastrowid
+            entry_ids.append(eid)
+            db.ex(
+                "INSERT OR IGNORE INTO photo_asset_entries(photo_asset_id, participant_entry_id, source) "
+                "VALUES (?,?,?)",
+                (body.asset_id, eid, "stagemaster_quick"),
+            )
+
+    return {"ok": True, "batch_id": asset["batch_id"], "entry_ids": entry_ids}
 
 @router.post("/batches/{batch_id}/publish")
 def publish_batch(batch_id: int, request: Request, user=Depends(require_photo_staff)):

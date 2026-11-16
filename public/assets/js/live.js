@@ -51,6 +51,13 @@
       }
 
       if (stateEl) setState(stateEl, v.state || 'IDLE');
+      if (v.active === false || v.state === 'INACTIVE'){
+        if (nowLabel) nowLabel.textContent = 'Status:';
+        if (nowEl) nowEl.innerHTML = '<span class="text-muted">Stage inactive</span>';
+        if (upcomingLabel) upcomingLabel.textContent = '';
+        if (upcomingEl) upcomingEl.textContent = '';
+        return;
+      }
 
       var now = v.now;
       if (nowEl){

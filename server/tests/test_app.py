@@ -390,3 +390,68 @@ def test_rate_limiting(client):
         assert blocked.status_code == 429
     finally:
         _RATE_BUCKETS.clear()
+
+
+def test_stagemaster_direct_control_and_quick_register_assign(client):
+    cfg = client.app.state.cfg
+    asyncio.run(_seed_user(cfg.db_path, "adm_d@example.com", "StrongPass1234!", "admin", []))
+    asyncio.run(_seed_user(cfg.db_path, "sm_d@example.com", "StrongPass1234!", "stagemaster", [1]))
+
+    adm_h = {"Authorization": f"Bearer {_login(client, 'adm_d@example.com', 'StrongPass1234!').json()['access_token']}"}
+    sm_h = {"Authorization": f"Bearer {_login(client, 'sm_d@example.com', 'StrongPass1234!').json()['access_token']}"}
+
+    v1 = client.post("/api/v1/admin/venues", json={"name": "Stage 1", "kind": "stage", "active": True}, headers=adm_h).json()
+    client.post("/api/v1/admin/participants", json={
+        "register_no": "77777", "name": "Kavya", "school_name": "St. Marys", "school_code": "22010", "class": 10,
+    }, headers=adm_h)
+
+    # Stagemaster sets direct state fields (and can leave any undefined)
+    r = client.post("/api/v1/live/state", json={
+        "venue_id": v1["id"],
+        "active": True,
+        "state": "RUNNING",
+        "current_item": "101 · Bharathanatyam",
+        "current_chest": "C50",
+        "upcoming_chests": "C51, C52",
+        "announcement": "Report backstage",
+    }, headers=sm_h)
+    assert r.status_code == 200
+
+    st = client.get("/api/v1/public/status").json()["venues"][0]
+    assert st["active"] is True
+    assert st["state"] == "RUNNING"
+    assert st["now"]["event"] == "101 · Bharathanatyam"
+    assert st["now"]["roll"] == "C50"
+    assert [u["roll"] for u in st["upcoming"]] == ["C51", "C52"]
+
+    # Stagemaster deactivates stage, still sees it on board so they can re-enable it
+    assert client.post("/api/v1/live/state", json={
+        "venue_id": v1["id"],
+        "active": False,
+        "state": "IDLE",
+        "current_item": None,
+        "current_chest": None,
+        "upcoming_chests": None,
+        "announcement": "",
+    }, headers=sm_h).status_code == 200
+    assert client.get("/api/v1/public/status").json()["venues"][0]["state"] == "INACTIVE"
+    assert len(client.get("/api/v1/live/board", headers=sm_h).json()["board"]) == 1
+
+    # Quick photo batch without queue_item_id + assign by any register number
+    bid = client.post("/api/v1/photos/batches", json={
+        "venue_id": v1["id"], "workflow": "quick", "perf_date": "2026-11-16",
+    }, headers=sm_h).json()["batch_id"]
+    aid = client.post(
+        f"/api/v1/photos/batches/{bid}/upload",
+        data={"kind": "stage"},
+        files={"file": ("stage.png", _MIN_PNG, "image/png")},
+        headers=sm_h,
+    ).json()["asset_id"]
+    assert client.post("/api/v1/photos/assign-by-register", json={
+        "asset_id": aid, "venue_id": v1["id"], "item_code": "101", "register_nos": ["77777"],
+    }, headers=sm_h).status_code == 200
+    assert client.post(f"/api/v1/photos/batches/{bid}/publish", headers=sm_h).status_code == 200
+
+    pub = client.post("/api/v1/photos/public/lookup", json={"register_no": "77777", "name": "kavya"}).json()
+    assert len(pub["photos"]) == 1
+    assert pub["photos"][0]["entries"] == ["101"]
