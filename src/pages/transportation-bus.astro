@@ -1,175 +1,208 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
-import Card from '../components/Card.astro';
-import { MALA_TO_ALUVA_BUSES, ALUVA_TO_MALA_BUSES, OTHER_BUS_ROUTES } from '../data/festival';
+import { MALA_TO_ANNAMANADA, ANNAMANADA_TO_MALA, MALA_LOCAL_CONNECTORS } from '../data/festival';
 ---
-<BaseLayout title="Bus Timings | Mala Kalolsavam" active="transportation">
+<BaseLayout title="Sub-District Bus Timings | Mala Kalolsavam" active="transportation">
   <div class="main-container">
-    <PageHead badge="KSRTC & Private" title="Bus Timings & Chronology" intro="Official KSRTC chronology for Mala ↔ Aluva (MLA-ALV), plus direct routes to Thrissur, Chalakudy, and Kodungallur." />
+    <PageHead badge="Mala Sub-District" title="Local Bus Timings" intro="Bus schedules strictly within the Mala Sub-District connecting festival venues, Annamanada, Eravathur, Vennur, Meladoor, Ashtamichira, Poyya, and Kuzhur." />
 
-    <!-- Route Switcher Buttons -->
-    <div class="row" style="margin-bottom:1.5rem;gap:.5rem" id="route-tabs">
-      <button type="button" class="btn-primary sm active" data-tab="mla-alv">Mala → Aluva ({MALA_TO_ALUVA_BUSES.length})</button>
-      <button type="button" class="btn-primary sm ghost" data-tab="alv-mla">Aluva → Mala ({ALUVA_TO_MALA_BUSES.length})</button>
-      <button type="button" class="btn-primary sm ghost" data-tab="other">Other Routes ({OTHER_BUS_ROUTES.length})</button>
+    <!-- Sub-District Route Tabs -->
+    <div class="dir-toggle-wrapper">
+      <button type="button" class="dir-btn active" data-dir="mla-anda">Mala → Annamanada ({MALA_TO_ANNAMANADA.length})</button>
+      <button type="button" class="dir-btn" data-dir="anda-mla">Annamanada → Mala ({ANNAMANADA_TO_MALA.length})</button>
+      <button type="button" class="dir-btn" data-dir="local-con">Poyya / Kuzhur ({MALA_LOCAL_CONNECTORS.length})</button>
     </div>
 
-    <!-- Quick Search -->
-    <div class="card-base" style="margin-bottom:1.75rem;padding:1.15rem">
-      <input id="bus-search" type="search" class="inp" placeholder="Search time, route, or duty number (e.g. 07:00, TVM, Duty 18, EKM)..." autocomplete="off">
+    <!-- Quick Stop Search -->
+    <div class="card-base" style="margin-bottom:1.5rem;padding:1rem 1.25rem">
+      <input id="bus-filter" type="search" class="inp" placeholder="Search by stop name or time (e.g. Meladoor, Eravathur, Vennur, Poyya, 08:10)..." autocomplete="off">
     </div>
 
-    <!-- Tab 1: Mala to Aluva -->
-    <div id="tab-mla-alv" class="bus-tab-content">
-      <Card title="Mala → Aluva (KSRTC MLA-ALV)" subtitle="Official Depot Schedule" tone="blue">
-        <div style="overflow-x:auto">
-          <table class="tbl bus-table">
-            <thead>
-              <tr>
-                <th style="width:4rem">#</th>
-                <th style="width:7rem">Time</th>
-                <th>Destination / Route</th>
-                <th style="width:6rem">Duty</th>
-                <th>Notes</th>
+    <!-- Tab 1: Mala to Annamanada / Eravathur / Vennur -->
+    <div id="dir-mla-anda" class="bus-table-box card-base" style="padding:0;overflow:hidden">
+      <div style="overflow-x:auto">
+        <table class="tbl minimal-tbl">
+          <thead>
+            <tr>
+              <th style="width:7rem">Time</th>
+              <th>Destination (Within Sub-District)</th>
+              <th>Via / Key Stops</th>
+              <th style="width:6rem;text-align:right">Service</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MALA_TO_ANNAMANADA.map((b) => (
+              <tr data-search={`${b.time} ${b.route} ${b.via}`.toLowerCase()}>
+                <td class="mono time-cell">{b.time}</td>
+                <td class="route-cell"><strong>{b.route}</strong></td>
+                <td class="text-muted sm">{b.via}</td>
+                <td style="text-align:right"><span class="badge-gov sm-type">{b.type}</span></td>
               </tr>
-            </thead>
-            <tbody>
-              {MALA_TO_ALUVA_BUSES.map((b) => (
-                <tr data-bus-text={`${b.time} ${b.route} ${b.duty || ''} ${b.notes || ''}`.toLowerCase()}>
-                  <td class="mono text-muted">{b.sl}</td>
-                  <td class="mono" style="font-weight:700;color:var(--brand)">{b.time}</td>
-                  <td><strong>{b.route}</strong></td>
-                  <td class="mono"><span class="badge-gov">Duty {b.duty}</span></td>
-                  <td class="text-muted sm">{b.notes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Tab 2: Aluva to Mala -->
-    <div id="tab-alv-mla" class="bus-tab-content" style="display:none">
-      <Card title="Aluva → Mala (KSRTC ALV-MLA Return)" subtitle="Official Return Chronology" tone="teal">
-        <div style="overflow-x:auto">
-          <table class="tbl bus-table">
-            <thead>
-              <tr>
-                <th style="width:4rem">#</th>
-                <th style="width:7rem">Time</th>
-                <th>Service / Type</th>
-                <th style="width:6rem">Duty</th>
-                <th>Notes</th>
+    <!-- Tab 2: Annamanada / Eravathur to Mala -->
+    <div id="dir-anda-mla" class="bus-table-box card-base" style="padding:0;overflow:hidden;display:none">
+      <div style="overflow-x:auto">
+        <table class="tbl minimal-tbl">
+          <thead>
+            <tr>
+              <th style="width:7rem">Time</th>
+              <th>Destination (To Mala Venues)</th>
+              <th>Via / Key Stops</th>
+              <th style="width:6rem;text-align:right">Service</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ANNAMANADA_TO_MALA.map((b) => (
+              <tr data-search={`${b.time} ${b.route} ${b.via}`.toLowerCase()}>
+                <td class="mono time-cell">{b.time}</td>
+                <td class="route-cell"><strong>{b.route}</strong></td>
+                <td class="text-muted sm">{b.via}</td>
+                <td style="text-align:right"><span class="badge-gov sm-type">{b.type}</span></td>
               </tr>
-            </thead>
-            <tbody>
-              {ALUVA_TO_MALA_BUSES.map((b) => (
-                <tr data-bus-text={`${b.time} ${b.route} ${b.type} ${b.duty || ''} ${b.notes || ''}`.toLowerCase()}>
-                  <td class="mono text-muted">{b.sl}</td>
-                  <td class="mono" style="font-weight:700;color:var(--accent)">{b.time}</td>
-                  <td><strong>{b.route}</strong> <span class="text-muted xs">({b.type})</span></td>
-                  <td class="mono"><span class="badge-gov">Duty {b.duty}</span></td>
-                  <td class="text-muted sm">{b.notes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Tab 3: Other Routes -->
-    <div id="tab-other" class="bus-tab-content" style="display:none">
-      <Card title="Mala Bus Stand (Regional Routes)" subtitle="Thrissur, Chalakudy & Kodungallur" tone="indigo">
-        <div style="overflow-x:auto">
-          <table class="tbl bus-table">
-            <thead>
-              <tr>
-                <th style="width:7rem">Time</th>
-                <th>Route</th>
-                <th>Type</th>
-                <th>Notes</th>
+    <!-- Tab 3: Ashtamichira / Poyya / Kuzhur -->
+    <div id="dir-local-con" class="bus-table-box card-base" style="padding:0;overflow:hidden;display:none">
+      <div style="overflow-x:auto">
+        <table class="tbl minimal-tbl">
+          <thead>
+            <tr>
+              <th style="width:7rem">Time</th>
+              <th>Sub-District Route</th>
+              <th>Via / Key Stops</th>
+              <th style="width:6rem;text-align:right">Service</th>
+            </tr>
+          </thead>
+          <tbody>
+            {MALA_LOCAL_CONNECTORS.map((b) => (
+              <tr data-search={`${b.time} ${b.route} ${b.via}`.toLowerCase()}>
+                <td class="mono time-cell">{b.time}</td>
+                <td class="route-cell"><strong>{b.route}</strong></td>
+                <td class="text-muted sm">{b.via}</td>
+                <td style="text-align:right"><span class="badge-gov sm-type">{b.type}</span></td>
               </tr>
-            </thead>
-            <tbody>
-              {OTHER_BUS_ROUTES.map((b) => (
-                <tr data-bus-text={`${b.time} ${b.route} ${b.type} ${b.notes}`.toLowerCase()}>
-                  <td class="mono" style="font-weight:700">{b.time}</td>
-                  <td><strong>{b.route}</strong></td>
-                  <td><span class="badge-gov">{b.type}</span></td>
-                  <td class="text-muted sm">{b.notes}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p class="text-muted sm" style="margin-top:1rem">Confirm timings at the Mala Bus Stand enquiry counter (0480 2890 500).</p>
-      </Card>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <p id="empty-bus-msg" class="text-muted center" style="margin-top:2.5rem" hidden>No bus services match your search.</p>
+    <p id="no-bus-match" class="text-muted center" style="margin-top:2.5rem" hidden>No local sub-district routes match your search.</p>
   </div>
 
   <style>
-    .btn-primary.sm.ghost { background: var(--surface); color: var(--text-heading); border: 1px solid var(--border); }
-    .btn-primary.sm.active { background: var(--brand); color: var(--on-brand); border-color: var(--brand); }
+    .dir-toggle-wrapper {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .dir-btn {
+      flex: 1;
+      min-width: 140px;
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-inner);
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-heading);
+      font-weight: 700;
+      font-size: 0.92rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-align: center;
+    }
+    .dir-btn:hover {
+      background: var(--bg-alt);
+    }
+    .dir-btn.active {
+      background: var(--brand);
+      color: var(--on-brand);
+      border-color: var(--brand);
+      box-shadow: 0 4px 12px rgba(27, 46, 32, 0.2);
+    }
+    .minimal-tbl th {
+      padding: 0.85rem 1.25rem;
+      background: var(--bg-alt);
+    }
+    .minimal-tbl td {
+      padding: 0.85rem 1.25rem;
+    }
+    .time-cell {
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: var(--brand);
+    }
+    .route-cell {
+      font-size: 0.95rem;
+    }
+    .sm-type {
+      font-size: 0.72rem;
+      padding: 0.2rem 0.55rem;
+    }
   </style>
 
   <script is:inline>
     (function(){
-      var tabContainer = document.getElementById('route-tabs');
-      var tabs = ['mla-alv', 'alv-mla', 'other'];
-      var searchInp = document.getElementById('bus-search');
-      var emptyMsg = document.getElementById('empty-bus-msg');
-      var activeTab = 'mla-alv';
+      var toggleBtns = document.querySelectorAll('.dir-btn');
+      var filterInp = document.getElementById('bus-filter');
+      var emptyNotice = document.getElementById('no-bus-match');
+      var activeDir = 'mla-anda';
+      var tabs = ['mla-anda', 'anda-mla', 'local-con'];
 
-      function switchTab(target){
-        activeTab = target;
-        tabContainer.querySelectorAll('button').forEach(function(btn){
-          var isCur = btn.getAttribute('data-tab') === target;
-          btn.classList.toggle('active', isCur);
-          btn.classList.toggle('ghost', !isCur);
+      function updateActiveDir(dir){
+        activeDir = dir;
+        toggleBtns.forEach(function(b){
+          b.classList.toggle('active', b.getAttribute('data-dir') === dir);
         });
         tabs.forEach(function(t){
-          var el = document.getElementById('tab-' + t);
-          if (el) el.style.display = (t === target) ? '' : 'none';
+          var el = document.getElementById('dir-' + t);
+          if (el) el.style.display = (t === dir) ? '' : 'none';
         });
-        filterRows();
+        filterTable();
       }
 
-      function filterRows(){
-        var q = (searchInp ? searchInp.value : '').trim().toLowerCase();
+      function filterTable(){
+        var q = (filterInp ? filterInp.value : '').trim().toLowerCase();
         var tokens = q.split(/\s+/).filter(Boolean);
-        var activeSec = document.getElementById('tab-' + activeTab);
-        if (!activeSec) return;
-        var rows = Array.from(activeSec.querySelectorAll('tbody tr'));
+        var activeBox = document.getElementById('dir-' + activeDir);
+        if (!activeBox) return;
+        var rows = Array.from(activeBox.querySelectorAll('tbody tr'));
         var visibleCount = 0;
 
-        rows.forEach(function(row){
-          var txt = row.getAttribute('data-bus-text') || '';
+        rows.forEach(function(r){
+          var txt = r.getAttribute('data-search') || '';
           var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
           if (matches){
-            row.style.display = '';
+            r.style.display = '';
             visibleCount++;
           } else {
-            row.style.display = 'none';
+            r.style.display = 'none';
           }
         });
 
-        if (emptyMsg) emptyMsg.hidden = visibleCount > 0;
+        if (emptyNotice){
+          emptyNotice.hidden = visibleCount > 0;
+        }
       }
 
-      if (tabContainer){
-        tabContainer.addEventListener('click', function(ev){
-          var btn = ev.target.closest('button[data-tab]');
-          if (btn) switchTab(btn.getAttribute('data-tab'));
+      toggleBtns.forEach(function(b){
+        b.addEventListener('click', function(){
+          updateActiveDir(b.getAttribute('data-dir'));
         });
-      }
+      });
 
-      if (searchInp){
-        searchInp.addEventListener('input', filterRows);
+      if (filterInp){
+        filterInp.addEventListener('input', filterTable);
       }
     })();
   </script>
