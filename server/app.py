@@ -45,8 +45,11 @@ async def lifespan(app: FastAPI):
 
 def create_app(cfg: Settings, db: Database) -> FastAPI:
     app = FastAPI(
-        title="Kalolsavam", lifespan=lifespan,
-        docs_url=None, redoc_url=None, openapi_url=None,
+        title="Kalolsavam",
+        lifespan=lifespan,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=None,
     )
     app.state.cfg = cfg
     app.state.db = db
@@ -98,19 +101,16 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             origin = request.headers.get("origin")
             host_hdr = request.headers.get("host", "")
-            auth_hdr = request.headers.get("authorization", "")
-            using_bearer = auth_hdr.lower().startswith("bearer ")
-
+            using_bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
             if origin and not _origin_allowed(origin, host_hdr):
                 return JSONResponse({"error": "origin_mismatch"}, status_code=403)
-            elif not origin and not using_bearer:
+            if not origin and not using_bearer:
                 referer = request.headers.get("referer")
                 if referer and not _origin_allowed(referer, host_hdr):
                     return JSONResponse({"error": "origin_mismatch"}, status_code=403)
 
         resp = await call_next(request)
 
-        # Audit login attempts (best-effort; must never break the response)
         if request.method == "POST" and clean_path in ("/api/v1/auth/login", "/auth/login"):
             try:
                 ip_h = hash_ip(client_ip(request), cfg.secret_key)
@@ -135,38 +135,36 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         resp.headers["X-Request-ID"] = request.state.request_id
 
         path = request.url.path
-        if path.startswith(("/admin", "/stagemaster", "/dashboard")):
+        if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")):
             resp.headers["Cache-Control"] = "no-store"
             resp.headers["X-Robots-Tag"] = "noindex, nofollow"
         elif path.startswith("/assets/js/"):
             resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
         elif path.startswith("/assets/"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        elif path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")):
-            resp.headers["Cache-Control"] = "no-store"
-        elif path in ("/healthz", "/readyz"):
+        elif path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")) or path in ("/healthz", "/readyz"):
             resp.headers["Cache-Control"] = "no-store"
         elif path == "/sw.js":
             resp.headers["Cache-Control"] = "no-cache, must-revalidate"
-        else:
-            if "text/html" in resp.headers.get("content-type", ""):
-                resp.headers.setdefault("Cache-Control", "public, max-age=0, must-revalidate")
+        elif "text/html" in resp.headers.get("content-type", ""):
+            resp.headers.setdefault("Cache-Control", "public, max-age=0, must-revalidate")
 
         dur = int((time.perf_counter() - start) * 1000)
-        log.info("req", extra={
-            "request_id": request.state.request_id, "method": request.method,
-            "path": path, "status": resp.status_code, "duration_ms": dur,
-        })
+        log.info(
+            "req",
+            extra={
+                "request_id": request.state.request_id,
+                "method": request.method,
+                "path": path,
+                "status": resp.status_code,
+                "duration_ms": dur,
+            },
+        )
         return resp
 
-    srv = Path(__file__).resolve().parent
-    pub = srv.parent / "public"
     dist = Path(cfg.dist_path)
-
-    assets_dir = next((p for p in (dist / "assets", pub / "assets") if p.exists()), None)
-    if assets_dir is not None:
-        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
-
+    if (dist / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=dist / "assets"), name="assets")
 
     @app.get("/healthz")
     async def healthz():
@@ -180,31 +178,13 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         except Exception:
             return JSONResponse({"ok": False}, status_code=503)
 
-    @app.get("/robots.txt")
-    async def robots():
-        for f in (dist / "robots.txt", pub / "robots.txt"):
-            if f.is_file():
-                return FileResponse(f, media_type="text/plain")
-        return JSONResponse({}, status_code=404)
-
-    @app.get("/manifest.json")
-    async def manifest():
-        for f in (dist / "manifest.json", pub / "manifest.json"):
-            if f.is_file():
-                return FileResponse(f, media_type="application/json")
-        return JSONResponse({}, status_code=404)
-
-    @app.get("/sw.js")
-    async def sw():
-        f = dist / "sw.js"
-        return FileResponse(f, media_type="application/javascript") if f.exists() else JSONResponse({}, status_code=404)
-
     from .routes.admin import router as admin_router
     from .routes.internal import router as internal_router
     from .routes.live import router as live_router
     from .routes.participants import router as participants_router
     from .routes.photos import router as photos_router
     from .routes.public import router as public_router
+
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")
@@ -220,17 +200,16 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
     async def stagemaster_bare_redirect():
         return RedirectResponse(url="/stagemaster/", status_code=307)
 
+    @app.get("/dataworker", include_in_schema=False)
+    async def dataworker_bare_redirect():
+        return RedirectResponse(url="/dataworker/", status_code=307)
+
     @app.get("/{full_path:path}")
     async def catch_all(full_path: str):
         clean_path = full_path.strip("/")
-
         if clean_path == "favicon.ico":
             return Response(status_code=204)
-
-        if (
-            clean_path in ("api", "assets", "dashboard")
-            or clean_path.startswith(("api/", "assets/", "dashboard/"))
-        ):
+        if clean_path in ("api", "assets", "dashboard") or clean_path.startswith(("api/", "assets/", "dashboard/")):
             return JSONResponse({"error": "not_found"}, status_code=404)
 
         dist_root = dist.resolve()
@@ -244,15 +223,12 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
                 pass
             return None
 
-        candidates: list[str] = []
-        if clean_path:
-            candidates.append(clean_path)
-            candidates.append(clean_path.rstrip("/") + "/index.html")
-            if "." not in clean_path.rsplit("/", 1)[-1]:
-                candidates.append(clean_path + ".html")
-        else:
-            candidates.append("index.html")
-
+        candidates = (
+            [clean_path, clean_path.rstrip("/") + "/index.html"]
+            + ([clean_path + ".html"] if "." not in clean_path.rsplit("/", 1)[-1] else [])
+            if clean_path
+            else ["index.html"]
+        )
         for rel in candidates:
             path = _safe(rel)
             if path:
@@ -261,12 +237,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         nf = _safe("404.html")
         if nf:
             return FileResponse(nf, status_code=404)
-
         if not clean_path:
-            gate = srv / "static" / "gate.html"
-            if gate.is_file():
-                return FileResponse(gate)
-
+            return JSONResponse({"service": "kalolsavam", "ok": True})
         return JSONResponse({"error": "not_found"}, status_code=404)
 
     app.add_middleware(GZipMiddleware, minimum_size=1000)

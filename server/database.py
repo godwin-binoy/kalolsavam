@@ -5,7 +5,6 @@ from pathlib import Path
 
 from sqlalchemy import event
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
-from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 
@@ -32,10 +31,3 @@ def make_engine(db_path: str | Path) -> AsyncEngine:
 
 def make_session_maker(engine: AsyncEngine) -> async_sessionmaker[AsyncSession]:
     return async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-
-
-async def ensure_schema(engine: AsyncEngine) -> None:
-    import server.models  # noqa: F401
-
-    async with engine.begin() as conn:
-        await conn.run_sync(SQLModel.metadata.create_all)

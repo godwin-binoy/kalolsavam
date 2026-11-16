@@ -7,6 +7,7 @@ import logging
 import secrets
 import sqlite3
 import time as _t
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import typer
@@ -25,6 +26,19 @@ FALLBACK_STAGES = [
     {"n": 8, "name": "HS 9E Class", "slug": "stage-8", "kind": "stage"},
     {"n": 9, "name": "HS Arabic Class", "slug": "stage-9", "kind": "stage"},
 ]
+
+
+@asynccontextmanager
+async def _auth_session():
+    from .config import Settings
+    from .database import make_engine, make_session_maker
+
+    engine = make_engine(Settings().db_path)
+    try:
+        async with make_session_maker(engine)() as session:
+            yield session
+    finally:
+        await engine.dispose()
 
 
 @app.command()
@@ -47,7 +61,6 @@ def serve(
     upgrade_to_head(cfg.db_path)
     db = Database(Path(cfg.db_path))
     app_instance = create_app(cfg, db)
-
     bind_host = host or cfg.server_host
     bind_port = port or cfg.server_port
     log.info("Binding %s:%s", bind_host, bind_port)
@@ -75,62 +88,38 @@ async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str
     from argon2 import PasswordHasher
     from sqlmodel import select
 
-    from .config import Settings
-    from .database import make_engine, make_session_maker
     from .models import Role, User
 
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
     ph = PasswordHasher()
     used_password = password or secrets.token_urlsafe(16)
-    try:
-        async with session_maker() as session:
-            admin_role = (
-                await session.execute(select(Role).where(Role.name == "admin"))
-            ).scalar_one_or_none()
-            if not admin_role:
-                admin_role = Role(name="admin")
-                session.add(admin_role)
-            for rname in ("stagemaster", "dataworker"):
-                existing_r = (
-                    await session.execute(select(Role).where(Role.name == rname))
-                ).scalar_one_or_none()
-                if not existing_r:
-                    session.add(Role(name=rname))
-            await session.commit()
-            await session.refresh(admin_role)
+    async with _auth_session() as session:
+        for rname in ("admin", "stagemaster", "dataworker"):
+            if not (await session.execute(select(Role).where(Role.name == rname))).scalar_one_or_none():
+                session.add(Role(name=rname))
+        await session.commit()
 
-            clean_email = email.strip().lower()
-            existing = (
-                await session.execute(select(User).where(User.email == clean_email))
-            ).scalar_one_or_none()
-            if existing:
-                return False, ""
+        clean_email = email.strip().lower()
+        if (await session.execute(select(User).where(User.email == clean_email))).scalar_one_or_none():
+            return False, ""
 
-            u = User(
-                email=clean_email,
-                hashed_password=ph.hash(used_password),
-                is_active=True,
-                is_verified=True,
-                stages="[]",
-            )
-            u.roles.append(admin_role)
-            session.add(u)
-            await session.commit()
-            return True, used_password
-    finally:
-        await engine.dispose()
+        admin_role = (await session.execute(select(Role).where(Role.name == "admin"))).scalar_one()
+        u = User(
+            email=clean_email,
+            hashed_password=ph.hash(used_password),
+            is_active=True,
+            is_verified=True,
+            stages="[]",
+        )
+        u.roles.append(admin_role)
+        session.add(u)
+        await session.commit()
+        return True, used_password
 
 
 @app.command()
 def seed_admin(
-    email: str = typer.Option(
-        "admin@kalolsavam.example.com", "--email", "-e", help="Admin email"
-    ),
-    password: str | None = typer.Option(
-        None, "--password", help="Admin password (generated if omitted)"
-    ),
+    email: str = typer.Option("admin@kalolsavam.example.com", "--email", "-e", help="Admin email"),
+    password: str | None = typer.Option(None, "--password", help="Admin password (generated if omitted)"),
 ) -> None:
     """Seed initial admin and staff roles."""
     from .config import Settings
@@ -144,7 +133,6 @@ def seed_admin(
     typer.echo("=" * 65)
     typer.echo(f"Admin user '{email}' created.")
     if password:
-        # Caller supplied the password; never echo it to stdout/logs.
         typer.echo("Password: (provided via --password / ADMIN_PASSWORD)")
     else:
         typer.echo(f"Temporary password: {final_pass}")
@@ -154,9 +142,7 @@ def seed_admin(
 
 @app.command()
 def seed_stages(
-    stages_file: Path = typer.Option(
-        Path("src/data/stages.json"), "--file", "-f", help="Path to stages.json"
-    ),
+    stages_file: Path = typer.Option(Path("src/data/stages.json"), "--file", "-f", help="Path to stages.json"),
 ) -> None:
     """Seed or update all 9 stages in the database from stages.json."""
     from .config import Settings
@@ -178,13 +164,10 @@ def seed_stages(
     with db.transaction():
         for s in items:
             vid = int(s["n"])
-            name = s["name"]
-            slug = s.get("slug") or f"stage-{vid}"
-            kind = s.get("kind") or "stage"
             db.ex(
                 "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1) "
                 "ON CONFLICT(id) DO UPDATE SET name = excluded.name, slug = excluded.slug",
-                (vid, name, kind, slug),
+                (vid, s["name"], s.get("kind") or "stage", s.get("slug") or f"stage-{vid}"),
             )
     typer.echo(f"Seeded/updated {len(items)} stages in database.")
 
@@ -194,16 +177,14 @@ def backup() -> None:
     """Create a hot online SQLite backup of kalolsavam.db."""
     from .config import Settings
 
-    cfg = Settings()
-    src = Path(cfg.db_path)
+    src = Path(Settings().db_path)
     if not src.exists():
         typer.echo(f"Database {src} does not exist.")
         raise typer.Exit(code=1)
 
     dst_dir = src.parent / "backups"
     dst_dir.mkdir(parents=True, exist_ok=True)
-    ts = _t.strftime("%Y%m%d-%H%M%S")
-    dst = dst_dir / f"{src.stem}-{ts}.db"
+    dst = dst_dir / f"{src.stem}-{_t.strftime('%Y%m%d-%H%M%S')}.db"
 
     src_con = sqlite3.connect(str(src))
     dst_con = sqlite3.connect(str(dst))
@@ -213,8 +194,7 @@ def backup() -> None:
         dst_con.close()
         src_con.close()
 
-    existing = sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)
-    for old in existing[:-24]:
+    for old in sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)[:-24]:
         try:
             old.unlink()
         except OSError:
@@ -230,93 +210,54 @@ def check() -> None:
 
     cfg = Settings()
     db = Database(Path(cfg.db_path))
-    tables = [
-        r["name"]
-        for r in db.q("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
-    ]
+    tables = [r["name"] for r in db.q("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
     typer.echo(f"DB Path: {cfg.db_path}")
     typer.echo(f"Tables present ({len(tables)}): {', '.join(tables)}")
-    user_count = (
-        db.one("SELECT COUNT(*) c FROM fullauth_users")["c"]
-        if "fullauth_users" in tables
-        else 0
-    )
+    user_count = db.one("SELECT COUNT(*) c FROM fullauth_users")["c"] if "fullauth_users" in tables else 0
     typer.echo(f"Users registered: {user_count}")
 
 
-# ── User management (invoked by ./kal admin *) ────────────────────────────
 async def _async_list_users():
     from sqlmodel import select
 
-    from .config import Settings
-    from .database import make_engine, make_session_maker
     from .models import User
 
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
-    try:
-        async with session_maker() as session:
-            users = (
-                await session.execute(select(User).order_by(User.email))
-            ).scalars().all()
-            return [
-                {
-                    "id": str(u.id),
-                    "email": u.email,
-                    "active": u.is_active,
-                    "roles": [r.name for r in u.roles],
-                    "stages": u.stages,
-                }
-                for u in users
-            ]
-    finally:
-        await engine.dispose()
+    async with _auth_session() as session:
+        users = (await session.execute(select(User).order_by(User.email))).scalars().all()
+        return [
+            {"id": str(u.id), "email": u.email, "active": u.is_active, "roles": [r.name for r in u.roles], "stages": u.stages}
+            for u in users
+        ]
 
 
 async def _async_create_user(email: str, password: str, role_name: str, stages: list[int]):
     from argon2 import PasswordHasher
     from sqlmodel import select
 
-    from .config import Settings
-    from .database import make_engine, make_session_maker
     from .models import Role, User
 
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
     ph = PasswordHasher()
-    try:
-        async with session_maker() as session:
-            clean_email = email.strip().lower()
-            existing = (
-                await session.execute(select(User).where(User.email == clean_email))
-            ).scalar_one_or_none()
-            if existing:
-                return False, "email_taken", None
-
-            role = (
-                await session.execute(select(Role).where(Role.name == role_name))
-            ).scalar_one_or_none()
-            if not role:
-                role = Role(name=role_name)
-                session.add(role)
-                await session.commit()
-                await session.refresh(role)
-
-            u = User(
-                email=clean_email,
-                hashed_password=ph.hash(password),
-                is_active=True,
-                is_verified=True,
-                stages=json.dumps(stages or []),
-            )
-            u.roles.append(role)
-            session.add(u)
+    async with _auth_session() as session:
+        clean_email = email.strip().lower()
+        if (await session.execute(select(User).where(User.email == clean_email))).scalar_one_or_none():
+            return False, "email_taken", None
+        role = (await session.execute(select(Role).where(Role.name == role_name))).scalar_one_or_none()
+        if not role:
+            role = Role(name=role_name)
+            session.add(role)
             await session.commit()
-            return True, None, str(u.id)
-    finally:
-        await engine.dispose()
+            await session.refresh(role)
+        u = User(
+            email=clean_email,
+            hashed_password=ph.hash(password),
+            is_active=True,
+            is_verified=True,
+            stages=json.dumps(stages or []),
+        )
+        u.roles.append(role)
+        session.add(u)
+        await session.commit()
+        return True, None, str(u.id)
 
 
 @app.command()
@@ -348,9 +289,7 @@ def user_create(
 
 
 @app.command()
-def user_list(
-    json_output: bool = typer.Option(False, "--json", help="Output JSON"),
-) -> None:
+def user_list(json_output: bool = typer.Option(False, "--json", help="Output JSON")) -> None:
     """List all users."""
     users = asyncio.run(_async_list_users())
     if json_output:
@@ -360,39 +299,35 @@ def user_list(
         typer.echo("No users.")
         return
     for u in users:
-        status = "active" if u["active"] else "disabled"
-        roles = ",".join(u["roles"]) or "-"
-        typer.echo(f"{u['email']:<40} {roles:<20} {status}")
+        typer.echo(f"{u['email']:<40} {','.join(u['roles']) or '-':<20} {'active' if u['active'] else 'disabled'}")
 
 
-async def _async_reset_password(email: str, password: str | None):
+async def _async_mutate_user(email: str, op_name: str, value=None):
     from argon2 import PasswordHasher
     from sqlmodel import select
 
-    from .config import Settings
-    from .database import make_engine, make_session_maker
     from .models import User
 
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
-    ph = PasswordHasher()
-    used = password or secrets.token_urlsafe(16)
-    try:
-        async with session_maker() as session:
-            u = (
-                await session.execute(
-                    select(User).where(User.email == email.strip().lower())
-                )
-            ).scalar_one_or_none()
-            if not u:
-                return False, "not_found", None
-            u.hashed_password = ph.hash(used)
+    async with _auth_session() as session:
+        u = (await session.execute(select(User).where(User.email == email.strip().lower()))).scalar_one_or_none()
+        if not u:
+            return False, "not_found", None
+        if op_name == "password":
+            used = value or secrets.token_urlsafe(16)
+            u.hashed_password = PasswordHasher().hash(used)
             session.add(u)
             await session.commit()
             return True, None, used
-    finally:
-        await engine.dispose()
+        if op_name == "active":
+            u.is_active = bool(value)
+            session.add(u)
+            await session.commit()
+            return True, None, None
+        if op_name == "delete":
+            await session.delete(u)
+            await session.commit()
+            return True, None, None
+        return False, "unknown_op", None
 
 
 @app.command()
@@ -401,7 +336,7 @@ def user_reset_password(
     password: str | None = typer.Option(None, "--password", "-p"),
 ) -> None:
     """Reset a user's password."""
-    ok, err_msg, used = asyncio.run(_async_reset_password(email, password))
+    ok, err_msg, used = asyncio.run(_async_mutate_user(email, "password", password))
     if not ok:
         typer.echo(f"Failed: {err_msg}", err=True)
         raise typer.Exit(1)
@@ -410,37 +345,10 @@ def user_reset_password(
         typer.echo(f"New password: {used}")
 
 
-async def _async_set_active(email: str, active: bool):
-    from sqlmodel import select
-
-    from .config import Settings
-    from .database import make_engine, make_session_maker
-    from .models import User
-
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
-    try:
-        async with session_maker() as session:
-            u = (
-                await session.execute(
-                    select(User).where(User.email == email.strip().lower())
-                )
-            ).scalar_one_or_none()
-            if not u:
-                return False, "not_found"
-            u.is_active = active
-            session.add(u)
-            await session.commit()
-            return True, None
-    finally:
-        await engine.dispose()
-
-
 @app.command()
 def user_enable(email: str = typer.Option(..., "--email", "-e")) -> None:
     """Enable a user."""
-    ok, err_msg = asyncio.run(_async_set_active(email, True))
+    ok, err_msg, _ = asyncio.run(_async_mutate_user(email, "active", True))
     if not ok:
         typer.echo(f"Failed: {err_msg}", err=True)
         raise typer.Exit(1)
@@ -450,37 +358,11 @@ def user_enable(email: str = typer.Option(..., "--email", "-e")) -> None:
 @app.command()
 def user_disable(email: str = typer.Option(..., "--email", "-e")) -> None:
     """Disable a user."""
-    ok, err_msg = asyncio.run(_async_set_active(email, False))
+    ok, err_msg, _ = asyncio.run(_async_mutate_user(email, "active", False))
     if not ok:
         typer.echo(f"Failed: {err_msg}", err=True)
         raise typer.Exit(1)
     typer.echo(f"User {email} disabled.")
-
-
-async def _async_delete_user(email: str):
-    from sqlmodel import select
-
-    from .config import Settings
-    from .database import make_engine, make_session_maker
-    from .models import User
-
-    cfg = Settings()
-    engine = make_engine(cfg.db_path)
-    session_maker = make_session_maker(engine)
-    try:
-        async with session_maker() as session:
-            u = (
-                await session.execute(
-                    select(User).where(User.email == email.strip().lower())
-                )
-            ).scalar_one_or_none()
-            if not u:
-                return False, "not_found"
-            await session.delete(u)
-            await session.commit()
-            return True, None
-    finally:
-        await engine.dispose()
 
 
 @app.command()
@@ -489,11 +371,10 @@ def user_delete(
     yes: bool = typer.Option(False, "--yes", "-y", help="Skip confirmation"),
 ) -> None:
     """Delete a user."""
-    if not yes:
-        if not typer.confirm(f"Delete user {email}?"):
-            typer.echo("Cancelled.")
-            raise typer.Exit(0)
-    ok, err_msg = asyncio.run(_async_delete_user(email))
+    if not yes and not typer.confirm(f"Delete user {email}?"):
+        typer.echo("Cancelled.")
+        raise typer.Exit(0)
+    ok, err_msg, _ = asyncio.run(_async_mutate_user(email, "delete"))
     if not ok:
         typer.echo(f"Failed: {err_msg}", err=True)
         raise typer.Exit(1)
