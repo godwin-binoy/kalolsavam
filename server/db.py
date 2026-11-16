@@ -71,6 +71,7 @@ CREATE TABLE IF NOT EXISTS participant_entries (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     participant_id INTEGER NOT NULL REFERENCES participants(id) ON DELETE CASCADE,
     item_code TEXT NOT NULL,
+    item_name TEXT,
     venue_id INTEGER NOT NULL,
     venue_name TEXT NOT NULL,
     perf_date TEXT NOT NULL,
@@ -133,6 +134,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_ts ON auth_audit(ts);
 
 _EXTRA_COLS = (
     ("events", "category", "TEXT"),
+    ("participant_entries", "item_name", "TEXT"),
     ("live_state", "current_item", "TEXT"),
     ("live_state", "current_chest", "TEXT"),
     ("live_state", "upcoming_chests", "TEXT"),

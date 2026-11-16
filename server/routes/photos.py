@@ -369,7 +369,7 @@ def public_lookup(body: PhotoLookupIn, request: Request):
 
     rows = db.q(
         """
-        SELECT a.id AS asset_id, pe.item_code
+        SELECT a.id AS asset_id, pe.item_code, pe.item_name
         FROM participant_entries pe
         JOIN photo_asset_entries pae ON pae.participant_entry_id = pe.id
         JOIN photo_assets a ON a.id = pae.photo_asset_id
@@ -385,7 +385,8 @@ def public_lookup(body: PhotoLookupIn, request: Request):
     exp = int(time.time()) + _SIGNED_URL_TTL
     grouped: dict[int, list[str]] = {}
     for r in rows:
-        grouped.setdefault(r["asset_id"], []).append(r["item_code"])
+        label = f"{r['item_code']} · {r['item_name']}" if r.get("item_name") else r["item_code"]
+        grouped.setdefault(r["asset_id"], []).append(label)
 
     return {
         "photos": [

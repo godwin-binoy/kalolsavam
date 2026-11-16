@@ -43,7 +43,7 @@ _SCHOOL_RE = re.compile(r"^\d{5,6}$")
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _CSV_COLS = (
     "register_no", "name", "school_name", "school_code", "class",
-    "item_code", "venue_id", "venue_name", "perf_date",
+    "item_code", "item_name", "venue_id", "venue_name", "perf_date",
 )
 
 
@@ -139,6 +139,7 @@ class ParticipantUpdateIn(BaseModel):
 
 class ParticipantEntryIn(BaseModel):
     item_code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
+    item_name: Annotated[str | None, BeforeValidator(_strip), Field(default=None, max_length=200)] = None
     venue_id: int
     venue_name: ReqShort
     perf_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
@@ -146,6 +147,7 @@ class ParticipantEntryIn(BaseModel):
 
 class ParticipantEntryUpdateIn(BaseModel):
     item_code: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    item_name: Annotated[str | None, BeforeValidator(_strip), Field(default=None, max_length=200)] = None
     venue_id: int | None = None
     venue_name: OptShort = None
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
@@ -250,7 +252,7 @@ def list_events(request: Request, venue_id: int | None = None, user=Depends(requ
     if venue_id is not None:
         q += " WHERE venue_id = ?"
         params = (venue_id,)
-    return {"events": [dict(r) for r in db.q(q + " ORDER BY id LIMIT 5000", params)]}
+    return {"events": [dict(r) for r in db.q(q + " ORDER BY id", params)]}
 
 
 @router.post("/events")
@@ -313,12 +315,12 @@ def list_participants(
     request: Request,
     q: str | None = None,
     school_code: str | None = None,
-    limit: int = 200,
+    limit: int = 10000,
     offset: int = 0,
     user=Depends(require_admin),
 ):
     db = get_db(request)
-    limit = max(1, min(limit, 1000))
+    limit = max(1, min(limit, 50000))
     clauses = ["p.deleted_at IS NULL"]
     params: list = []
     if q:
@@ -377,8 +379,17 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
     cp = ce = up = ue = 0
     now = db.now()
     try:
+        seen_rows = set()
+        deduped_rows = []
+        for lineno, raw_row in enumerate(reader, start=2):
+            norm_tuple = tuple((k or "").strip() + "::" + (v or "").strip() for k, v in sorted(raw_row.items()))
+            if norm_tuple in seen_rows:
+                continue
+            seen_rows.add(norm_tuple)
+            deduped_rows.append((lineno, raw_row))
+
         with db.transaction():
-            for lineno, raw_row in enumerate(reader, start=2):
+            for lineno, raw_row in deduped_rows:
                 row = {(k or "").strip(): (v or "").strip() for k, v in raw_row.items()}
                 reg, sc, perf_date, item_code = row.get("register_no", ""), row.get("school_code", ""), row.get("perf_date", ""), row.get("item_code", "")
                 if not _REG_RE.match(reg):
@@ -432,10 +443,15 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                     (pid, item_code),
                 )
                 if ex_e:
-                    if ex_e["venue_id"] != venue_id or ex_e["venue_name"] != row["venue_name"] or ex_e["perf_date"] != perf_date:
+                    if (
+                        ex_e["venue_id"] != venue_id
+                        or ex_e["venue_name"] != row["venue_name"]
+                        or ex_e["perf_date"] != perf_date
+                        or (row.get("item_name") and ex_e["item_name"] != row["item_name"])
+                    ):
                         db.ex(
-                            "UPDATE participant_entries SET venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
-                            (venue_id, row["venue_name"], perf_date, now, ex_e["id"]),
+                            "UPDATE participant_entries SET item_name = COALESCE(?, item_name), venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
+                            (row.get("item_name"), venue_id, row["venue_name"], perf_date, now, ex_e["id"]),
                         )
                         ue += 1
                 else:
@@ -443,9 +459,9 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
                         errors.append(f"line {lineno}: {reg} at {MAX_ITEMS_PER_PARTICIPANT} entries")
                         continue
                     db.ex(
-                        "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
-                        "VALUES (?,?,?,?,?,?,?)",
-                        (pid, item_code, venue_id, row["venue_name"], perf_date, now, now),
+                        "INSERT INTO participant_entries(participant_id, item_code, item_name, venue_id, venue_name, perf_date, created_at, updated_at) "
+                        "VALUES (?,?,?,?,?,?,?,?)",
+                        (pid, item_code, row.get("item_name"), venue_id, row["venue_name"], perf_date, now, now),
                     )
                     ce += 1
     except Exception as exc:
@@ -483,6 +499,7 @@ def export_participants_csv(request: Request, user=Depends(require_admin)):
             csv_cell(r["school_code"]),
             r["student_class"],
             csv_cell(r["item_code"]),
+            csv_cell(r["item_name"]),
             r["venue_id"],
             csv_cell(r["venue_name"]),
             csv_cell(r["perf_date"]),
@@ -544,9 +561,9 @@ def add_entry(pid: int, body: ParticipantEntryIn, request: Request, user=Depends
     now = db.now()
     try:
         cur = db.ex(
-            "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
-            "VALUES (?,?,?,?,?,?,?)",
-            (pid, body.item_code, body.venue_id, body.venue_name, body.perf_date, now, now),
+            "INSERT INTO participant_entries(participant_id, item_code, item_name, venue_id, venue_name, perf_date, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?,?)",
+            (pid, body.item_code, body.item_name, body.venue_id, body.venue_name, body.perf_date, now, now),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_item_for_participant") from exc
@@ -793,7 +810,7 @@ def download_backup(request: Request, _=Depends(require_worker("obs"))):
 
 @internal_router.get("/audit-export")
 def export_audit_logs(request: Request, since: float = 0.0, limit: int = 500, _=Depends(require_worker("obs"))):
-    limit = max(1, min(limit, 1000))
+    limit = max(1, min(limit, 50000))
     rows = get_db(request).q(
         "SELECT id, ts, username, ip_hash, event, detail FROM auth_audit WHERE ts > ? ORDER BY ts ASC LIMIT ?",
         (since, limit),

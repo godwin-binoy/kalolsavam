@@ -85,7 +85,7 @@
   async function openPartEditor(id){
     var dlg = el('part-edit-dialog');
     el('pe-id').value = id || '';
-    ['pe-reg', 'pe-name', 'pe-school', 'pe-scode', 'pe-class'].forEach(function(k){ el(k).value = ''; });
+    ['pe-reg', 'pe-name', 'pe-school', 'pe-scode', 'pe-class', 'pe-item-name'].forEach(function(k){ el(k).value = ''; });
     el('pe-entry-venue').innerHTML = cache.venues.map(function(v){ return '<option value="' + v.id + '">' + esc(v.name) + '</option>'; }).join('');
     var sec = el('pe-entries-section'), list = el('pe-entries-list');
     if (id){
@@ -97,7 +97,7 @@
       sec.style.display = 'block';
       list.innerHTML = (d.entries || []).length ? d.entries.map(function(e){
         return '<div class="row" style="border-bottom:1px solid var(--border);padding:.4rem 0">' +
-          '<span style="flex:1"><b>' + esc(e.item_code) + '</b> · ' + esc(e.venue_name) + ' · ' + esc(e.perf_date) + '</span>' +
+          '<span style="flex:1"><b>' + esc(e.item_code) + '</b> ' + (e.item_name ? ('(' + esc(e.item_name) + ') ') : '') + '· ' + esc(e.venue_name) + ' · ' + esc(e.perf_date) + '</span>' +
           '<button type="button" class="danger small" data-del-entry="' + e.id + '">Remove</button></div>';
       }).join('') : '<p class="muted small">No items added yet.</p>';
     } else { sec.style.display = 'none'; list.innerHTML = ''; }
@@ -267,8 +267,8 @@
       ev.preventDefault();
       var pid = Number(el('pe-id').value), vid = Number(el('pe-entry-venue').value), vObj = cache.venues.find(function(x){ return x.id === vid; });
       if (await req('/participants/' + pid + '/entries', { method: 'POST', body: {
-        item_code: el('pe-item-code').value.trim(), venue_id: vid, venue_name: vObj ? vObj.name : 'Stage', perf_date: el('pe-entry-date').value
-      } }, 'Entry added.')){ el('pe-item-code').value = ''; openPartEditor(pid); show('participants'); }
+        item_code: el('pe-item-code').value.trim(), item_name: el('pe-item-name').value.trim() || null, venue_id: vid, venue_name: vObj ? vObj.name : 'Stage', perf_date: el('pe-entry-date').value
+      } }, 'Entry added.')){ el('pe-item-code').value = ''; el('pe-item-name').value = ''; openPartEditor(pid); show('participants'); }
     });
   }
 
