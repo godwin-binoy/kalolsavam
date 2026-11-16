@@ -20,7 +20,7 @@ from . import __version__
 from .auth import create_auth
 from .config import Settings
 from .db import Database
-from .deps import client_ip, hash_ip
+from .deps import check_rate_limit, client_ip, hash_ip
 from .errors import http_error
 
 log = logging.getLogger("kalolsavam")
@@ -89,6 +89,12 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         if clean_path in ("/api/v1/auth/register", "/auth/register"):
             return JSONResponse({"error": "registration_disabled"}, status_code=403)
 
+        if request.method == "POST" and clean_path in ("/api/v1/auth/login", "/auth/login"):
+            try:
+                check_rate_limit(request, "login", 15, 60)
+            except HTTPException as exc:
+                return JSONResponse({"error": exc.detail}, status_code=exc.status_code)
+
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             origin = request.headers.get("origin")
             host_hdr = request.headers.get("host", "")
@@ -124,6 +130,8 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)
+        if request.url.path.startswith("/api/"):
+            resp.headers.setdefault("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
         resp.headers["X-Request-ID"] = request.state.request_id
 
         path = request.url.path

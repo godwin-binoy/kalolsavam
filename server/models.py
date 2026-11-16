@@ -110,80 +110,6 @@ class Event(EventBase, table=True):
     id: int | None = SQLField(default=None, primary_key=True)
 
 
-class DeprecatedParticipant(SQLModel, table=True):
-    """Legacy event-scoped participant rows. Preserved by migration 0004.
-
-    New flows use ``Participant`` + ``ParticipantEntry`` below.
-    """
-    __tablename__ = "_deprecated_participants"
-    id: int | None = SQLField(default=None, primary_key=True)
-    event_id: int | None = SQLField(
-        default=None,
-        sa_column=Column(Integer, ForeignKey("events.id", ondelete="CASCADE"), nullable=True),
-    )
-    school: str = SQLField(min_length=1, max_length=200)
-    student_name: str | None = SQLField(default=None, max_length=200)
-    roll: str | None = SQLField(default=None, max_length=64)
-
-
-class QueueItem(SQLModel, table=True):
-    __tablename__ = "queue_items"
-    __table_args__ = (
-        Index("idx_queue_board", "venue_id", "status", "position"),
-        Index("idx_queue_venue_status_pos", "venue_id", "status", "position"),
-    )
-    id: int | None = SQLField(default=None, primary_key=True)
-    venue_id: int = SQLField(foreign_key="venues.id")
-    event_id: int = SQLField(foreign_key="events.id")
-    participant_id: int | None = SQLField(
-        default=None,
-        sa_column=Column(Integer, ForeignKey("_deprecated_participants.id", ondelete="CASCADE"), nullable=True),
-    )
-    participant_entry_id: int | None = SQLField(
-        default=None,
-        sa_column=Column(Integer, ForeignKey("participant_entries.id", ondelete="SET NULL"), nullable=True),
-    )
-    chest_no: str | None = SQLField(default=None, max_length=16)
-    status: str = SQLField(default="WAITING", max_length=16)
-    position: int = SQLField(default=0)
-    version: int = SQLField(default=1)
-    started_at: float | None = SQLField(default=None)
-    completed_at: float | None = SQLField(default=None)
-    updated_at: float
-
-
-
-class LiveState(SQLModel, table=True):
-    __tablename__ = "live_state"
-    venue_id: int = SQLField(primary_key=True, foreign_key="venues.id")
-    state: str = SQLField(default="IDLE", max_length=16)
-    announcement: str = SQLField(default="", max_length=280)
-    updated_at: float
-
-
-class Idempotency(SQLModel, table=True):
-    __tablename__ = "idempotency"
-    key: str = SQLField(primary_key=True)
-    response: str
-    created_at: float
-
-
-class AuthAudit(SQLModel, table=True):
-    __tablename__ = "auth_audit"
-    __table_args__ = (
-        Index("idx_audit_ts", "ts"),
-        Index("idx_audit_ip_event_ts", "ip_hash", "event", "ts"),
-    )
-    id: int | None = SQLField(default=None, primary_key=True)
-    ts: float
-    username: str | None = SQLField(default=None)
-    ip_hash: str | None = SQLField(default=None)
-    event: str
-    detail: str | None = SQLField(default=None)
-
-
-
-# ── Participant Registry (migration 0004) ─────────────────────────────────────
 class Participant(SQLModel, table=True):
     __tablename__ = "participants"
     __table_args__ = (
@@ -236,6 +162,58 @@ class ParticipantEntry(SQLModel, table=True):
     deleted_at: float | None = SQLField(default=None)
 
 
+class QueueItem(SQLModel, table=True):
+    __tablename__ = "queue_items"
+    __table_args__ = (
+        Index("idx_queue_board", "venue_id", "status", "position"),
+        Index("idx_queue_venue_status_pos", "venue_id", "status", "position"),
+    )
+    id: int | None = SQLField(default=None, primary_key=True)
+    venue_id: int = SQLField(foreign_key="venues.id")
+    event_id: int = SQLField(foreign_key="events.id")
+    participant_id: int | None = SQLField(default=None)
+    participant_entry_id: int | None = SQLField(
+        default=None,
+        sa_column=Column(Integer, ForeignKey("participant_entries.id", ondelete="SET NULL"), nullable=True),
+    )
+    chest_no: str | None = SQLField(default=None, max_length=16)
+    status: str = SQLField(default="WAITING", max_length=16)
+    position: int = SQLField(default=0)
+    version: int = SQLField(default=1)
+    started_at: float | None = SQLField(default=None)
+    completed_at: float | None = SQLField(default=None)
+    updated_at: float
+
+
+class LiveState(SQLModel, table=True):
+    __tablename__ = "live_state"
+    venue_id: int = SQLField(primary_key=True, foreign_key="venues.id")
+    state: str = SQLField(default="IDLE", max_length=16)
+    announcement: str = SQLField(default="", max_length=280)
+    updated_at: float
+
+
+class Idempotency(SQLModel, table=True):
+    __tablename__ = "idempotency"
+    key: str = SQLField(primary_key=True)
+    response: str
+    created_at: float
+
+
+class AuthAudit(SQLModel, table=True):
+    __tablename__ = "auth_audit"
+    __table_args__ = (
+        Index("idx_audit_ts", "ts"),
+        Index("idx_audit_ip_event_ts", "ip_hash", "event", "ts"),
+    )
+    id: int | None = SQLField(default=None, primary_key=True)
+    ts: float
+    username: str | None = SQLField(default=None)
+    ip_hash: str | None = SQLField(default=None)
+    event: str
+    detail: str | None = SQLField(default=None)
+
+
 # ── Request Validation DTOs (Pydantic v2 BaseModel) ───────────────────────────
 class StateIn(BaseModel):
     venue_id: int
@@ -248,8 +226,7 @@ class AdvanceIn(BaseModel):
     action: str = Field(pattern=r"^(START_NEXT|COMPLETE_CURRENT|PAUSE|RESUME|SKIP|RECALL)$")
     version: int | None = None
     item_id: int | None = None
-    chest_no: str | None = None
-
+    chest_no: str | None = Field(default=None, max_length=16)
 
 
 class VenueIn(VenueBase):
@@ -324,14 +301,14 @@ class EventUpdateIn(BaseModel):
 
 class UserIn(BaseModel):
     email: EmailStr
-    role: str = Field(pattern=r"^(stagemaster|admin)$")
+    role: str = Field(pattern=r"^(stagemaster|dataworker|admin)$")
     stages: list[int] = Field(default_factory=list)
     password: str = Field(min_length=12, max_length=256)
 
 
 class UserUpdateIn(BaseModel):
     email: EmailStr | None = None
-    role: str | None = Field(default=None, pattern=r"^(stagemaster|admin)$")
+    role: str | None = Field(default=None, pattern=r"^(stagemaster|dataworker|admin)$")
     stages: list[int] | None = None
     is_active: bool | None = None
 
@@ -343,23 +320,17 @@ class PasswordResetIn(BaseModel):
 class AddToQueueIn(BaseModel):
     venue_id: int
     participant_entry_id: int
-    chest_no: str | None = None
+    chest_no: str | None = Field(default=None, max_length=16)
+
 
 class QueueItemUpdateIn(BaseModel):
-    school: str | None = Field(default=None, min_length=1, max_length=200)
-    student_name: str | None = Field(default=None, max_length=200)
-    roll: str | None = Field(default=None, max_length=64)
-
-    @field_validator("school")
-    @classmethod
-    def _clean_school(cls, v: str | None) -> str | None:
-        return _require_non_blank(v)
+    chest_no: str | None = Field(default=None, max_length=16)
 
 
 class QueueMoveIn(BaseModel):
     direction: str = Field(pattern=r"^(up|down)$")
 
-# ── Participant Registry DTOs ─────────────────────────────────────────────────
+
 class ParticipantIn(BaseModel):
     register_no: str = Field(pattern=r"^\d{5}$")
     name: str = Field(min_length=1, max_length=200)
@@ -393,3 +364,19 @@ class ParticipantEntryUpdateIn(BaseModel):
     venue_name: str | None = Field(default=None, min_length=1, max_length=120)
     perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
 
+
+class PhotoBatchIn(BaseModel):
+    queue_item_id: int
+    venue_id: int
+    workflow: str = Field(pattern=r"^(bulk|quick)$")
+    perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class PhotoAssignIn(BaseModel):
+    asset_id: int
+    participant_entry_ids: list[int] = Field(min_length=1, max_length=30)
+
+
+class PhotoLookupIn(BaseModel):
+    register_no: str = Field(pattern=r"^\d{5}$")
+    name: str = Field(min_length=1, max_length=200)

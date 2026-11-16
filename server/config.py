@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import secrets
 from pathlib import Path
 
 from pydantic import Field, field_validator
@@ -32,7 +33,6 @@ class Settings(BaseSettings):
     @field_validator("db_path", "dist_path")
     @classmethod
     def _absolute(cls, v: str) -> str:
-        # Relative paths must not drift between sqlite3 and aiosqlite callers.
         return str(Path(v).expanduser().resolve())
 
     @field_validator("public_origin")
@@ -47,15 +47,17 @@ class Settings(BaseSettings):
     @classmethod
     def _ensure_secret(cls, v: str) -> str:
         if v:
-            return v
-        import secrets
+            s = str(v).strip()
+            if len(s) < 32:
+                raise ValueError("SECRET_KEY must be at least 32 characters")
+            return s
 
         key_file = ROOT / "deployment" / "secret.key"
         log = logging.getLogger("kalolsavam")
         if key_file.exists():
             try:
                 stored = key_file.read_text().strip()
-                if stored:
+                if len(stored) >= 32:
                     return stored
             except Exception as exc:
                 log.warning("Could not read secret.key: %s", exc)
@@ -63,10 +65,7 @@ class Settings(BaseSettings):
         try:
             key_file.parent.mkdir(parents=True, exist_ok=True)
             key_file.write_text(key)
-            try:
-                key_file.chmod(0o600)
-            except Exception as exc:
-                log.warning("Could not chmod secret.key: %s", exc)
+            key_file.chmod(0o600)
         except Exception as exc:
             log.warning("Could not persist secret.key: %s", exc)
         return key

@@ -13,7 +13,7 @@ import sqlite3
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 
-from ..deps import client_ip, get_cfg, get_db, hash_ip, require_admin
+from ..deps import client_ip, csv_cell, escape_like, get_cfg, get_db, hash_ip, require_admin
 from ..models import (
     ParticipantEntryIn,
     ParticipantEntryUpdateIn,
@@ -62,12 +62,7 @@ def _active_entry_count(db, participant_id: int) -> int:
     )["c"]
 
 
-def _csv_cell(val: object) -> str:
-    s = "" if val is None else str(val)
-    stripped = s.lstrip()
-    if stripped and stripped[0] in ("=", "+", "-", "@", "\t", "\r"):
-        return "'" + s
-    return s
+
 
 
 # ── Participants ────────────────────────────────────────────────────────
@@ -91,8 +86,9 @@ def list_participants(
     if not include_deleted:
         clauses.append("p.deleted_at IS NULL")
     if q:
-        clauses.append("(p.register_no LIKE ? OR p.name LIKE ?)")
-        params.extend([f"%{q}%", f"%{q}%"])
+        safe_q = escape_like(q.strip())
+        clauses.append("(p.register_no LIKE ? ESCAPE '\\' OR p.name LIKE ? ESCAPE '\\')")
+        params.extend([f"%{safe_q}%", f"%{safe_q}%"])
     if school_code:
         clauses.append("p.school_code = ?")
         params.append(school_code)
@@ -300,7 +296,9 @@ async def import_csv(
     user=Depends(require_admin),
 ):
     db = get_db(request)
-    raw = await file.read()
+    raw = await file.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(413, "csv_too_large")
     try:
         text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
@@ -348,6 +346,9 @@ async def import_csv(
                 except ValueError:
                     errors.append(f"line {lineno}: invalid venue_id {row.get('venue_id')!r}")
                     continue
+                if not db.one("SELECT id FROM venues WHERE id = ?", (venue_id,)):
+                    errors.append(f"line {lineno}: unknown venue_id {venue_id}")
+                    continue
                 item_code = row.get("item_code", "")
                 if not item_code:
                     errors.append(f"line {lineno}: missing item_code")
@@ -360,6 +361,7 @@ async def import_csv(
                 if existing:
                     pid = existing["id"]
                     if (existing["name"] != row["name"]
+                            or existing["school_name"] != row["school_name"]
                             or existing["school_code"] != sc
                             or existing["student_class"] != cls):
                         db.ex(
@@ -411,7 +413,7 @@ async def import_csv(
                     except sqlite3.IntegrityError:
                         errors.append(f"line {lineno}: duplicate entry for {reg}/{item_code}")
     except Exception as exc:
-        raise HTTPException(500, f"import_failed:{exc}") from exc
+        raise HTTPException(500, "import_failed") from exc
 
     _audit(db, request, user, "import",
            f"p+{created_p}/p~{updated_p}/e+{created_e}/e~{updated_e}/err{len(errors)}")
@@ -441,15 +443,15 @@ def export_participants_csv(request: Request, user=Depends(require_admin)):
     w.writerow(_CSV_COLS)
     for r in rows:
         w.writerow([
-            _csv_cell(r["register_no"]),
-            _csv_cell(r["name"]),
-            _csv_cell(r["school_name"]),
-            _csv_cell(r["school_code"]),
+            csv_cell(r["register_no"]),
+            csv_cell(r["name"]),
+            csv_cell(r["school_name"]),
+            csv_cell(r["school_code"]),
             r["student_class"],
-            _csv_cell(r["item_code"]),
+            csv_cell(r["item_code"]),
             r["venue_id"],
-            _csv_cell(r["venue_name"]),
-            _csv_cell(r["perf_date"]),
+            csv_cell(r["venue_name"]),
+            csv_cell(r["perf_date"]),
         ])
     return Response(
         content=out.getvalue(),

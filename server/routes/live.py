@@ -76,15 +76,13 @@ def board(request: Request, user=Depends(require_staff)):
     vid_set = {v["id"] for v in venues}
     items = db.q(
         "SELECT q.*, e.title AS event, c.name AS category, "
-        " COALESCE(p.school, p2.school_name) AS school, "
-        " COALESCE(p.student_name, p2.name) AS student_name, "
-        " COALESCE(p.roll, p2.register_no) AS roll "
+        " p.school_name AS school, p.name AS student_name, "
+        " COALESCE(q.chest_no, p.register_no) AS roll "
         "FROM queue_items q "
         "JOIN events e ON e.id = q.event_id "
         "LEFT JOIN categories c ON c.id = e.category_id "
-        "LEFT JOIN _deprecated_participants p ON p.id = q.participant_id "
         "LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id "
-        "LEFT JOIN participants p2 ON p2.id = pe.participant_id "
+        "LEFT JOIN participants p ON p.id = pe.participant_id "
         "ORDER BY q.venue_id, "
         "CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 0 ELSE 1 END, q.position"
     )

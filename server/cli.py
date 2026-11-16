@@ -92,11 +92,12 @@ async def _async_seed_admin(email: str, password: str | None) -> tuple[bool, str
             if not admin_role:
                 admin_role = Role(name="admin")
                 session.add(admin_role)
-            sm_role = (
-                await session.execute(select(Role).where(Role.name == "stagemaster"))
-            ).scalar_one_or_none()
-            if not sm_role:
-                session.add(Role(name="stagemaster"))
+            for rname in ("stagemaster", "dataworker"):
+                existing_r = (
+                    await session.execute(select(Role).where(Role.name == rname))
+                ).scalar_one_or_none()
+                if not existing_r:
+                    session.add(Role(name=rname))
             await session.commit()
             await session.refresh(admin_role)
 
@@ -322,14 +323,14 @@ async def _async_create_user(email: str, password: str, role_name: str, stages: 
 def user_create(
     email: str = typer.Option(..., "--email", "-e"),
     password: str = typer.Option(..., "--password", "-p"),
-    role: str = typer.Option("admin", "--role", help="admin or stagemaster"),
+    role: str = typer.Option("admin", "--role", help="admin, stagemaster, or dataworker"),
     stages: str = typer.Option("[]", "--stages", help="JSON array of stage numbers"),
 ) -> None:
     """Create a staff user with a given role and assigned stages."""
     from .config import Settings
     from .schema import upgrade_to_head
 
-    if role not in ("admin", "stagemaster"):
+    if role not in ("admin", "stagemaster", "dataworker"):
         typer.echo(f"Invalid role: {role}", err=True)
         raise typer.Exit(1)
     try:

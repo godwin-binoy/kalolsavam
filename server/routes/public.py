@@ -6,9 +6,11 @@ import time
 from collections.abc import Callable
 from typing import Any
 
-from fastapi import APIRouter, Request, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+
+from ..deps import rate_limit
 
 router = APIRouter()
 _CACHE_LOCK = threading.Lock()
@@ -58,22 +60,26 @@ def status(request: Request):
 
         items = db.q("""
             WITH ranked_waiting AS (
-                SELECT q.id, q.venue_id, q.status, q.position,
-                       e.title AS event, p.school, p.student_name, p.roll,
+                SELECT q.id, q.venue_id, q.status, q.position, q.chest_no,
+                       e.title AS event, p.school_name AS school,
+                       p.name AS student_name, COALESCE(q.chest_no, p.register_no) AS roll,
                        ROW_NUMBER() OVER (PARTITION BY q.venue_id ORDER BY q.position) AS rn
                 FROM queue_items q
                 JOIN events e ON e.id = q.event_id
-                LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
+                LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
+                LEFT JOIN participants p ON p.id = pe.participant_id AND p.deleted_at IS NULL
                 WHERE q.status = 'WAITING'
             )
-            SELECT q.id, q.venue_id, q.status, q.position,
-                   e.title AS event, p.school, p.student_name, p.roll
+            SELECT q.id, q.venue_id, q.status, q.position, q.chest_no,
+                   e.title AS event, p.school_name AS school,
+                   p.name AS student_name, COALESCE(q.chest_no, p.register_no) AS roll
             FROM queue_items q
             JOIN events e ON e.id = q.event_id
-            LEFT JOIN _deprecated_participants p ON p.id = q.participant_id
+            LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
+            LEFT JOIN participants p ON p.id = pe.participant_id AND p.deleted_at IS NULL
             WHERE q.status IN ('ON-STAGE', 'PAUSED')
             UNION ALL
-            SELECT id, venue_id, status, position, event, school, student_name, roll
+            SELECT id, venue_id, status, position, chest_no, event, school, student_name, roll
             FROM ranked_waiting
             WHERE rn <= 5
             ORDER BY venue_id, position
@@ -153,6 +159,7 @@ def schedule(request: Request, day: str | None = None, venue_id: int | None = No
         headers={"Cache-Control": "public, max-age=60"},
     )
 
+
 @router.get("/dashboard")
 def dashboard_stats(request: Request):
     db = request.app.state.db
@@ -163,7 +170,7 @@ def dashboard_stats(request: Request):
                 (SELECT COUNT(*) FROM venues) AS venues,
                 (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
                 (SELECT COUNT(*) FROM events) AS events,
-                (SELECT COUNT(*) FROM participants) AS participants,
+                (SELECT COUNT(*) FROM participants WHERE deleted_at IS NULL) AS participants,
                 COUNT(q.id) AS queue_items,
                 COALESCE(SUM(CASE WHEN q.status = 'WAITING' THEN 1 ELSE 0 END), 0) AS queue_waiting,
                 COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 1 ELSE 0 END), 0) AS queue_onstage,
@@ -171,7 +178,6 @@ def dashboard_stats(request: Request):
                 COALESCE(SUM(CASE WHEN q.status = 'SKIPPED' THEN 1 ELSE 0 END), 0) AS queue_skipped
             FROM queue_items q
         """)
-
         per_venue = [
             dict(r) for r in db.q("""
                 SELECT v.id, v.name, v.kind, v.active,
@@ -185,7 +191,6 @@ def dashboard_stats(request: Request):
                 GROUP BY v.id ORDER BY v.id
             """)
         ]
-
         recent_completed = [
             dict(r) for r in db.q("""
                 SELECT q.id, q.completed_at, e.code AS event_code, e.title AS event_title,
@@ -197,16 +202,11 @@ def dashboard_stats(request: Request):
                 ORDER BY q.completed_at DESC LIMIT 20
             """)
         ]
-
-        overall = dict(row)
-        overall["active_venues"] = row["active_venues"]
-        
         return {
             "updated_at": db.now(),
-            "overall": overall,
+            "overall": dict(row),
             "per_venue": per_venue,
             "recent_completed": recent_completed,
-            "health": {"status": "ok", "db_bytes": 0, "disk_free_bytes": 0, "sse_connections": 0, "auth_failures_24h": 0}
         }
 
     return JSONResponse(
@@ -214,28 +214,24 @@ def dashboard_stats(request: Request):
         headers={"Cache-Control": "public, max-age=10"},
     )
 
-class LookupIn(BaseModel):
-    register_no: str
-    name: str
 
-@router.post("/participant-lookup")
+class LookupIn(BaseModel):
+    register_no: str = Field(pattern=r"^\d{5}$")
+    name: str = Field(min_length=1, max_length=200)
+
+
+@router.post("/participant-lookup", dependencies=[Depends(rate_limit("lookup", 12, 60))])
 def participant_lookup(body: LookupIn, request: Request):
     db = request.app.state.db
-    
-    # Privacy Gate: exact match on both register_no and case-insensitive name
     p = db.one(
         "SELECT id, name FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL",
-        (body.register_no.strip(), body.name.strip())
+        (body.register_no.strip(), body.name.strip()),
     )
     if not p:
-        raise HTTPException(404, "participant_not_found_or_name_mismatch")
-        
-    entries = db.q("""
-        SELECT id, item_code, venue_name, perf_date
-        FROM participant_entries
-        WHERE participant_id = ? AND deleted_at IS NULL
-        ORDER BY perf_date, item_code
-    """, (p["id"],))
-    
+        raise HTTPException(404, "not_found")
+    entries = db.q(
+        "SELECT id, item_code, venue_name, perf_date FROM participant_entries "
+        "WHERE participant_id = ? AND deleted_at IS NULL ORDER BY perf_date, item_code",
+        (p["id"],),
+    )
     return {"valid": True, "participant": dict(p), "entries": [dict(e) for e in entries]}
-
