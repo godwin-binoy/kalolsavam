@@ -18,8 +18,6 @@ deployment/
 public/
 
 requirements-dev.txt
-requirements-photos.txt
-requirements-obs.txt
 pyproject.toml
 scripts/stamp-sw.mjs
 kal
