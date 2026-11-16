@@ -26,5 +26,3 @@ kal
 .kal.lock
 
 server/tests/
-server_photos/
-server_obs/
