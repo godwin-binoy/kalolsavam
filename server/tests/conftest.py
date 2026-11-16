@@ -1,33 +1,19 @@
-"""Test fixtures: isolated test DB (migrated via Alembic) and test client."""
+"""Test fixtures: isolated SQLite DB and FastAPI test client."""
 from __future__ import annotations
 
 import pytest
 from fastapi.testclient import TestClient
 
 from server.app import create_app
+from server.auth import _RATE_BUCKETS
 from server.config import Settings
 from server.db import Database
-from server.deps import _RATE_BUCKETS
-from server.schema import upgrade_to_head
 
 
 def _write_stub_dist(dist_root):
-    (dist_root / "admin").mkdir(parents=True, exist_ok=True)
-    (dist_root / "admin" / "index.html").write_text(
-        '<!doctype html><html><head><title>Admin</title></head>'
-        '<body><h1>Admin Console</h1>'
-        '<script src="/dashboard/js/admin.js"></script>'
-        '</body></html>',
-        encoding="utf-8",
-    )
-    (dist_root / "stagemaster").mkdir(parents=True, exist_ok=True)
-    (dist_root / "stagemaster" / "index.html").write_text(
-        '<!doctype html><html><head><title>Stage</title></head>'
-        '<body><h1>Stage Control</h1>'
-        '<script src="/dashboard/js/board.js"></script>'
-        '</body></html>',
-        encoding="utf-8",
-    )
+    for d in ("admin", "stagemaster", "dataworker"):
+        (dist_root / d).mkdir(parents=True, exist_ok=True)
+        (dist_root / d / "index.html").write_text(f"<!doctype html><html><body><h1>{d}</h1></body></html>", encoding="utf-8")
 
 
 @pytest.fixture
@@ -46,8 +32,8 @@ def client(tmp_path, monkeypatch):
     monkeypatch.setenv("DIST_PATH", str(dist_path))
 
     cfg = Settings()
-    upgrade_to_head(cfg.db_path)
     db = Database(db_path)
+    db.init_schema()
     app = create_app(cfg, db)
 
     try:

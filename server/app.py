@@ -1,9 +1,11 @@
-"""FastAPI app factory: FullAuth, security middleware, GZip, SSE bus."""
+"""FastAPI app factory: security middleware, GZip, CORS, SSE, and route mounting."""
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import re
+import sys
 import time
 import uuid
 from contextlib import asynccontextmanager
@@ -17,11 +19,9 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Resp
 from fastapi.staticfiles import StaticFiles
 
 from . import __version__
-from .auth import create_auth
+from .auth import check_rate_limit, router as auth_router
 from .config import Settings
 from .db import Database
-from .deps import check_rate_limit, client_ip, hash_ip
-from .errors import http_error
 
 log = logging.getLogger("kalolsavam")
 
@@ -34,40 +34,50 @@ SEC_HEADERS = {
 }
 
 
+class _JsonFmt(logging.Formatter):
+    def format(self, record: logging.LogRecord) -> str:
+        payload = {"ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S"), "level": record.levelname, "logger": record.name, "msg": record.getMessage()}
+        for k in ("request_id", "method", "path", "status", "duration_ms"):
+            v = getattr(record, k, None)
+            if v is not None:
+                payload[k] = v
+        return json.dumps(payload, default=str)
+
+
+def setup_logging() -> None:
+    h = logging.StreamHandler(sys.stdout)
+    h.setFormatter(_JsonFmt())
+    root = logging.getLogger()
+    root.handlers.clear()
+    root.addHandler(h)
+    root.setLevel(logging.INFO)
+
+
+async def _http_error(request: Request, exc: HTTPException) -> JSONResponse:
+    req_id = getattr(request.state, "request_id", "")
+    if exc.status_code >= 500:
+        log.error("http_5xx", extra={"request_id": req_id, "method": request.method, "path": request.url.path, "status": exc.status_code})
+        return JSONResponse({"error": "internal", "request_id": req_id}, status_code=500)
+    return JSONResponse(exc.detail if isinstance(exc.detail, dict) else {"error": str(exc.detail)}, status_code=exc.status_code)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.loop = asyncio.get_running_loop()
     yield
-    if getattr(app.state, "auth_engine", None):
-        await app.state.auth_engine.dispose()
     app.state.db.close_all()
 
 
 def create_app(cfg: Settings, db: Database) -> FastAPI:
-    app = FastAPI(
-        title="Kalolsavam",
-        lifespan=lifespan,
-        docs_url=None,
-        redoc_url=None,
-        openapi_url=None,
-    )
+    app = FastAPI(title="Kalolsavam", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
     app.state.cfg = cfg
     app.state.db = db
     app.state.subscribers = {}
 
-    fullauth, auth_engine, auth_session_maker = create_auth(cfg)
-    fullauth.init_app(app, include_routers=["auth", "profile", "sessions"])
-    app.state.fullauth = fullauth
-    app.state.auth_engine = auth_engine
-    app.state.auth_session_maker = auth_session_maker
-
     expected_origin = urlparse(cfg.public_origin)
-    cors_origins = [cfg.public_origin]
-    if cfg.allowed_origins:
-        cors_origins.extend(
-            o.strip().rstrip("/") for o in cfg.allowed_origins.split(",") if o.strip()
-        )
-    cors_origins = list(dict.fromkeys(cors_origins))
+    cors_origins = list(dict.fromkeys(
+        [cfg.public_origin] + [o.strip().rstrip("/") for o in cfg.allowed_origins.split(",") if o.strip()]
+    ))
     allowed_netlocs = {urlparse(o).netloc for o in cors_origins if urlparse(o).netloc}
     pages_preview_re = (
         re.compile(r"^https://([a-z0-9-]+\.)?" + re.escape(expected_origin.netloc) + r"$")
@@ -77,18 +87,15 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
     def _origin_allowed(origin_val: str, host_hdr: str) -> bool:
         o = urlparse(origin_val)
-        allowed = set(allowed_netlocs)
-        if host_hdr:
-            allowed.add(host_hdr)
-        preview_ok = bool(pages_preview_re and pages_preview_re.match(origin_val.rstrip("/")))
-        return o.netloc in allowed or preview_ok
+        allowed = allowed_netlocs | ({host_hdr} if host_hdr else set())
+        return o.netloc in allowed or bool(pages_preview_re and pages_preview_re.match(origin_val.rstrip("/")))
 
     @app.middleware("http")
     async def security_middleware(request: Request, call_next):
         request.state.request_id = uuid.uuid4().hex[:12]
         start = time.perf_counter()
-
         clean_path = request.url.path.rstrip("/")
+
         if clean_path in ("/api/v1/auth/register", "/auth/register"):
             return JSONResponse({"error": "registration_disabled"}, status_code=403)
 
@@ -111,23 +118,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
 
         resp = await call_next(request)
 
-        if request.method == "POST" and clean_path in ("/api/v1/auth/login", "/auth/login"):
-            try:
-                ip_h = hash_ip(client_ip(request), cfg.secret_key)
-                now = db.now()
-                if resp.status_code == 200:
-                    db.ex(
-                        "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-                        (now, "staff", ip_h, "login_ok", "status=200"),
-                    )
-                elif resp.status_code in (400, 401, 403, 429):
-                    db.ex(
-                        "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-                        (now, "unknown", ip_h, "login_fail", f"status={resp.status_code}"),
-                    )
-            except Exception as exc:
-                log.warning("auth_audit_write_failed: %s", exc)
-
         for k, v in SEC_HEADERS.items():
             resp.headers.setdefault(k, v)
         if request.url.path.startswith("/api/"):
@@ -135,31 +125,21 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         resp.headers["X-Request-ID"] = request.state.request_id
 
         path = request.url.path
-        if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")):
+        if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")) or path in ("/healthz", "/readyz") or path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")):
             resp.headers["Cache-Control"] = "no-store"
-            resp.headers["X-Robots-Tag"] = "noindex, nofollow"
+            if path.startswith(("/admin", "/stagemaster", "/dataworker", "/dashboard")):
+                resp.headers["X-Robots-Tag"] = "noindex, nofollow"
         elif path.startswith("/assets/js/"):
             resp.headers["Cache-Control"] = "public, max-age=300, must-revalidate"
         elif path.startswith("/assets/"):
             resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
-        elif path.startswith(("/api/v1/admin/", "/api/v1/live/", "/api/v1/auth/")) or path in ("/healthz", "/readyz"):
-            resp.headers["Cache-Control"] = "no-store"
         elif path == "/sw.js":
             resp.headers["Cache-Control"] = "no-cache, must-revalidate"
         elif "text/html" in resp.headers.get("content-type", ""):
             resp.headers.setdefault("Cache-Control", "public, max-age=0, must-revalidate")
 
         dur = int((time.perf_counter() - start) * 1000)
-        log.info(
-            "req",
-            extra={
-                "request_id": request.state.request_id,
-                "method": request.method,
-                "path": path,
-                "status": resp.status_code,
-                "duration_ms": dur,
-            },
-        )
+        log.info("req", extra={"request_id": request.state.request_id, "method": request.method, "path": path, "status": resp.status_code, "duration_ms": dur})
         return resp
 
     dist = Path(cfg.dist_path)
@@ -178,31 +158,30 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         except Exception:
             return JSONResponse({"ok": False}, status_code=503)
 
+    from .routes.admin import internal_router
     from .routes.admin import router as admin_router
-    from .routes.internal import router as internal_router
     from .routes.live import router as live_router
-    from .routes.participants import router as participants_router
     from .routes.photos import router as photos_router
     from .routes.public import router as public_router
 
+    app.include_router(auth_router, prefix="/api/v1/auth")
     app.include_router(public_router, prefix="/api/v1/public")
     app.include_router(live_router, prefix="/api/v1/live")
     app.include_router(admin_router, prefix="/api/v1/admin")
     app.include_router(photos_router, prefix="/api/v1/photos")
     app.include_router(internal_router, prefix="/api/v1/internal")
-    app.include_router(participants_router, prefix="/api/v1/admin")
 
     @app.get("/admin", include_in_schema=False)
-    async def admin_bare_redirect():
-        return RedirectResponse(url="/admin/", status_code=307)
+    async def _red_admin():
+        return RedirectResponse("/admin/", status_code=307)
 
     @app.get("/stagemaster", include_in_schema=False)
-    async def stagemaster_bare_redirect():
-        return RedirectResponse(url="/stagemaster/", status_code=307)
+    async def _red_sm():
+        return RedirectResponse("/stagemaster/", status_code=307)
 
     @app.get("/dataworker", include_in_schema=False)
-    async def dataworker_bare_redirect():
-        return RedirectResponse(url="/dataworker/", status_code=307)
+    async def _red_dw():
+        return RedirectResponse("/dataworker/", status_code=307)
 
     @app.get("/{full_path:path}")
     async def catch_all(full_path: str):
@@ -233,7 +212,6 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
             path = _safe(rel)
             if path:
                 return FileResponse(path)
-
         nf = _safe("404.html")
         if nf:
             return FileResponse(nf, status_code=404)
@@ -252,5 +230,5 @@ def create_app(cfg: Settings, db: Database) -> FastAPI:
         expose_headers=["X-Request-ID"],
         max_age=600,
     )
-    app.add_exception_handler(HTTPException, http_error)
+    app.add_exception_handler(HTTPException, _http_error)
     return app

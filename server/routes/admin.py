@@ -1,4 +1,4 @@
-"""Admin API: master data CRUD, FullAuth user administration, dashboard, CSV exports."""
+"""Admin, Participant Registry, and Obs Worker internal endpoints."""
 from __future__ import annotations
 
 import csv
@@ -6,48 +6,156 @@ import io
 import json
 import logging
 import os
+import re
 import shutil
 import sqlite3
+import tempfile
 import time as _t
-import uuid as _uuid
 from pathlib import Path
+from typing import Annotated
 
-from argon2 import PasswordHasher
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import Response
-from sqlmodel import select
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi.responses import FileResponse, Response
+from pydantic import BaseModel, BeforeValidator, EmailStr, Field
+from starlette.background import BackgroundTask
 
-from ..deps import client_ip, csv_cell, get_cfg, get_db, hash_ip, require_admin
-from ..models import (
-    AddToQueueIn,
-    CategoryIn,
-    CategoryUpdateIn,
-    EventIn,
-    EventUpdateIn,
-    PasswordResetIn,
-    QueueItemUpdateIn,
-    QueueMoveIn,
-    Role,
-    User,
-    UserIn,
-    UserUpdateIn,
-    VenueIn,
-    VenueUpdateIn,
+from ..auth import (
+    client_ip,
+    csv_cell,
+    escape_like,
+    get_cfg,
+    get_db,
+    hash_ip,
+    ph,
+    require_admin,
+    require_worker,
 )
 from .public import invalidate_public_cache
 
 router = APIRouter()
+internal_router = APIRouter()
 log = logging.getLogger("kalolsavam")
-_ph = PasswordHasher()
+
+MAX_ITEMS_PER_PARTICIPANT = 7
+_REG_RE = re.compile(r"^\d{5}$")
+_SCHOOL_RE = re.compile(r"^\d{5,6}$")
+_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_CSV_COLS = (
+    "register_no", "name", "school_name", "school_code", "class",
+    "item_code", "venue_id", "venue_name", "perf_date",
+)
 
 
-def _admin_log(db, request: Request, user: object, action: str, detail: str = "") -> None:
+def _strip(v: object) -> object:
+    return v.strip() if isinstance(v, str) else v
+
+
+def _clean_slug(v: object) -> str | None:
+    if v is None:
+        return None
+    s = str(v).strip().lower()
+    if not s:
+        return None
+    if not re.fullmatch(r"[a-z0-9-]+", s) or len(s) > 64:
+        raise ValueError("invalid slug")
+    return s
+
+
+CleanSlug = Annotated[str | None, BeforeValidator(_clean_slug)]
+ReqStr = Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
+OptStr = Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=200)]
+ReqShort = Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=120)]
+OptShort = Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=120)]
+
+
+class VenueIn(BaseModel):
+    name: ReqShort
+    kind: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = "stage"
+    slug: CleanSlug = None
+    active: bool = True
+
+
+class VenueUpdateIn(BaseModel):
+    name: OptShort = None
+    kind: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    slug: CleanSlug = None
+    active: bool | None = None
+
+
+class EventIn(BaseModel):
+    code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
+    title: ReqStr
+    category: str | None = Field(default=None, max_length=64)
+    venue_id: int | None = None
+    day: str | None = Field(default=None, max_length=32)
+    scheduled_time: str | None = Field(default=None, max_length=16)
+
+
+class EventUpdateIn(BaseModel):
+    code: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    title: OptStr = None
+    category: str | None = Field(default=None, max_length=64)
+    venue_id: int | None = None
+    day: str | None = Field(default=None, max_length=32)
+    scheduled_time: str | None = Field(default=None, max_length=16)
+
+
+class UserIn(BaseModel):
+    email: EmailStr
+    role: str = Field(pattern=r"^(stagemaster|dataworker|admin)$")
+    stages: list[int] = Field(default_factory=list)
+    password: str = Field(min_length=12, max_length=256)
+
+
+class UserUpdateIn(BaseModel):
+    email: EmailStr | None = None
+    role: str | None = Field(default=None, pattern=r"^(stagemaster|dataworker|admin)$")
+    stages: list[int] | None = None
+    is_active: bool | None = None
+
+
+class PasswordResetIn(BaseModel):
+    password: str = Field(min_length=12, max_length=256)
+
+
+class ParticipantIn(BaseModel):
+    register_no: str = Field(pattern=r"^\d{5}$")
+    name: ReqStr
+    school_name: ReqStr
+    school_code: str = Field(pattern=r"^\d{5,6}$")
+    student_class: int = Field(alias="class", ge=1, le=12)
+    model_config = {"populate_by_name": True}
+
+
+class ParticipantUpdateIn(BaseModel):
+    register_no: str | None = Field(default=None, pattern=r"^\d{5}$")
+    name: OptStr = None
+    school_name: OptStr = None
+    school_code: str | None = Field(default=None, pattern=r"^\d{5,6}$")
+    student_class: int | None = Field(default=None, alias="class", ge=1, le=12)
+    model_config = {"populate_by_name": True}
+
+
+class ParticipantEntryIn(BaseModel):
+    item_code: Annotated[str, BeforeValidator(_strip), Field(min_length=1, max_length=32)]
+    venue_id: int
+    venue_name: ReqShort
+    perf_date: str = Field(pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+class ParticipantEntryUpdateIn(BaseModel):
+    item_code: Annotated[str | None, BeforeValidator(_strip), Field(min_length=1, max_length=32)] = None
+    venue_id: int | None = None
+    venue_name: OptShort = None
+    perf_date: str | None = Field(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$")
+
+
+def _audit(db, request: Request, user: dict, action: str, detail: str = "") -> None:
     try:
-        secret = get_cfg(request).secret_key
-        email = getattr(user, "email", "admin")
         db.ex(
             "INSERT INTO auth_audit(ts, username, ip_hash, event, detail) VALUES (?,?,?,?,?)",
-            (db.now(), email, hash_ip(client_ip(request), secret), "admin_action", f"{action}|{detail}"),
+            (db.now(), user.get("email", "admin"), hash_ip(client_ip(request), get_cfg(request).secret_key),
+             "admin_action", f"{action}|{detail}"),
         )
     except Exception as exc:
         log.warning("audit_write_failed: %s", exc)
@@ -60,72 +168,13 @@ def _row_or_404(db, table: str, row_id: int, err: str):
     return row
 
 
-def _parse_uid(uid: str) -> _uuid.UUID | int | str:
-    try:
-        return _uuid.UUID(uid)
-    except (ValueError, AttributeError):
-        try:
-            return int(uid)
-        except ValueError:
-            return uid
-
-
 def _validate_stage_ids(db, stages: list[int]) -> None:
     if not stages:
         return
     valid = {r["id"] for r in db.q("SELECT id FROM venues")}
-    invalid = [s for s in stages if s not in valid]
-    if invalid:
-        raise HTTPException(400, f"invalid_stage_ids:{invalid}")
-
-
-def _collect_stats(db) -> dict[str, int]:
-    row = db.one("""
-        SELECT
-            (SELECT COUNT(*) FROM venues) AS venues,
-            (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
-            (SELECT COUNT(*) FROM categories) AS categories,
-            (SELECT COUNT(*) FROM events) AS events,
-            (SELECT COUNT(*) FROM participants WHERE deleted_at IS NULL) AS participants,
-            COUNT(q.id) AS queue_items,
-            COALESCE(SUM(CASE WHEN q.status = 'WAITING' THEN 1 ELSE 0 END), 0) AS queue_waiting,
-            COALESCE(SUM(CASE WHEN q.status = 'ON-STAGE' THEN 1 ELSE 0 END), 0) AS queue_onstage_only,
-            COALESCE(SUM(CASE WHEN q.status IN ('ON-STAGE', 'PAUSED') THEN 1 ELSE 0 END), 0) AS queue_active,
-            COALESCE(SUM(CASE WHEN q.status = 'COMPLETE' THEN 1 ELSE 0 END), 0) AS queue_complete,
-            COALESCE(SUM(CASE WHEN q.status = 'SKIPPED' THEN 1 ELSE 0 END), 0) AS queue_skipped
-        FROM queue_items q
-    """)
-    return dict(row)
-
-
-def _collect_health(db, cfg, sse_connections: int, fail_window_sec: int) -> dict[str, int | float]:
-    try:
-        db_bytes = os.stat(cfg.db_path).st_size
-    except OSError:
-        db_bytes = 0
-    try:
-        disk_free = shutil.disk_usage(cfg.db_path).free
-    except OSError:
-        disk_free = 0
-    fails = db.one(
-        "SELECT COUNT(*) c FROM auth_audit WHERE event = 'login_fail' AND ts > ?",
-        (db.now() - fail_window_sec,),
-    )["c"]
-    return {
-        "db_bytes": db_bytes,
-        "disk_free_bytes": disk_free,
-        "sse_connections": sse_connections,
-        "auth_failures": fails,
-    }
-
-
-async def _get_or_create_role(session, role_name: str) -> Role:
-    role = (await session.execute(select(Role).where(Role.name == role_name))).scalar_one_or_none()
-    if not role:
-        role = Role(name=role_name)
-        session.add(role)
-        await session.flush()
-    return role
+    bad = [s for s in stages if s not in valid]
+    if bad:
+        raise HTTPException(400, f"invalid_stage_ids:{bad}")
 
 
 # ── Venues ────────────────────────────────────────────────────────────────────
@@ -145,7 +194,7 @@ def create_venue(body: VenueIn, request: Request, user=Depends(require_admin)):
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_slug") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "create_venue", f"id={cur.lastrowid}")
+    _audit(db, request, user, "create_venue", f"id={cur.lastrowid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (cur.lastrowid,)))
 
 
@@ -158,14 +207,11 @@ def update_venue(vid: int, body: VenueUpdateIn, request: Request, user=Depends(r
     slug = body.slug if "slug" in body.model_fields_set else row["slug"]
     active = int(body.active) if body.active is not None else row["active"]
     try:
-        db.ex(
-            "UPDATE venues SET name = ?, kind = ?, slug = ?, active = ? WHERE id = ?",
-            (name, kind, slug, active, vid),
-        )
+        db.ex("UPDATE venues SET name = ?, kind = ?, slug = ?, active = ? WHERE id = ?", (name, kind, slug, active, vid))
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_slug") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "update_venue", f"id={vid}")
+    _audit(db, request, user, "update_venue", f"id={vid}")
     return dict(db.one("SELECT * FROM venues WHERE id = ?", (vid,)))
 
 
@@ -175,52 +221,11 @@ def delete_venue(vid: int, request: Request, user=Depends(require_admin)):
     _row_or_404(db, "venues", vid, "venue_not_found")
     if db.one("SELECT COUNT(*) c FROM events WHERE venue_id = ?", (vid,))["c"]:
         raise HTTPException(409, "venue_has_events")
-    if db.one("SELECT COUNT(*) c FROM queue_items WHERE venue_id = ?", (vid,))["c"]:
-        raise HTTPException(409, "venue_has_queue_items")
     with db.transaction():
         db.ex("DELETE FROM live_state WHERE venue_id = ?", (vid,))
         db.ex("DELETE FROM venues WHERE id = ?", (vid,))
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "delete_venue", f"id={vid}")
-    return {"ok": True}
-
-
-# ── Categories ────────────────────────────────────────────────────────────────
-@router.get("/categories")
-def list_categories(request: Request, user=Depends(require_admin)):
-    return {"categories": [dict(r) for r in get_db(request).q("SELECT * FROM categories ORDER BY name")]}
-
-
-@router.post("/categories")
-def create_category(body: CategoryIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    cur = db.ex("INSERT INTO categories(name, grp) VALUES (?,?)", (body.name, body.group))
-    invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "create_category", f"id={cur.lastrowid}")
-    return {"id": cur.lastrowid}
-
-
-@router.put("/categories/{cid}")
-def update_category(cid: int, body: CategoryUpdateIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    row = _row_or_404(db, "categories", cid, "category_not_found")
-    name = body.name if body.name is not None else row["name"]
-    group = body.group if body.group is not None else row["grp"]
-    db.ex("UPDATE categories SET name = ?, grp = ? WHERE id = ?", (name, group, cid))
-    invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "update_category", f"id={cid}")
-    return dict(db.one("SELECT * FROM categories WHERE id = ?", (cid,)))
-
-
-@router.delete("/categories/{cid}")
-def delete_category(cid: int, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    _row_or_404(db, "categories", cid, "category_not_found")
-    if db.one("SELECT COUNT(*) c FROM events WHERE category_id = ?", (cid,))["c"]:
-        raise HTTPException(409, "category_has_events")
-    db.ex("DELETE FROM categories WHERE id = ?", (cid,))
-    invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "delete_category", f"id={cid}")
+    _audit(db, request, user, "delete_venue", f"id={vid}")
     return {"ok": True}
 
 
@@ -241,13 +246,13 @@ def create_event(body: EventIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     try:
         cur = db.ex(
-            "INSERT INTO events(code, title, category_id, venue_id, day, scheduled_time) VALUES (?,?,?,?,?,?)",
-            (body.code, body.title, body.category_id, body.venue_id, body.day, body.scheduled_time),
+            "INSERT INTO events(code, title, category, venue_id, day, scheduled_time) VALUES (?,?,?,?,?,?)",
+            (body.code, body.title, body.category, body.venue_id, body.day, body.scheduled_time),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_or_fk") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "create_event", f"id={cur.lastrowid},code={body.code}")
+    _audit(db, request, user, "create_event", f"id={cur.lastrowid},code={body.code}")
     return {"id": cur.lastrowid}
 
 
@@ -255,22 +260,23 @@ def create_event(body: EventIn, request: Request, user=Depends(require_admin)):
 def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     row = _row_or_404(db, "events", eid, "event_not_found")
-    code = body.code if body.code is not None else row["code"]
-    title = body.title if body.title is not None else row["title"]
-    cat = body.category_id if body.category_id is not None else row["category_id"]
-    ven = body.venue_id if body.venue_id is not None else row["venue_id"]
-    day = body.day if body.day is not None else row["day"]
-    when = body.scheduled_time if body.scheduled_time is not None else row["scheduled_time"]
     try:
         db.ex(
-            "UPDATE events SET code = ?, title = ?, category_id = ?, venue_id = ?, "
-            "day = ?, scheduled_time = ? WHERE id = ?",
-            (code, title, cat, ven, day, when, eid),
+            "UPDATE events SET code = ?, title = ?, category = ?, venue_id = ?, day = ?, scheduled_time = ? WHERE id = ?",
+            (
+                body.code if body.code is not None else row["code"],
+                body.title if body.title is not None else row["title"],
+                body.category if "category" in body.model_fields_set else row["category"],
+                body.venue_id if "venue_id" in body.model_fields_set else row["venue_id"],
+                body.day if "day" in body.model_fields_set else row["day"],
+                body.scheduled_time if "scheduled_time" in body.model_fields_set else row["scheduled_time"],
+                eid,
+            ),
         )
     except sqlite3.IntegrityError as exc:
         raise HTTPException(409, "duplicate_code_or_fk") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "update_event", f"id={eid}")
+    _audit(db, request, user, "update_event", f"id={eid}")
     return dict(db.one("SELECT * FROM events WHERE id = ?", (eid,)))
 
 
@@ -278,289 +284,438 @@ def update_event(eid: int, body: EventUpdateIn, request: Request, user=Depends(r
 def delete_event(eid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     _row_or_404(db, "events", eid, "event_not_found")
-    if db.one("SELECT COUNT(*) c FROM queue_items WHERE event_id = ?", (eid,))["c"]:
-        raise HTTPException(409, "event_has_queue_items")
     db.ex("DELETE FROM events WHERE id = ?", (eid,))
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "delete_event", f"id={eid}")
+    _audit(db, request, user, "delete_event", f"id={eid}")
     return {"ok": True}
 
 
-# ── Queue ─────────────────────────────────────────────────────────────────────
-@router.get("/queue")
-def list_queue(request: Request, venue_id: int | None = None, user=Depends(require_admin)):
-    db = get_db(request)
-    q = """
-        SELECT q.id, q.venue_id, q.event_id, q.participant_entry_id, q.chest_no,
-               q.status, q.position, q.version, q.started_at, q.completed_at,
-               e.title AS event_title, e.code AS event_code,
-               p.school_name AS school, p.name AS student_name, p.register_no AS roll
-        FROM queue_items q
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
-        LEFT JOIN participants p ON p.id = pe.participant_id
-    """
-    params: tuple = ()
-    if venue_id is not None:
-        q += " WHERE q.venue_id = ?"
-        params = (venue_id,)
-    q += " ORDER BY q.venue_id, q.position LIMIT 2000"
-    return {"items": [dict(r) for r in db.q(q, params)]}
+# ── Participants & Entries Registry ───────────────────────────────────────────
+def _get_participant_or_404(db, pid: int):
+    row = db.one("SELECT * FROM participants WHERE id = ? AND deleted_at IS NULL", (pid,))
+    if not row:
+        raise HTTPException(404, "participant_not_found")
+    return row
 
 
-@router.put("/queue/{item_id}")
-def update_queue_item(item_id: int, body: QueueItemUpdateIn, request: Request, user=Depends(require_admin)):
+def _active_entry_count(db, pid: int) -> int:
+    return db.one("SELECT COUNT(*) c FROM participant_entries WHERE participant_id = ? AND deleted_at IS NULL", (pid,))["c"]
+
+
+@router.get("/participants")
+def list_participants(
+    request: Request,
+    q: str | None = None,
+    school_code: str | None = None,
+    limit: int = 200,
+    offset: int = 0,
+    user=Depends(require_admin),
+):
     db = get_db(request)
-    with db.transaction():
-        row = db.one("SELECT id FROM queue_items WHERE id = ?", (item_id,))
-        if not row:
-            raise HTTPException(404, "not_found")
-        chest = body.chest_no.strip() if body.chest_no and body.chest_no.strip() else None
-        db.ex(
-            "UPDATE queue_items SET chest_no = ?, version = version + 1, updated_at = ? WHERE id = ?",
-            (chest, db.now(), item_id),
+    limit = max(1, min(limit, 1000))
+    clauses = ["p.deleted_at IS NULL"]
+    params: list = []
+    if q:
+        sq = escape_like(q.strip())
+        clauses.append("(p.register_no LIKE ? ESCAPE '\\' OR p.name LIKE ? ESCAPE '\\')")
+        params.extend([f"%{sq}%", f"%{sq}%"])
+    if school_code:
+        clauses.append("p.school_code = ?")
+        params.append(school_code)
+    where = " WHERE " + " AND ".join(clauses)
+    rows = db.q(
+        "SELECT p.*, (SELECT COUNT(*) FROM participant_entries pe "  # noqa: S608
+        "WHERE pe.participant_id = p.id AND pe.deleted_at IS NULL) AS entry_count "
+        f"FROM participants p{where} ORDER BY p.school_code, p.register_no LIMIT ? OFFSET ?",
+        tuple(params) + (limit, offset),
+    )
+    total = db.one(f"SELECT COUNT(*) c FROM participants p{where}", tuple(params))["c"]  # noqa: S608
+    return {"participants": [dict(r) for r in rows], "total": total, "limit": limit, "offset": offset}
+
+
+@router.post("/participants")
+def create_participant(body: ParticipantIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    now = db.now()
+    try:
+        cur = db.ex(
+            "INSERT INTO participants(register_no, name, school_name, school_code, student_class, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (body.register_no, body.name, body.school_name, body.school_code, body.student_class, now, now),
         )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "register_no_taken") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "queue_edit", f"id={item_id}")
+    _audit(db, request, user, "participant_create", f"id={cur.lastrowid}")
+    return dict(db.one("SELECT * FROM participants WHERE id = ?", (cur.lastrowid,)))
+
+
+@router.get("/participants/{pid}")
+def get_participant(pid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = _get_participant_or_404(db, pid)
+    entries = db.q(
+        "SELECT * FROM participant_entries WHERE participant_id = ? AND deleted_at IS NULL ORDER BY perf_date, item_code",
+        (pid,),
+    )
+    return {"participant": dict(row), "entries": [dict(e) for e in entries]}
+
+
+@router.put("/participants/{pid}")
+def update_participant(pid: int, body: ParticipantUpdateIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = _get_participant_or_404(db, pid)
+    f = body.model_fields_set
+    try:
+        db.ex(
+            "UPDATE participants SET register_no = ?, name = ?, school_name = ?, school_code = ?, student_class = ?, updated_at = ? "
+            "WHERE id = ? AND deleted_at IS NULL",
+            (
+                body.register_no if "register_no" in f else row["register_no"],
+                body.name if "name" in f else row["name"],
+                body.school_name if "school_name" in f else row["school_name"],
+                body.school_code if "school_code" in f else row["school_code"],
+                body.student_class if "student_class" in f and body.student_class is not None else row["student_class"],
+                db.now(),
+                pid,
+            ),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "register_no_taken") from exc
+    _audit(db, request, user, "participant_update", f"id={pid}")
+    return dict(db.one("SELECT * FROM participants WHERE id = ?", (pid,)))
+
+
+@router.delete("/participants/{pid}")
+def delete_participant(pid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    _get_participant_or_404(db, pid)
+    now = db.now()
+    with db.transaction():
+        db.ex("UPDATE participants SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, pid))
+        db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE participant_id = ? AND deleted_at IS NULL", (now, now, pid))
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "participant_delete", f"id={pid}")
     return {"ok": True}
 
 
-@router.delete("/queue/{item_id}")
-def delete_queue_item(item_id: int, request: Request, user=Depends(require_admin)):
+@router.post("/participants/{pid}/entries")
+def add_entry(pid: int, body: ParticipantEntryIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    with db.transaction():
-        row = db.one("SELECT status FROM queue_items WHERE id = ?", (item_id,))
-        if not row:
-            raise HTTPException(404, "not_found")
-        if row["status"] != "WAITING":
-            raise HTTPException(409, "only_waiting_items_deletable")
-        db.ex("DELETE FROM queue_items WHERE id = ?", (item_id,))
+    _get_participant_or_404(db, pid)
+    if _active_entry_count(db, pid) >= MAX_ITEMS_PER_PARTICIPANT:
+        raise HTTPException(409, f"participant_at_{MAX_ITEMS_PER_PARTICIPANT}_items")
+    now = db.now()
+    try:
+        cur = db.ex(
+            "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
+            "VALUES (?,?,?,?,?,?,?)",
+            (pid, body.item_code, body.venue_id, body.venue_name, body.perf_date, now, now),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_item_for_participant") from exc
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "queue_delete", f"id={item_id}")
+    _audit(db, request, user, "entry_add", f"pid={pid},eid={cur.lastrowid}")
+    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (cur.lastrowid,)))
+
+
+@router.put("/participants/{pid}/entries/{eid}")
+def update_entry(pid: int, eid: int, body: ParticipantEntryUpdateIn, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    row = db.one("SELECT * FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid))
+    if not row:
+        raise HTTPException(404, "entry_not_found")
+    f = body.model_fields_set
+    try:
+        db.ex(
+            "UPDATE participant_entries SET item_code = ?, venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
+            (
+                body.item_code if "item_code" in f and body.item_code else row["item_code"],
+                body.venue_id if "venue_id" in f and body.venue_id is not None else row["venue_id"],
+                body.venue_name if "venue_name" in f and body.venue_name else row["venue_name"],
+                body.perf_date if "perf_date" in f and body.perf_date else row["perf_date"],
+                db.now(),
+                eid,
+            ),
+        )
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "duplicate_item_for_participant") from exc
+    _audit(db, request, user, "entry_update", f"pid={pid},eid={eid}")
+    return dict(db.one("SELECT * FROM participant_entries WHERE id = ?", (eid,)))
+
+
+@router.delete("/participants/{pid}/entries/{eid}")
+def delete_entry(pid: int, eid: int, request: Request, user=Depends(require_admin)):
+    db = get_db(request)
+    if not db.one("SELECT id FROM participant_entries WHERE id = ? AND participant_id = ? AND deleted_at IS NULL", (eid, pid)):
+        raise HTTPException(404, "entry_not_found")
+    now = db.now()
+    db.ex("UPDATE participant_entries SET deleted_at = ?, updated_at = ? WHERE id = ?", (now, now, eid))
+    invalidate_public_cache(request.app)
+    _audit(db, request, user, "entry_delete", f"pid={pid},eid={eid}")
     return {"ok": True}
 
 
-@router.post("/queue/{item_id}/move")
-def move_queue_item(item_id: int, body: QueueMoveIn, request: Request, user=Depends(require_admin)):
+@router.post("/participants/import")
+async def import_csv(request: Request, file: UploadFile = File(...), user=Depends(require_admin)):
     db = get_db(request)
-    with db.transaction():
-        item = db.one("SELECT * FROM queue_items WHERE id = ?", (item_id,))
-        if not item:
-            raise HTTPException(404, "not_found")
-        venue_id = item["venue_id"]
-        cur_pos = item["position"]
-        cmp_op, order_dir = ("<", "DESC") if body.direction == "up" else (">", "ASC")
-        neighbor = db.one(
-            f"SELECT * FROM queue_items WHERE venue_id = ? AND position {cmp_op} ? "  # noqa: S608
-            f"ORDER BY position {order_dir} LIMIT 1",
-            (venue_id, cur_pos),
-        )
-        if not neighbor:
-            return {"ok": True, "moved": False}
-        now = db.now()
-        db.ex(
-            "UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
-            (neighbor["position"], now, item_id),
-        )
-        db.ex(
-            "UPDATE queue_items SET position = ?, version = version + 1, updated_at = ? WHERE id = ?",
-            (cur_pos, now, neighbor["id"]),
-        )
+    raw = await file.read(5 * 1024 * 1024 + 1)
+    if len(raw) > 5 * 1024 * 1024:
+        raise HTTPException(413, "csv_too_large")
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise HTTPException(400, "csv_must_be_utf8") from exc
+    reader = csv.DictReader(io.StringIO(text))
+    if not reader.fieldnames:
+        raise HTTPException(400, "csv_empty")
+    missing = [c for c in _CSV_COLS if c not in reader.fieldnames]
+    if missing:
+        raise HTTPException(400, f"csv_missing_columns:{missing}")
+
+    errors: list[str] = []
+    cp = ce = up = ue = 0
+    now = db.now()
+    try:
+        with db.transaction():
+            for lineno, raw_row in enumerate(reader, start=2):
+                row = {(k or "").strip(): (v or "").strip() for k, v in raw_row.items()}
+                reg, sc, perf_date, item_code = row.get("register_no", ""), row.get("school_code", ""), row.get("perf_date", ""), row.get("item_code", "")
+                if not _REG_RE.match(reg):
+                    errors.append(f"line {lineno}: invalid register_no {reg!r}")
+                    continue
+                if not _SCHOOL_RE.match(sc):
+                    errors.append(f"line {lineno}: invalid school_code {sc!r}")
+                    continue
+                try:
+                    cls = int(row.get("class", ""))
+                    venue_id = int(row.get("venue_id", ""))
+                except ValueError:
+                    errors.append(f"line {lineno}: invalid class or venue_id")
+                    continue
+                if not 1 <= cls <= 12 or not _DATE_RE.match(perf_date) or not item_code:
+                    errors.append(f"line {lineno}: invalid class, perf_date, or item_code")
+                    continue
+                if not db.one("SELECT id FROM venues WHERE id = ?", (venue_id,)):
+                    errors.append(f"line {lineno}: unknown venue_id {venue_id}")
+                    continue
+
+                ex_p = db.one("SELECT * FROM participants WHERE register_no = ? AND deleted_at IS NULL", (reg,))
+                if ex_p:
+                    pid = ex_p["id"]
+                    if (ex_p["name"] != row["name"] or ex_p["school_name"] != row["school_name"]
+                            or ex_p["school_code"] != sc or ex_p["student_class"] != cls):
+                        db.ex(
+                            "UPDATE participants SET name = ?, school_name = ?, school_code = ?, student_class = ?, updated_at = ? WHERE id = ?",
+                            (row["name"], row["school_name"], sc, cls, now, pid),
+                        )
+                        up += 1
+                else:
+                    pid = db.ex(
+                        "INSERT INTO participants(register_no, name, school_name, school_code, student_class, created_at, updated_at) VALUES (?,?,?,?,?,?,?)",
+                        (reg, row["name"], row["school_name"], sc, cls, now, now),
+                    ).lastrowid
+                    cp += 1
+
+                ex_e = db.one(
+                    "SELECT * FROM participant_entries WHERE participant_id = ? AND item_code = ? AND deleted_at IS NULL",
+                    (pid, item_code),
+                )
+                if ex_e:
+                    if ex_e["venue_id"] != venue_id or ex_e["venue_name"] != row["venue_name"] or ex_e["perf_date"] != perf_date:
+                        db.ex(
+                            "UPDATE participant_entries SET venue_id = ?, venue_name = ?, perf_date = ?, updated_at = ? WHERE id = ?",
+                            (venue_id, row["venue_name"], perf_date, now, ex_e["id"]),
+                        )
+                        ue += 1
+                else:
+                    if _active_entry_count(db, pid) >= MAX_ITEMS_PER_PARTICIPANT:
+                        errors.append(f"line {lineno}: {reg} at {MAX_ITEMS_PER_PARTICIPANT} entries")
+                        continue
+                    db.ex(
+                        "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
+                        "VALUES (?,?,?,?,?,?,?)",
+                        (pid, item_code, venue_id, row["venue_name"], perf_date, now, now),
+                    )
+                    ce += 1
+    except Exception as exc:
+        raise HTTPException(500, "import_failed") from exc
+
     invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "queue_move", f"id={item_id},dir={body.direction}")
-    return {"ok": True, "moved": True}
+    _audit(db, request, user, "participant_import", f"p+{cp}/p~{up}/e+{ce}/e~{ue}/err{len(errors)}")
+    return {
+        "ok": not errors,
+        "participants_created": cp,
+        "participants_updated": up,
+        "entries_created": ce,
+        "entries_updated": ue,
+        "errors": errors,
+    }
 
 
-@router.post("/queue")
-def add_to_queue(body: AddToQueueIn, request: Request, user=Depends(require_admin)):
-    db = get_db(request)
-    with db.transaction():
-        if not db.one("SELECT id FROM venues WHERE id = ?", (body.venue_id,)):
-            raise HTTPException(404, "venue_not_found")
-        entry = db.one("""
-            SELECT pe.id, pe.item_code
-            FROM participant_entries pe
-            JOIN participants p ON p.id = pe.participant_id
-            WHERE pe.id = ? AND pe.deleted_at IS NULL AND p.deleted_at IS NULL
-        """, (body.participant_entry_id,))
-        if not entry:
-            raise HTTPException(404, "participant_entry_not_found")
-        ev = db.one("SELECT id, venue_id FROM events WHERE code = ?", (entry["item_code"],))
-        if not ev:
-            raise HTTPException(404, "event_not_found_for_item")
-        if ev["venue_id"] is not None and ev["venue_id"] != body.venue_id:
-            raise HTTPException(409, "event_venue_mismatch")
+@router.get("/participants/export.csv")
+def export_participants_csv(request: Request, user=Depends(require_admin)):
+    rows = get_db(request).q(
+        "SELECT p.register_no, p.name, p.school_name, p.school_code, p.student_class, "
+        "pe.item_code, pe.venue_id, pe.venue_name, pe.perf_date "
+        "FROM participants p "
+        "LEFT JOIN participant_entries pe ON pe.participant_id = p.id AND pe.deleted_at IS NULL "
+        "WHERE p.deleted_at IS NULL ORDER BY p.school_code, p.register_no, pe.perf_date, pe.item_code"
+    )
+    out = io.StringIO()
+    w = csv.writer(out)
+    w.writerow(_CSV_COLS)
+    for r in rows:
+        w.writerow([
+            csv_cell(r["register_no"]),
+            csv_cell(r["name"]),
+            csv_cell(r["school_name"]),
+            csv_cell(r["school_code"]),
+            r["student_class"],
+            csv_cell(r["item_code"]),
+            r["venue_id"],
+            csv_cell(r["venue_name"]),
+            csv_cell(r["perf_date"]),
+        ])
+    return Response(
+        content=out.getvalue(),
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=participants.csv"},
+    )
 
-        row = db.one("SELECT COALESCE(MAX(position),-1)+1 AS p FROM queue_items WHERE venue_id = ?", (body.venue_id,))
-        chest = body.chest_no.strip() if body.chest_no and body.chest_no.strip() else None
-        cur_q = db.ex(
-            "INSERT INTO queue_items(venue_id, event_id, participant_entry_id, chest_no, status, position, version, updated_at) "
-            "VALUES (?,?,?,?, 'WAITING', ?, 1, ?)",
-            (body.venue_id, ev["id"], entry["id"], chest, row["p"], db.now()),
-        )
-    invalidate_public_cache(request.app)
-    _admin_log(db, request, user, "queue_add", f"venue={body.venue_id},event={ev['id']}")
-    return {"id": cur_q.lastrowid}
 
-
-# ── FullAuth Users Administration ─────────────────────────────────────────────
+# ── Staff Users Administration ────────────────────────────────────────────────
 @router.get("/users")
-async def list_users(request: Request, user=Depends(require_admin)):
-    async with request.app.state.auth_session_maker() as session:
-        users = (await session.execute(select(User).order_by(User.email))).scalars().all()
-        return {
-            "users": [
-                {
-                    "id": str(u.id),
-                    "email": u.email,
-                    "stages": u.stages,
-                    "roles": [r.name for r in u.roles],
-                    "disabled": not u.is_active,
-                }
-                for u in users
-            ]
-        }
+def list_users(request: Request, user=Depends(require_admin)):
+    rows = get_db(request).q("SELECT id, email, role, stages, is_active FROM users ORDER BY email")
+    return {
+        "users": [
+            {"id": str(r["id"]), "email": r["email"], "stages": r["stages"], "roles": [r["role"]], "disabled": not r["is_active"]}
+            for r in rows
+        ]
+    }
 
 
 @router.post("/users")
-async def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
+def create_user(body: UserIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     _validate_stage_ids(db, body.stages)
-    async with request.app.state.auth_session_maker() as session:
-        clean_email = body.email.strip().lower()
-        if (await session.execute(select(User).where(User.email == clean_email))).scalar_one_or_none():
-            raise HTTPException(409, "email_taken")
-        role = await _get_or_create_role(session, body.role)
-        u = User(
-            email=clean_email,
-            hashed_password=_ph.hash(body.password),
-            is_active=True,
-            is_verified=True,
-            stages=json.dumps(body.stages),
+    clean_email = body.email.strip().lower()
+    try:
+        cur = db.ex(
+            "INSERT INTO users(email, password_hash, role, stages, is_active, token_version, created_at) "
+            "VALUES (?,?,?,?,1,1,?)",
+            (clean_email, ph.hash(body.password), body.role, json.dumps(body.stages), db.now()),
         )
-        u.roles.append(role)
-        session.add(u)
-        await session.commit()
-        await session.refresh(u)
-        _admin_log(db, request, user, "create_user", f"id={u.id},role={body.role}")
-        return {"id": str(u.id), "email": u.email, "role": body.role}
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "email_taken") from exc
+    _audit(db, request, user, "create_user", f"id={cur.lastrowid},role={body.role}")
+    return {"id": str(cur.lastrowid), "email": clean_email, "role": body.role}
 
 
 @router.put("/users/{uid}")
-async def update_user(uid: str, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
+def update_user(uid: int, body: UserUpdateIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
     if body.stages is not None:
         _validate_stage_ids(db, body.stages)
-    async with request.app.state.auth_session_maker() as session:
-        target = await session.get(User, _parse_uid(uid))
-        if not target:
-            raise HTTPException(404, "not_found")
+    target = _row_or_404(db, "users", uid, "not_found")
+    if uid == user["id"] and (body.is_active is False or (body.role is not None and body.role != "admin")):
+        raise HTTPException(400, "cannot_modify_own_access")
 
-        curr_user_id = str(getattr(user, "id", ""))
-        if str(target.id) == curr_user_id:
-            if body.is_active is False or (body.role is not None and body.role != "admin"):
-                raise HTTPException(400, "cannot_modify_own_access")
+    email = body.email.strip().lower() if body.email is not None else target["email"]
+    role = body.role if body.role is not None else target["role"]
+    stages = json.dumps(body.stages) if body.stages is not None else target["stages"]
+    active = int(body.is_active) if body.is_active is not None else target["is_active"]
+    bump = 1 if (not active or role != target["role"]) else 0
 
-        if body.email is not None and body.email.strip().lower() != target.email:
-            new_email = body.email.strip().lower()
-            if (await session.execute(select(User).where(User.email == new_email))).scalar_one_or_none():
-                raise HTTPException(409, "email_taken")
-            target.email = new_email
-        if body.stages is not None:
-            target.stages = json.dumps(body.stages)
-        if body.is_active is not None:
-            target.is_active = body.is_active
-        if body.role is not None:
-            new_role = await _get_or_create_role(session, body.role)
-            target.roles.clear()
-            target.roles.append(new_role)
-
-        session.add(target)
-        await session.commit()
-        _admin_log(db, request, user, "update_user", f"id={target.id}")
-        return {"ok": True}
+    try:
+        with db.transaction():
+            db.ex(
+                "UPDATE users SET email = ?, role = ?, stages = ?, is_active = ?, "
+                "token_version = token_version + ? WHERE id = ?",
+                (email, role, stages, active, bump, uid),
+            )
+            if not active:
+                db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?", (uid,))
+    except sqlite3.IntegrityError as exc:
+        raise HTTPException(409, "email_taken") from exc
+    _audit(db, request, user, "update_user", f"id={uid}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/disable")
-async def disable_user(uid: str, request: Request, user=Depends(require_admin)):
+def disable_user(uid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    curr_user_id = str(getattr(user, "id", ""))
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
-            raise HTTPException(404, "not_found")
-        if str(u.id) == curr_user_id:
-            raise HTTPException(400, "cannot_disable_self")
-        u.is_active = False
-        session.add(u)
-        await session.commit()
-        _admin_log(db, request, user, "disable_user", f"id={u.id}")
-        return {"ok": True}
+    _row_or_404(db, "users", uid, "not_found")
+    if uid == user["id"]:
+        raise HTTPException(400, "cannot_disable_self")
+    with db.transaction():
+        db.ex("UPDATE users SET is_active = 0, token_version = token_version + 1 WHERE id = ?", (uid,))
+        db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?", (uid,))
+    _audit(db, request, user, "disable_user", f"id={uid}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/enable")
-async def enable_user(uid: str, request: Request, user=Depends(require_admin)):
+def enable_user(uid: int, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
-            raise HTTPException(404, "not_found")
-        u.is_active = True
-        session.add(u)
-        await session.commit()
-        _admin_log(db, request, user, "enable_user", f"id={u.id}")
-        return {"ok": True}
+    _row_or_404(db, "users", uid, "not_found")
+    db.ex("UPDATE users SET is_active = 1 WHERE id = ?", (uid,))
+    _audit(db, request, user, "enable_user", f"id={uid}")
+    return {"ok": True}
 
 
 @router.post("/users/{uid}/reset-password")
-async def reset_user_password(uid: str, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
+def reset_user_password(uid: int, body: PasswordResetIn, request: Request, user=Depends(require_admin)):
     db = get_db(request)
-    async with request.app.state.auth_session_maker() as session:
-        u = await session.get(User, _parse_uid(uid))
-        if not u:
-            raise HTTPException(404, "not_found")
-        u.hashed_password = _ph.hash(body.password)
-        session.add(u)
-        await session.commit()
-        _admin_log(db, request, user, "reset_password", f"id={u.id}")
-        return {"ok": True}
+    _row_or_404(db, "users", uid, "not_found")
+    with db.transaction():
+        db.ex("UPDATE users SET password_hash = ?, token_version = token_version + 1 WHERE id = ?", (ph.hash(body.password), uid))
+        db.ex("UPDATE refresh_tokens SET revoked = 1 WHERE user_id = ?", (uid,))
+    _audit(db, request, user, "reset_password", f"id={uid}")
+    return {"ok": True}
 
 
 # ── Audit / Stats / Health / Backup ───────────────────────────────────────────
 @router.get("/audit")
 def list_audit(request: Request, limit: int = 100, offset: int = 0, user=Depends(require_admin)):
     limit = max(1, min(limit, 500))
-    rows = get_db(request).q(
-        "SELECT * FROM auth_audit ORDER BY ts DESC LIMIT ? OFFSET ?", (limit, offset)
-    )
-    return {"items": [dict(r) for r in rows]}
+    return {"items": [dict(r) for r in get_db(request).q("SELECT * FROM auth_audit ORDER BY ts DESC LIMIT ? OFFSET ?", (limit, offset))]}
 
 
 @router.get("/stats")
 def stats(request: Request, user=Depends(require_admin)):
-    s = _collect_stats(get_db(request))
-    return {
-        "venues": s["venues"],
-        "categories": s["categories"],
-        "events": s["events"],
-        "participants": s["participants"],
-        "queue_items": s["queue_items"],
-        "queue_waiting": s["queue_waiting"],
-        "queue_onstage": s["queue_onstage_only"],
-        "queue_complete": s["queue_complete"],
-    }
+    row = get_db(request).one("""
+        SELECT
+            (SELECT COUNT(*) FROM venues) AS venues,
+            (SELECT COUNT(*) FROM venues WHERE active = 1) AS active_venues,
+            (SELECT COUNT(*) FROM events) AS events,
+            (SELECT COUNT(*) FROM participants WHERE deleted_at IS NULL) AS participants,
+            (SELECT COUNT(*) FROM participant_entries WHERE deleted_at IS NULL) AS entries,
+            (SELECT COUNT(*) FROM photo_assets a JOIN photo_batches b ON b.id = a.batch_id
+             WHERE a.kind = 'stage' AND b.status = 'published') AS photos_published
+    """)
+    return dict(row)
 
 
 @router.get("/health")
 def health(request: Request, user=Depends(require_admin)):
     db, cfg = get_db(request), get_cfg(request)
-    h = _collect_health(db, cfg, len(request.app.state.subscribers), 3600)
+    try:
+        db_bytes = os.stat(cfg.db_path).st_size
+    except OSError:
+        db_bytes = 0
+    try:
+        disk_free = shutil.disk_usage(cfg.db_path).free
+    except OSError:
+        disk_free = 0
+    fails = db.one("SELECT COUNT(*) c FROM auth_audit WHERE event = 'login_fail' AND ts > ?", (db.now() - 3600,))["c"]
     return {
         "time": db.now(),
-        "db_bytes": h["db_bytes"],
-        "sse_connections": h["sse_connections"],
-        "disk_free_bytes": h["disk_free_bytes"],
-        "recent_auth_failures": h["auth_failures"],
+        "db_bytes": db_bytes,
+        "sse_connections": len(request.app.state.subscribers),
+        "disk_free_bytes": disk_free,
+        "recent_auth_failures": fails,
     }
 
 
@@ -569,62 +724,55 @@ def backup(request: Request, user=Depends(require_admin)):
     db, cfg = get_db(request), get_cfg(request)
     dst_dir = Path(cfg.db_path).parent / "backups"
     dst_dir.mkdir(parents=True, exist_ok=True)
-    ts = _t.strftime("%Y%m%d-%H%M%S")
     src = Path(cfg.db_path)
     if not src.exists():
         raise HTTPException(500, "db_not_found")
-
-    dst = dst_dir / f"{src.stem}-{ts}.db"
-    src_con = sqlite3.connect(str(src))
-    dst_con = sqlite3.connect(str(dst))
+    dst = dst_dir / f"{src.stem}-{_t.strftime('%Y%m%d-%H%M%S')}.db"
+    src_con, dst_con = sqlite3.connect(str(src)), sqlite3.connect(str(dst))
     try:
         src_con.backup(dst_con)
     finally:
         dst_con.close()
         src_con.close()
-
-    existing = sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)
-    for old in existing[:-24]:
+    for old in sorted(dst_dir.glob(f"{src.stem}-*.db"), key=lambda f: f.stat().st_mtime)[:-24]:
         try:
             old.unlink()
         except OSError:
             pass
-
-    _admin_log(db, request, user, "backup", f"file={dst.name}")
+    _audit(db, request, user, "backup", f"file={dst.name}")
     return {"ok": True, "backups": [str(dst)]}
 
 
-@router.get("/export/participants.csv")
-def export_participants(request: Request, user=Depends(require_admin)):
-    rows = get_db(request).q("""
-        SELECT q.id, v.name AS venue, e.code AS event_code, e.title AS event,
-               p.school_name AS school, p.name AS student_name,
-               COALESCE(q.chest_no, p.register_no) AS roll, q.status, q.position
-        FROM queue_items q
-        JOIN venues v ON v.id = q.venue_id
-        JOIN events e ON e.id = q.event_id
-        LEFT JOIN participant_entries pe ON pe.id = q.participant_entry_id
-        LEFT JOIN participants p ON p.id = pe.participant_id
-        ORDER BY v.id, q.position
-    """)
-    out = io.StringIO()
-    w = csv.writer(out)
-    w.writerow(["id", "venue", "event_code", "event", "school",
-                "student_name", "roll", "status", "position"])
-    for r in rows:
-        w.writerow([
-            r["id"],
-            csv_cell(r["venue"]),
-            csv_cell(r["event_code"]),
-            csv_cell(r["event"]),
-            csv_cell(r["school"]),
-            csv_cell(r["student_name"]),
-            csv_cell(r["roll"]),
-            r["status"],
-            r["position"],
-        ])
-    return Response(
-        content=out.getvalue(),
-        media_type="text/csv",
-        headers={"Content-Disposition": "attachment; filename=participants.csv"},
+# ── Device 3 Obs Worker Internal Endpoints ────────────────────────────────────
+@internal_router.get("/backup")
+def download_backup(request: Request, _=Depends(require_worker("obs"))):
+    src_path = Path(get_cfg(request).db_path)
+    if not src_path.exists():
+        raise HTTPException(500, "db_not_found")
+    temp_dir = tempfile.mkdtemp(prefix="kal-bak-")
+    tmp_file = Path(temp_dir) / "kalolsavam.db"
+    src_con, dst_con = sqlite3.connect(str(src_path)), sqlite3.connect(str(tmp_file))
+    try:
+        src_con.backup(dst_con)
+    except BaseException:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        raise
+    finally:
+        dst_con.close()
+        src_con.close()
+    return FileResponse(
+        tmp_file,
+        media_type="application/x-sqlite3",
+        filename="kalolsavam.db",
+        background=BackgroundTask(shutil.rmtree, temp_dir, ignore_errors=True),
     )
+
+
+@internal_router.get("/audit-export")
+def export_audit_logs(request: Request, since: float = 0.0, limit: int = 500, _=Depends(require_worker("obs"))):
+    limit = max(1, min(limit, 1000))
+    rows = get_db(request).q(
+        "SELECT id, ts, username, ip_hash, event, detail FROM auth_audit WHERE ts > ? ORDER BY ts ASC LIMIT ?",
+        (since, limit),
+    )
+    return {"items": [dict(r) for r in rows]}

@@ -5,13 +5,9 @@ import PageHead from '../components/PageHead.astro';
 ---
 <BaseLayout title="Dashboard | Kalolsavam">
   <div class="main-container">
-    <PageHead badge="Live Stats" title="Festival Dashboard" intro="Real-time statistics and stage progress." />
+    <PageHead badge="Live Stats" title="Festival Dashboard" intro="Real-time stage status and festival overview." />
     <section id="kpi-grid" class="kpi-grid"></section>
-    <section id="venue-panel" class="panel" style="margin-top:1.5rem"></section>
-    <div class="split" style="margin-top:1.5rem">
-      <section id="summary-panel" class="panel"></section>
-      <section id="recent-completed-panel" class="panel"></section>
-    </div>
+    <section id="venue-panel" class="card-base" style="margin-top:1.5rem"></section>
   </div>
   <script is:inline src={BASE + 'dashboard/js/stats.js'}></script>
 </BaseLayout>
