@@ -1,84 +1,150 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
-import Card from '../components/Card.astro';
-import ActionItem from '../components/ActionItem.astro';
 import { FESTIVAL_SCHEDULE } from '../data/schedule';
 import { url } from '../lib/url';
 
 const CATEGORIES = [
-  { slug: "lp-general", name: "LP General", tone: "blue", icon: "sparkle", desc: "Lower Primary General (Classes 1–4)" },
-  { slug: "up-general", name: "UP General", tone: "teal", icon: "user", desc: "Upper Primary General (Classes 5–7)" },
-  { slug: "hs-general", name: "HS General", tone: "indigo", icon: "building", desc: "High School General (Classes 8–10)" },
-  { slug: "hss-general", name: "HSS General", tone: "purple", icon: "grid", desc: "Higher Secondary General (Classes 11–12)" },
-  { slug: "up-sanskrit", name: "UP Sanskrit", tone: "orange", icon: "clipboard-check", desc: "UP Sanskrit Sahithyolsavam" },
-  { slug: "hs-sanskrit", name: "HS Sanskrit", tone: "pink", icon: "clipboard-check", desc: "HS Sanskrit Sahithyolsavam" },
-  { slug: "lp-arabic", name: "LP Arabic", tone: "rose", icon: "sparkle", desc: "LP Arabic Sahithyolsavam" },
-  { slug: "up-arabic", name: "UP Arabic", tone: "teal", icon: "user", desc: "UP Arabic Sahithyolsavam" },
-  { slug: "hs-arabic", name: "HS Arabic", tone: "blue", icon: "building", desc: "HS Arabic Sahithyolsavam" },
+  { slug: "lp-general", name: "LP General", tone: "blue" },
+  { slug: "up-general", name: "UP General", tone: "teal" },
+  { slug: "hs-general", name: "HS General", tone: "indigo" },
+  { slug: "hss-general", name: "HSS General", tone: "purple" },
+  { slug: "up-sanskrit", name: "UP Sanskrit", tone: "orange" },
+  { slug: "hs-sanskrit", name: "HS Sanskrit", tone: "pink" },
+  { slug: "lp-arabic", name: "LP Arabic", tone: "rose" },
+  { slug: "up-arabic", name: "UP Arabic", tone: "teal" },
+  { slug: "hs-arabic", name: "HS Arabic", tone: "blue" },
 ];
 
-const categoryCards = CATEGORIES.map((c) => {
+const categoryTiles = CATEGORIES.map((c) => {
   const count = FESTIVAL_SCHEDULE.filter((it) => it.cat === c.name).length;
-  const sampleItems = FESTIVAL_SCHEDULE.filter((it) => it.cat === c.name).slice(0, 3).map((x) => x.item);
   return {
     ...c,
     count,
-    sample: sampleItems.join(", "),
   };
 });
 ---
 <BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Item Categories" title="Find Venue by Item" intro="Select any category below to view all competitions, assigned venues, locations, and timings." />
+    <PageHead badge="Categories" title="Find Venue by Item" intro="Select a category below to explore its scheduled competitions, venues, and timings." />
 
-    <!-- Instant Search across all Categories -->
-    <div class="card-base" style="margin-bottom:2.5rem">
-      <label for="q-global" class="text-muted sm" style="display:block;margin-bottom:.5rem;font-weight:600">Quick Search Any Category or Item Name:</label>
-      <input id="q-global" type="search" class="inp" placeholder="Type category or item name — e.g. LP, Sanskrit, Oppana, Bharathanatyam…" autocomplete="off">
+    <!-- Search Input -->
+    <div class="card-base" style="margin-bottom:2rem;padding:1.25rem">
+      <input id="q-global" type="search" class="inp" placeholder="Search category name — e.g. LP, UP, HS, HSS, Sanskrit, Arabic…" autocomplete="off">
     </div>
 
-    <!-- Category Cards Grid -->
-    <div id="cat-cards-grid" class="grid-3" style="gap:1.5rem">
-      {categoryCards.map((c) => (
-        <div class="cat-card-wrapper" data-cat-text={`${c.name} ${c.slug} ${c.desc} ${c.sample}`.toLowerCase()}>
-          <Card title={c.name} badge={`${c.count} Events`} tone={c.tone} icon={c.icon} href={`/category/${c.slug}`}>
-            <p class="text-muted sm" style="margin:0 0 .5rem">{c.desc}</p>
-            {c.sample && (
-              <div class="text-muted xs" style="line-height:1.4;margin-bottom:.75rem">
-                <strong>Includes:</strong> {c.sample}...
-              </div>
-            )}
-            <ActionItem href={`/category/${c.slug}`} title={`View ${c.name} Schedule`} iconTone={`c-${c.tone}`} />
-          </Card>
-        </div>
+    <!-- Compact Squircle Category Buttons -->
+    <div id="cat-tiles-grid" class="cat-grid">
+      {categoryTiles.map((c) => (
+        <a href={url(`/category/${c.slug}`)} class={`cat-tile banner-${c.tone}`} data-cat-text={`${c.name} ${c.slug}`.toLowerCase()}>
+          <div class="tile-content">
+            <span class="tile-badge">{c.count} Events</span>
+            <h2 class="tile-title">{c.name}</h2>
+          </div>
+          <span class="tile-arrow">&rarr;</span>
+        </a>
       ))}
     </div>
 
     <p id="empty-cat-cards" class="text-muted center" style="margin-top:3rem" hidden>No matching categories found.</p>
   </div>
 
+  <style>
+    .cat-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+    @media (min-width: 600px) {
+      .cat-grid { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    }
+    @media (min-width: 960px) {
+      .cat-grid { grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    }
+    .cat-tile {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.35rem 1.6rem;
+      border-radius: 1.25rem;
+      color: #ffffff !important;
+      text-decoration: none;
+      box-shadow: 0 8px 20px -6px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .cat-tile:hover {
+      transform: translateY(-3px) scale(1.015);
+      box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.35);
+    }
+    .cat-tile:active {
+      transform: translateY(-1px) scale(0.985);
+    }
+    .tile-content {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      min-width: 0;
+    }
+    .tile-badge {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.22);
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      width: fit-content;
+      line-height: 1.2;
+    }
+    .tile-title {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin: 0;
+      color: #ffffff;
+      line-height: 1.15;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    }
+    .tile-arrow {
+      font-size: 1.5rem;
+      font-weight: 700;
+      opacity: 0.85;
+      transition: transform 0.18s ease, opacity 0.18s ease;
+      flex-shrink: 0;
+      margin-left: 0.75rem;
+    }
+    .cat-tile:hover .tile-arrow {
+      transform: translateX(4px);
+      opacity: 1;
+    }
+  </style>
+
   <script is:inline>
     (function(){
       var q = document.getElementById('q-global');
-      var grid = document.getElementById('cat-cards-grid');
+      var grid = document.getElementById('cat-tiles-grid');
       var emp = document.getElementById('empty-cat-cards');
       if (!q || !grid) return;
-      var cards = Array.from(grid.querySelectorAll('.cat-card-wrapper'));
+      var tiles = Array.from(grid.querySelectorAll('.cat-tile'));
 
       q.addEventListener('input', function(){
         var val = q.value.trim().toLowerCase();
         var tokens = val.split(/\s+/).filter(Boolean);
         var visibleCount = 0;
 
-        cards.forEach(function(card){
-          var txt = card.getAttribute('data-cat-text') || '';
+        tiles.forEach(function(tile){
+          var txt = tile.getAttribute('data-cat-text') || '';
           var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
           if (matches){
-            card.style.display = '';
+            tile.style.display = 'flex';
             visibleCount++;
           } else {
-            card.style.display = 'none';
+            tile.style.display = 'none';
           }
         });
 
