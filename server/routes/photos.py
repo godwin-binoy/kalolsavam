@@ -385,7 +385,9 @@ def public_lookup(body: PhotoLookupIn, request: Request):
     exp = int(time.time()) + _SIGNED_URL_TTL
     grouped: dict[int, list[str]] = {}
     for r in rows:
-        label = f"{r['item_code']} · {r['item_name']}" if r.get("item_name") else r["item_code"]
+        r_dict = dict(r)
+        item_name = r_dict.get("item_name")
+        label = f"{r['item_code']} · {item_name}" if item_name else r["item_code"]
         grouped.setdefault(r["asset_id"], []).append(label)
 
     return {

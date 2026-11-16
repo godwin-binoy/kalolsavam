@@ -484,7 +484,7 @@ async def import_csv(request: Request, file: UploadFile = File(...), user=Depend
 def export_participants_csv(request: Request, user=Depends(require_admin)):
     rows = get_db(request).q(
         "SELECT p.register_no, p.name, p.school_name, p.school_code, p.student_class, "
-        "pe.item_code, pe.venue_id, pe.venue_name, pe.perf_date "
+        "pe.item_code, COALESCE(pe.item_name, '') AS item_name, pe.venue_id, pe.perf_date "
         "FROM participants p "
         "LEFT JOIN participant_entries pe ON pe.participant_id = p.id AND pe.deleted_at IS NULL "
         "WHERE p.deleted_at IS NULL ORDER BY p.school_code, p.register_no, pe.perf_date, pe.item_code"

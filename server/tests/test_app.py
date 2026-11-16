@@ -154,7 +154,7 @@ def test_stagemaster_direct_control_and_quick_register_assign(client):
     assert client.post(f"/api/v1/photos/batches/{bid}/publish", headers=sm_h).status_code == 200
 
     pub = client.post("/api/v1/photos/public/lookup", json={"register_no": "77777", "name": "kavya"}).json()
-    assert len(pub["photos"]) == 1 and pub["photos"][0]["entries"] == ["101"]
+    assert len(pub["photos"]) == 1 and pub["photos"][0]["entries"][0].startswith("101")
 
 
 def test_worker_auth_isolation(client):
