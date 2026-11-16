@@ -6,6 +6,7 @@
     en: {
       "brand.name": "St. Antony's HSS Mala",
       "brand.sub": "Sub-District School Kalolsavam",
+      "banner.dev": "This website is under active development — schedules and features are being updated.",
       "nav.home": "Home",
       "nav.venues": "Stages",
       "nav.media": "Photos",
@@ -68,6 +69,7 @@
     ml: {
       "brand.name": "സെന്റ് ആന്റണീസ് HSS മാള",
       "brand.sub": "ഉപജില്ല സ്കൂൾ കലോത്സവം",
+      "banner.dev": "ഈ വെബ്സൈറ്റ് സജീവ നിർമ്മാണ ഘട്ടത്തിലാണ് — വിവരങ്ങളും സൗകര്യങ്ങളും അപ്ഡേറ്റ് ചെയ്തുകൊണ്ടിരിക്കുന്നു.",
       "nav.home": "ഹോം",
       "nav.venues": "വേദികൾ",
       "nav.media": "ഫോട്ടോകൾ",
