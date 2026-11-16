@@ -5,7 +5,6 @@ import PageHead from '../components/PageHead.astro';
 <BaseLayout title="Media & Photos | Mala Kalolsavam" active="media">
   <div class="main-container">
     <PageHead badge="Official Media" title="Download Your Stage Photos" intro="Enter your register number and name exactly as printed on your participation card." />
-
     <div class="card-base" style="max-width:500px;margin:0 auto">
       <form id="photo-lookup-form">
         <label style="display:block;margin-bottom:.9rem">
@@ -20,60 +19,31 @@ import PageHead from '../components/PageHead.astro';
         <p id="lookup-msg" class="text-muted sm center" style="margin:1rem 0 0" role="status" aria-live="polite"></p>
       </form>
     </div>
-
     <div id="gallery" class="grid-3" style="margin-top:3rem"></div>
   </div>
-
   <script is:inline>
     (function(){
-      var form = document.getElementById('photo-lookup-form');
-      var msg = document.getElementById('lookup-msg');
-      var gal = document.getElementById('gallery');
-      if (!form || !window.Kal) return;
-      var K = window.Kal;
-
+      var K = window.Kal, form = K && K.el('photo-lookup-form');
+      if (!form) return;
+      var msg = K.el('lookup-msg'), gal = K.el('gallery');
       form.addEventListener('submit', async function(e){
         e.preventDefault();
-        msg.textContent = 'Searching…';
-        gal.innerHTML = '';
-
-        var reg = document.getElementById('reg-no').value.trim();
-        var name = document.getElementById('reg-name').value.trim();
-        var base = K.apiBase();
-
+        msg.textContent = 'Searching…'; gal.innerHTML = '';
         try {
-          var res = await fetch(base + '/api/v1/photos/public/lookup', {
-            method: 'POST',
-            credentials: 'omit',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ register_no: reg, name: name })
+          var data = await K.fetchJSON('/api/v1/photos/public/lookup', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ register_no: K.el('reg-no').value.trim(), name: K.el('reg-name').value.trim() })
           });
-          if (res.status === 429){
-            msg.textContent = 'Too many attempts. Please wait a minute and try again.';
-            return;
-          }
-          var data = await res.json().catch(function(){ return {}; });
-          if (!res.ok){
-            msg.textContent = 'No match found. Check your register number and name spelling.';
-            return;
-          }
-          if (!data.photos || !data.photos.length){
-            msg.textContent = 'Profile found, but no published photos are available yet.';
-            return;
-          }
+          if (!data.photos || !data.photos.length){ msg.textContent = 'Profile found, but no published photos are available yet.'; return; }
           msg.textContent = 'Found ' + data.photos.length + ' photo(s).';
           gal.innerHTML = data.photos.map(function(p){
-            var viewUrl = base + p.url;
-            var dlUrl = viewUrl + '&dl=1';
-            return '<div class="fest-card">' +
-              '<img src="' + K.esc(viewUrl) + '" alt="Stage photo" loading="lazy" style="width:100%;display:block">' +
-              '<div class="fest-body">' +
-                '<p class="sm text-muted" style="margin:0">Item(s): ' + K.esc((p.entries || []).join(', ')) + '</p>' +
-                '<a href="' + K.esc(dlUrl) + '" class="btn-primary dark sm" style="width:100%;text-align:center">Download</a>' +
-              '</div></div>';
+            var u = K.url(p.url);
+            return '<div class="fest-card"><img src="' + K.esc(u) + '" alt="Stage photo" loading="lazy" style="width:100%;display:block">' +
+              '<div class="fest-body"><p class="sm text-muted" style="margin:0">Item(s): ' + K.esc((p.entries || []).join(', ')) + '</p>' +
+              '<a href="' + K.esc(u + '&dl=1') + '" class="btn-primary dark sm" style="width:100%;text-align:center">Download</a></div></div>';
           }).join('');
         } catch (err){
-          msg.textContent = 'Network error. Please try again.';
+          msg.textContent = err && err.status === 429 ? 'Too many attempts. Wait a minute and try again.' : (err && err.status === 404 ? 'No match found. Check your register number and name spelling.' : 'Network error. Please try again.');
         }
       });
     })();
