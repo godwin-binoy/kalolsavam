@@ -4,15 +4,24 @@ import PageHead from '../components/PageHead.astro';
 import Card from '../components/Card.astro';
 import ActionItem from '../components/ActionItem.astro';
 import stages from '../data/stages.json';
+
+const sortedVenues = [...stages].sort((a, b) => a.n - b.n);
 ---
-<BaseLayout title="Venue Locations | Mala Kalolsavam" active="venues">
+<BaseLayout title="All Venues | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Location" title="Venue Locations" intro="All 9 stages at the Mala Sub-District Kalolsavam. Tap a stage for its blueprint, directions, live status, and schedule." />
+    <PageHead badge="Locations" title="All 26 Festival Venues" intro="Complete list of on-stage and off-stage venues at St. Antonys HSS Mala. Ordered by Venue Number." />
     <div class="grid-3">
-      {stages.map((s) => (
-        <Card title={s.name} badge={`Venue ${s.n}`} tone={s.banner ? s.banner.replace('banner-', '') : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'}>
+      {sortedVenues.map((s) => (
+        <Card title={s.name} badge={`Venue ${s.n}`} tone={s.kind === 'stage' ? 'rose' : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'}>
           <p class="text-muted sm">{s.short}</p>
-          <ActionItem href={`/venues-stage/${s.n}`} icon="map-pin" iconTone="c-emerald" title={s.loc} />
+          <div class="fest-action-item">
+            <span class="left">
+              <span class={`fest-item-icon ${s.kind === 'stage' ? 'c-rose' : 'c-blue'}`}>
+                <span class="icn" style={`--icon-url:url('/assets/svg/map-pin.svg')`}></span>
+              </span>
+              <span><strong>Location:</strong> {s.loc}</span>
+            </span>
+          </div>
         </Card>
       ))}
     </div>

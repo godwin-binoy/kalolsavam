@@ -2,55 +2,61 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { BASE } from '../lib/url';
 import PageHead from '../components/PageHead.astro';
+import { FESTIVAL_SCHEDULE } from '../data/schedule';
+import stages from '../data/stages.json';
+
+const venueMap: Record<number, { name: string; loc: string }> = {};
+for (const s of stages) {
+  venueMap[s.n] = { name: s.name, loc: s.loc };
+}
+
+const scheduleWithDetails = FESTIVAL_SCHEDULE.map((it) => ({
+  ...it,
+  venue_name: venueMap[it.venue_n]?.name || `Venue ${it.venue_n}`,
+  venue_loc: venueMap[it.venue_n]?.loc || '',
+}));
 ---
 <BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Find by Item" title="Find Venue by Item" intro="Type an item code or name — we'll show its venue, day, and scheduled time." />
+    <PageHead badge="Item Finder" title="Find Venue by Item" intro="Search any competition item name or category — venue, date, and timing will be displayed immediately." />
     <div class="card-base" style="margin-bottom:1.5rem">
-      <input id="q" type="search" class="inp" placeholder="Search item code or name — e.g. 101, Bharathanatyam, Oppana…" autocomplete="off">
-      <p class="text-muted sm" style="margin:.5rem 0 0">Try: 101 · Bharathanatyam · Oppana · Folk Dance</p>
+      <input id="q" type="search" class="inp" placeholder="Type item name in Manglish — e.g. Oppana, Bharathanatyam, Sanghanritham, Kolkali…" autocomplete="off">
+      <p class="text-muted sm" style="margin:.5rem 0 0">Try: Oppana · Bharathanatyam · Sanghanritham · Margamkali · Kolkali · Duffmuttu · Vattappattu</p>
     </div>
     <div id="results" class="grid-2"></div>
-    <p id="empty" class="text-muted center" style="margin-top:2rem" hidden>No matching items.</p>
+    <p id="empty" class="text-muted center" style="margin-top:2rem" hidden>No matching items found.</p>
   </div>
-  <script is:inline define:vars={{ BASE }}>
+  <script is:inline define:vars={{ BASE, scheduleWithDetails }}>
     (function(){
-      var K = window.Kal, q = K && K.el('q'), res = K && K.el('results'), emp = K && K.el('empty');
+      var q = document.getElementById('q'), res = document.getElementById('results'), emp = document.getElementById('empty');
       if (!q || !res || !emp) return;
-      var all = [], loaded = false, err = false;
 
-      K.fetchJSON('/api/v1/public/schedule').then(function(d){
-        loaded = true; all = (d && Array.isArray(d.events)) ? d.events : []; render(q.value);
-      }).catch(function(){ loaded = true; err = true; render(q.value); });
+      function esc(s){ return window.Kal ? window.Kal.esc(s) : String(s || ''); }
 
       function render(filter){
-        if (!loaded) return;
-        if (err || !all.length){
-          res.innerHTML = ''; emp.hidden = false;
-          emp.textContent = err ? 'Unable to load the schedule right now.' : 'Official competition schedule has not been published yet.';
-          return;
-        }
         var tokens = (filter || '').trim().toLowerCase().split(/\s+/).filter(Boolean);
-        var matches = all.filter(function(e){
+        var matches = scheduleWithDetails.filter(function(e){
           if (!tokens.length) return true;
-          var txt = (String(e.code || '') + ' ' + String(e.title || '') + ' ' + String(e.venue || '') + ' ' + String(e.category || '')).toLowerCase();
+          var txt = (e.item + ' ' + e.cat + ' ' + e.venue_name + ' ' + e.venue_loc + ' ' + e.day + ' ' + e.time).toLowerCase();
           return tokens.every(function(t){ return txt.indexOf(t) >= 0; });
         });
+
         emp.hidden = matches.length > 0;
-        emp.textContent = 'No matching competition items found.';
-        res.innerHTML = matches.slice(0, 60).map(function(e){
+        res.innerHTML = matches.slice(0, 80).map(function(e){
           return '<div class="fest-card"><div class="fest-header banner-blue">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.2rem">' +
-              '<span style="font-size:.75rem;padding:.2rem .6rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">Item #' + K.esc(e.code) + '</span>' +
-              '<span style="font-size:.75rem;opacity:.9">' + K.esc(e.category || '') + '</span>' +
-            '</div><h3 class="fest-title" style="font-size:1.15rem">' + K.esc(e.title || '') + '</h3></div>' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">' +
+              '<span style="font-size:.75rem;padding:.2rem .65rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">Venue #' + e.venue_n + '</span>' +
+              '<span style="font-size:.75rem;opacity:.9;font-weight:600">' + esc(e.cat) + '</span>' +
+            '</div><h3 class="fest-title" style="font-size:1.15rem">' + esc(e.item) + '</h3></div>' +
             '<div class="fest-body">' +
-              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-emerald"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/map-pin.svg\')"></span></span><span><strong>Venue:</strong> ' + K.esc(e.venue || 'TBA') + '</span></span></div>' +
-              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-amber"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/bolt.svg\')"></span></span><span><strong>Schedule:</strong> ' + K.esc(e.day || '') + ' · ' + K.esc(e.scheduled_time || '') + '</span></span></div>' +
+              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-rose"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/map-pin.svg\')"></span></span><span><strong>Venue:</strong> ' + esc(e.venue_name) + ' (' + esc(e.venue_loc) + ')</span></span></div>' +
+              '<div class="fest-action-item"><span class="left"><span class="fest-item-icon c-amber"><span class="icn" style="--icon-url:url(\'' + BASE + 'assets/svg/bolt.svg\')"></span></span><span><strong>Schedule:</strong> ' + esc(e.day) + ' · ' + esc(e.time) + '</span></span></div>' +
             '</div></div>';
         }).join('');
       }
-      q.addEventListener('input', K.debounce(function(){ render(q.value); }, 120));
+
+      render('');
+      q.addEventListener('input', function(){ render(q.value); });
     })();
   </script>
 </BaseLayout>
