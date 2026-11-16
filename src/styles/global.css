@@ -110,8 +110,8 @@ strong{color:var(--text-heading);font-weight:700}
 
 /* Floating Utility Dock */
 .utility-dock{
-  position:fixed;top:4.85rem;right:.75rem;z-index:45;
-  display:flex;align-items:center;gap:.3rem;padding:.35rem;
+  position:fixed !important;top:4.85rem;right:.75rem;z-index:48 !important;
+  display:flex !important;visibility:visible !important;align-items:center;gap:.3rem;padding:.35rem;
   background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:999px;
   -webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);
   box-shadow:0 8px 24px -6px rgba(15,23,42,.15),0 2px 6px rgba(15,23,42,.08);
@@ -357,7 +357,7 @@ html.dark .stage-blueprint{border-color:var(--border);background:#141A17}
 .grid-3{align-items:stretch}
 .fest-card{height:100%}
 @media(min-width:900px){.stage-live-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem}}
-.utility-dock.dock-hidden{opacity:0;transform:translateY(-12px) scale(.94);pointer-events:none}
+.utility-dock.dock-hidden{opacity:0 !important;transform:translateY(-12px) scale(.94) !important;pointer-events:none !important}
 
 /* Active Development Banner */
 .dev-banner{

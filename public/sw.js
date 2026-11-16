@@ -27,7 +27,14 @@ const PRECACHE_FLEET = [
   'transportation-bus/',
   'transportation-auto/',
   'developers/',
-  'help/'
+  'help/',
+  'assets/css/tokens.css',
+  'assets/js/common.js',
+  'assets/js/app.js',
+  'assets/js/lang.js',
+  'assets/img/logo.webp',
+  'assets/img/master-logo.webp',
+  'manifest.json'
 ];
 
 self.addEventListener('install', function (event) {
@@ -62,11 +69,42 @@ self.addEventListener('activate', function (event) {
   );
 });
 
+function isHtmlPath(pathname) {
+  var last = pathname.split('/').pop() || '';
+  return last.indexOf('.') < 0;
+}
+
 function cachePut(req, res) {
-  if (res && res.ok && !res.redirected && res.type === 'basic') {
-    var copy = res.clone();
-    caches.open(CACHE_NAME).then(function (c) { c.put(req, copy); });
-  }
+  if (!res || !res.ok || res.type !== 'basic') return;
+  var ct = res.headers.get('content-type') || '';
+  var u = new URL(req.url);
+
+  var cleanPromise = res.redirected
+    ? res.clone().arrayBuffer().then(function (buf) {
+        return new Response(buf, { status: res.status, statusText: res.statusText, headers: res.headers });
+      })
+    : Promise.resolve(res.clone());
+
+  cleanPromise.then(function (clean) {
+    caches.open(CACHE_NAME).then(function (c) {
+      c.put(req, clean.clone());
+      if (ct.indexOf('text/html') >= 0 && isHtmlPath(u.pathname) && u.pathname !== '/') {
+        var altPath = u.pathname.endsWith('/') ? u.pathname.slice(0, -1) : u.pathname + '/';
+        var altUrl = u.origin + altPath + u.search;
+        c.put(new Request(altUrl), clean.clone());
+      }
+    });
+  }).catch(function () {});
+}
+
+function matchCached(req) {
+  return caches.match(req).then(function (hit) {
+    if (hit) return hit;
+    var u = new URL(req.url);
+    if (!isHtmlPath(u.pathname) || u.pathname === '/') return undefined;
+    var altPath = u.pathname.endsWith('/') ? u.pathname.slice(0, -1) : u.pathname + '/';
+    return caches.match(u.origin + altPath + u.search);
+  });
 }
 
 self.addEventListener('fetch', function (event) {
@@ -84,7 +122,6 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Config is always network-first so API origin updates apply immediately
   if (url.pathname.endsWith('/config.js')) {
     event.respondWith(
       fetch(new Request(event.request, { cache: 'no-cache' }))
@@ -94,7 +131,6 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Cache-first for hashed/static assets
   if (
     url.pathname.indexOf('/astro/') >= 0 ||
     url.pathname.indexOf('/assets/img/') >= 0 ||
@@ -113,9 +149,9 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // Stale-While-Revalidate for HTML pages and app JS: instant switch + fresh background sync
+  // Stale-While-Revalidate for all pages and app JS: 0ms switch + background refresh
   event.respondWith(
-    caches.match(event.request).then(function (cached) {
+    matchCached(event.request).then(function (cached) {
       var networkFetch = fetch(new Request(event.request, { cache: 'no-cache' }))
         .then(function (networkRes) {
           cachePut(event.request, networkRes);

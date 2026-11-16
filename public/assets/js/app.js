@@ -99,13 +99,49 @@
   document.addEventListener('focusin', onLinkIntent, { capture: true, passive: true });
 
   window.addEventListener('load', function(){
-    var warm = function(){
-      document.querySelectorAll('.nav a[href], .mnav a[href]').forEach(function(a){
-        prefetchUrl(a.href);
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn && conn.saveData) return;
+
+    var warmQueue = function(){
+      var basePath = (document.body.getAttribute('data-base') || '/').replace(/\/+$/, '') + '/';
+      var coreRoutes = [
+        '', 'venues/', 'venues-live/', 'venues-location/', 'venues-find/',
+        'facilities/', 'facilities-green-room/', 'facilities-toilet/',
+        'facilities-water/', 'facilities-dining/', 'media/', 'live-stream/',
+        'transportation/', 'transportation-bus/', 'transportation-auto/',
+        'developers/', 'help/'
+      ].map(function(r){ return location.origin + basePath + r; });
+
+      var pageLinks = Array.from(document.querySelectorAll('a[href]')).map(function(a){ return a.href; });
+      var all = coreRoutes.concat(pageLinks).filter(function(h){
+        try {
+          var u = new URL(h, location.origin);
+          if (u.origin !== location.origin) return false;
+          if (u.pathname.startsWith('/admin') || u.pathname.startsWith('/stagemaster') ||
+              u.pathname.startsWith('/dataworker') || u.pathname.startsWith('/dashboard') ||
+              u.pathname.startsWith('/api')) return false;
+          if (/\.(png|jpe?g|webp|gif|svg|pdf|zip|json|xml|txt)$/i.test(u.pathname)) return false;
+          return !prefetched.has(u.href);
+        } catch(e){ return false; }
       });
+
+      var idx = 0;
+      function nextBatch(){
+        if (idx >= all.length || prefetched.size >= 45) return;
+        var batch = all.slice(idx, idx + 3);
+        idx += 3;
+        Promise.all(batch.map(function(u){
+          if (prefetched.has(u)) return Promise.resolve();
+          prefetched.add(u);
+          return fetch(u, { credentials: 'same-origin', priority: 'low' }).catch(function(){});
+        })).then(function(){
+          setTimeout(nextBatch, 150);
+        });
+      }
+      nextBatch();
     };
-    if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 1500 });
-    else setTimeout(warm, 800);
+    if ('requestIdleCallback' in window) window.requestIdleCallback(warmQueue, { timeout: 1200 });
+    else setTimeout(warmQueue, 400);
   });
 
   // Service Worker registration with updateViaCache:none + automatic update handling
