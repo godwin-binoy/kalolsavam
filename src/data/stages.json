@@ -95,7 +95,7 @@
     "building_name": "Vyapara Bhavan (Mala Town)",
     "campus_blueprint": "",
     "room_blueprint": "",
-    "google_map": "https://maps.google.com/?q=Vyapari+Vyavasayi+Ekopana+Samithi+Bhavan+Mala+Thrissur+Kerala"
+    "google_map": "https://maps.app.goo.gl/Spma7h4m6YfmfrbD9"
   },
   {
     "n": 8,
@@ -127,16 +127,16 @@
   },
   {
     "n": 26,
-    "name": "Venue 26 - Jilla Panchayath Ground",
-    "short": "On-stage · Jilla Panchayath Ground, Mala (Band Melam)",
+    "name": "Venue 26 - Maliekkal Garden",
+    "short": "On-stage · Maliekkal Garden, Mala (Band Display)",
     "banner": "banner-rose",
     "icon": "map-pin.svg",
-    "loc": "Jilla Panchayath Ground, Mala",
+    "loc": "Maliekkal Garden, Mala",
     "kind": "stage",
     "slug": "venue-26",
-    "building_name": "Jilla Panchayath Ground, Mala",
+    "building_name": "Maliekkal Garden, Mala",
     "campus_blueprint": "",
     "room_blueprint": "",
-    "google_map": "https://maps.google.com/?q=Mala+Thrissur+Kerala"
+    "google_map": "https://maps.app.goo.gl/wdWLqueRru3nhqEVA"
   }
 ]

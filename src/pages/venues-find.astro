@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
 import { FESTIVAL_SCHEDULE } from '../data/schedule';
 import stages from '../data/stages.json';
 import { BASE, url } from '../lib/url';
@@ -39,7 +40,7 @@ const allScheduleItems = FESTIVAL_SCHEDULE.map((it) => ({
 
     <!-- Search Input -->
     <div class="card-base" style="margin-bottom:2rem;padding:1.25rem">
-      <input id="q-global" type="search" class="inp" placeholder="Search by item name or category — e.g. Oppana, Bharathanatyam, Sanskrit, LP…" autocomplete="off">
+      <div class="search-input-box"><Icon name="search" class="search-icon" /><input id="q-global" type="search" class="inp inp-search" placeholder="Search by item name or category — e.g. Oppana, Bharathanatyam, Sanskrit, LP…" autocomplete="off"></div>
     </div>
 
     <!-- Category Squircle Buttons -->

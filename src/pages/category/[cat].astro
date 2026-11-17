@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHead from '../../components/PageHead.astro';
+import Icon from '../../components/Icon.astro';
 import { FESTIVAL_SCHEDULE } from '../../data/schedule';
 import stages from '../../data/stages.json';
 import { BASE, url } from '../../lib/url';
@@ -49,7 +50,7 @@ const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
 
     <!-- Live Filter within Category -->
     <div class="card-base" style="margin-bottom:2rem;padding:1.15rem">
-      <input id="q-cat" type="search" class="inp" placeholder={`Filter ${name} items by name, venue or timing…`} autocomplete="off">
+      <div class="search-input-box"><Icon name="search" class="search-icon" /><input id="q-cat" type="search" class="inp inp-search" placeholder={`Filter ${name} items by name, venue or timing…`} autocomplete="off"></div>
     </div>
 
     <div id="items-grid" class="grid-3" style="gap:1.25rem">

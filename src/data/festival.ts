@@ -237,11 +237,18 @@ export const BUS_SCHEDULE = MALA_TO_TSR;
 
 
 export const AUTO_DRIVERS: AutoDriver[] = [
-  { name: "Anil T. V.", sub: "Auto · Mala Junction", desc: "Quick trips between Mala Bus Stand, festival venues, and St. Antony's HSS.", phone: "+919999000103" },
-  { name: "Shibu P.", sub: "Auto · 5-Seater", desc: "Shared auto for groups up to 5. Mala ↔ Annamanada fixed fare.", phone: "+919999000105" },
-  { name: "Suresh N.", sub: "Auto · Mala Town", desc: "Local trips within Mala town. Cash / UPI. Available on call from 5 AM.", phone: "+919999000107" },
-  { name: "Manoj K.", sub: "Auto · Bus Stand", desc: "Standby near Mala Bus Stand. Direct trips to the school main gate on request.", phone: "+919999000108" },
-  { name: "Varghese P.", sub: "Auto · Annamanada Route", desc: "Regular driver on the Mala ↔ Annamanada route.", phone: "+919000000109" },
+  { name: "Noufal", sub: "Auto · Mala", desc: "Local auto service in and around Mala and festival venues.", phone: "+918714968058" },
+  { name: "Sharath", sub: "Auto · KL 64 1078", desc: "Mala auto service (KL 64 1078). Available for festival venue & stand trips.", phone: "+919526439828" },
+  { name: "Shihab", sub: "Auto · Mala", desc: "Local auto service in Mala area and festival stages.", phone: "+919995525670" },
+  { name: "Thomas", sub: "Auto · KL 45 A 9695", desc: "Mala auto service (KL 45 A 9695). Direct trips to school & venues.", phone: "+919846481978" },
+  { name: "Samath", sub: "Auto · KL 11 AL 9013", desc: "Auto service (KL 11 AL 9013) in Mala area.", phone: "+919526468696" },
+  { name: "Salam", sub: "Auto · KL 47 C 0336", desc: "Auto service (KL 47 C 0336) in Mala area.", phone: "+918943628907" },
+  { name: "Ratin Rag", sub: "Auto · KL 64 A 6088", desc: "Auto service (KL 64 A 6088) in Mala area.", phone: "+918943628907" },
+  { name: "Aneesh", sub: "Auto · KL 64 B 0261", desc: "Auto service (KL 64 B 0261) in Mala area.", phone: "+919745510515" },
+  { name: "Shafee", sub: "Auto · KL 43 J 5288", desc: "Auto service (KL 43 J 5288) in Mala area.", phone: "+918137811292" },
+  { name: "Joy", sub: "Auto · KL 64 9950", desc: "Auto service (KL 64 9950) in Mala area.", phone: "+919747547017" },
+  { name: "Manohar", sub: "Auto · KL 64 C 0067", desc: "Auto service (KL 64 C 0067) in Mala area.", phone: "+919539872268" },
+  { name: "Ismayel", sub: "Auto · KL 64 B 1583", desc: "Auto service (KL 64 B 1583) in Mala area.", phone: "+918943186293" },
 ];
 
 export const GREEN_ROOMS = [

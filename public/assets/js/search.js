@@ -1,4 +1,4 @@
-/* Universal site-wide advanced search (Ctrl+K / '/' / dock button + homepage inline search). */
+/* Universal site-wide advanced search for the search bar on every page. */
 (function () {
   'use strict';
 
@@ -49,23 +49,17 @@
     return getBase() + String(h).replace(/^\/+/, '');
   }
 
-  function searchItems(rawQuery, groupFilter, maxResults) {
+  function searchItems(rawQuery, maxResults) {
     var data = window.KAL_SEARCH_INDEX || [];
     var q = norm(rawQuery);
-    var filtered = groupFilter && groupFilter !== 'all'
-      ? data.filter(function (x) { return x.g === groupFilter; })
-      : data;
-
-    if (!q) {
-      return filtered.slice(0, maxResults || 10);
-    }
+    if (!q) return [];
 
     var tokens = q.split(' ').filter(Boolean);
     var qComp = compact(rawQuery);
     var scored = [];
 
-    for (var i = 0; i < filtered.length; i++) {
-      var it = filtered[i];
+    for (var i = 0; i < data.length; i++) {
+      var it = data[i];
       var tLow = (it.t || '').toLowerCase();
       var cLow = (it.c || '').toLowerCase();
       var dLow = (it.d || '').toLowerCase();
@@ -106,12 +100,12 @@
       return b.score - a.score || a.item.t.length - b.item.t.length;
     });
 
-    return scored.slice(0, maxResults || 18).map(function (s) { return s.item; });
+    return scored.slice(0, maxResults || 12).map(function (s) { return s.item; });
   }
 
   function renderRows(items, activeIdx) {
     if (!items.length) {
-      return '<div class="search-empty">No matches found. Try stage number, item name, bus stop, facility, or phone number.</div>';
+      return '<div class="search-empty">No matches found. Try stage number, item name, bus stop, auto driver, facility, or phone number.</div>';
     }
     return items.map(function (m, idx) {
       var href = resolveHref(m.h);
@@ -129,108 +123,8 @@
     }).join('');
   }
 
-  function initGlobalModal() {
-    var modal = document.getElementById('kal-search-modal');
-    var input = document.getElementById('kal-modal-input');
-    var list = document.getElementById('kal-modal-list');
-    var closeBtn = document.getElementById('kal-modal-close');
-    var openBtns = document.querySelectorAll('[data-open-search], #open-search');
-    if (!modal || !input || !list) return;
-
-    var curGroup = 'all', curItems = [], activeIdx = -1;
-
-    function refresh() {
-      curItems = searchItems(input.value, curGroup, 25);
-      activeIdx = curItems.length ? 0 : -1;
-      list.innerHTML = renderRows(curItems, activeIdx);
-    }
-
-    function openModal(prefill) {
-      modal.classList.remove('hidden');
-      modal.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-      if (typeof prefill === 'string') input.value = prefill;
-      refresh();
-      setTimeout(function () { input.focus(); input.select(); }, 25);
-    }
-
-    function closeModal() {
-      modal.classList.add('hidden');
-      modal.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    openBtns.forEach(function (btn) {
-      btn.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        openModal();
-      });
-    });
-
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (ev) {
-      if (ev.target === modal || ev.target.classList.contains('search-modal-backdrop')) closeModal();
-    });
-
-    modal.querySelectorAll('[data-search-group]').forEach(function (chip) {
-      chip.addEventListener('click', function () {
-        curGroup = chip.getAttribute('data-search-group') || 'all';
-        modal.querySelectorAll('[data-search-group]').forEach(function (c) {
-          c.classList.toggle('active', c === chip);
-        });
-        refresh();
-        input.focus();
-      });
-    });
-
-    input.addEventListener('input', refresh);
-    input.addEventListener('keydown', function (ev) {
-      if (ev.key === 'ArrowDown' && curItems.length) {
-        ev.preventDefault();
-        activeIdx = (activeIdx + 1) % curItems.length;
-        list.innerHTML = renderRows(curItems, activeIdx);
-        var sel = list.querySelector('.selected');
-        if (sel) sel.scrollIntoView({ block: 'nearest' });
-      } else if (ev.key === 'ArrowUp' && curItems.length) {
-        ev.preventDefault();
-        activeIdx = (activeIdx - 1 + curItems.length) % curItems.length;
-        list.innerHTML = renderRows(curItems, activeIdx);
-        var selU = list.querySelector('.selected');
-        if (selU) selU.scrollIntoView({ block: 'nearest' });
-      } else if (ev.key === 'Enter' && activeIdx >= 0 && curItems[activeIdx]) {
-        ev.preventDefault();
-        var target = list.querySelector('.selected');
-        if (target) target.click();
-      }
-    });
-
-    list.addEventListener('click', function (ev) {
-      if (ev.target.closest('a')) closeModal();
-    });
-
-    document.addEventListener('keydown', function (ev) {
-      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') {
-        ev.preventDefault();
-        modal.classList.contains('hidden') ? openModal() : closeModal();
-      } else if (ev.key === '/' && modal.classList.contains('hidden')) {
-        var tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
-        if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
-          ev.preventDefault();
-          openModal();
-        }
-      } else if (ev.key === 'Escape' && !modal.classList.contains('hidden')) {
-        closeModal();
-      }
-    });
-
-    window.KalSearch = { search: searchItems, open: openModal, close: closeModal, renderRows: renderRows, resolveHref: resolveHref };
-  }
-
-  function initHomeInline() {
-    var input = document.getElementById('global-search');
-    var dropdown = document.getElementById('search-results-dropdown');
+  function bindSearchBar(input, dropdown) {
     if (!input || !dropdown) return;
-
     var curItems = [], activeIdx = -1;
 
     function update() {
@@ -242,7 +136,7 @@
         activeIdx = -1;
         return;
       }
-      curItems = searchItems(val, 'all', 12);
+      curItems = searchItems(val, 14);
       activeIdx = curItems.length ? 0 : -1;
       dropdown.innerHTML = renderRows(curItems, activeIdx);
       dropdown.classList.remove('hidden');
@@ -256,10 +150,14 @@
         ev.preventDefault();
         activeIdx = (activeIdx + 1) % curItems.length;
         dropdown.innerHTML = renderRows(curItems, activeIdx);
+        var selD = dropdown.querySelector('.selected');
+        if (selD) selD.scrollIntoView({ block: 'nearest' });
       } else if (ev.key === 'ArrowUp') {
         ev.preventDefault();
         activeIdx = (activeIdx - 1 + curItems.length) % curItems.length;
         dropdown.innerHTML = renderRows(curItems, activeIdx);
+        var selU = dropdown.querySelector('.selected');
+        if (selU) selU.scrollIntoView({ block: 'nearest' });
       } else if (ev.key === 'Enter' && activeIdx >= 0) {
         ev.preventDefault();
         var sel = dropdown.querySelector('.selected');
@@ -277,9 +175,29 @@
   }
 
   function boot() {
-    initGlobalModal();
-    initHomeInline();
+    var input = document.getElementById('global-search');
+    var dropdown = document.getElementById('search-results-dropdown');
+    bindSearchBar(input, dropdown);
+
+    document.addEventListener('keydown', function (ev) {
+      if (!input) return;
+      if ((ev.ctrlKey || ev.metaKey) && ev.key.toLowerCase() === 'k') {
+        ev.preventDefault();
+        input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setTimeout(function () { input.focus(); input.select(); }, 60);
+      } else if (ev.key === '/') {
+        var tag = (document.activeElement && document.activeElement.tagName || '').toLowerCase();
+        if (tag !== 'input' && tag !== 'textarea' && tag !== 'select') {
+          ev.preventDefault();
+          input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(function () { input.focus(); }, 60);
+        }
+      }
+    });
+
+    window.KalSearch = { search: searchItems, renderRows: renderRows, resolveHref: resolveHref };
   }
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();

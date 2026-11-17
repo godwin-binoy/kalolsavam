@@ -84,9 +84,6 @@ const navKey = (k: string) => `nav.${k}`;
   </nav>
 </header>
   <div class="utility-dock " role="group" aria-label="Display settings">
-      <button id="open-search" data-open-search class="icbtn" type="button" aria-label="Search anything (Ctrl+K)" title="Search anything (Ctrl+K)">
-        <span class="icn" style={`--icon-url:url('${BASE}assets/svg/search.svg')`}></span>
-      </button>
       <button data-lang-toggle class="lang-btn" type="button" aria-label="Switch language" title="Switch language">
         <span class="icn" style={`--icon-url:url('${BASE}assets/svg/translate.svg')`}></span>
       </button>
@@ -98,7 +95,17 @@ const navKey = (k: string) => `nav.${k}`;
   <div class="dev-banner" role="status" aria-live="polite"><span class="dev-banner-dot" aria-hidden="true"></span><span data-i18n="banner.dev">This website is under active development — schedules and features are being updated.</span></div>
 <div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
 <div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
-<main id="main"><slot /></main>
+<main id="main">{active !== "home" && (
+  <div class="site-search-shell">
+    <div class="search-wrapper site-search-wrapper">
+      <div class="search-input-box">
+        <span class="icn search-icon" style={`--icon-url:url('${BASE}assets/svg/search.svg')`} aria-hidden="true"></span>
+        <input id="global-search" type="search" placeholder="Search anything — events, venues, buses, auto, facilities, contacts" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="search-results-dropdown" class="hidden"></div>
+    </div>
+  </div>
+)}<slot /></main>
 <footer class="ftr">
   <div class="ftr-in">
     <div>
@@ -109,27 +116,5 @@ const navKey = (k: string) => `nav.${k}`;
   </div>
 </footer>
 
-<div id="kal-search-modal" class="search-modal hidden" role="dialog" aria-modal="true" aria-labelledby="kal-modal-title" aria-hidden="true">
-  <div class="search-modal-backdrop"></div>
-  <div class="search-modal-box">
-    <div class="search-modal-head">
-      <span class="icn" style={`--icon-url:url('${BASE}assets/svg/search.svg');width:1.2rem;height:1.2rem;color:var(--brand)`}></span>
-      <input id="kal-modal-input" type="search" placeholder="Search events, stages, rooms, buses, facilities, contacts…" autocomplete="off" spellcheck="false" aria-label="Site-wide search">
-      <button id="kal-modal-close" type="button" class="icbtn" aria-label="Close search">&times;</button>
-    </div>
-    <div class="search-modal-chips" role="tablist" aria-label="Filter search results">
-      <button type="button" class="search-chip active" data-search-group="all">All</button>
-      <button type="button" class="search-chip" data-search-group="events">Events</button>
-      <button type="button" class="search-chip" data-search-group="venues">Venues</button>
-      <button type="button" class="search-chip" data-search-group="facilities">Facilities</button>
-      <button type="button" class="search-chip" data-search-group="transport">Transport</button>
-      <button type="button" class="search-chip" data-search-group="help">Help</button>
-    </div>
-    <div id="kal-modal-list" class="search-modal-list"></div>
-    <div class="search-modal-foot">
-      <span>Tip: Press <kbd>Ctrl</kbd>+<kbd>K</kbd> or <kbd>/</kbd> anywhere · <kbd>&uarr;</kbd><kbd>&darr;</kbd> to navigate · <kbd>Enter</kbd> to open</span>
-    </div>
-  </div>
-</div>
 </body>
 </html>

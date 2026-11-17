@@ -110,13 +110,38 @@
 
     if (dock) {
       var lastY = window.pageYOffset || document.documentElement.scrollTop || 0;
-      window.addEventListener('scroll', function () {
+      var ticking = false;
+      var isMobile = function () { return window.innerWidth < 768; };
+
+      function updateDock() {
+        ticking = false;
         if (mnav && mnav.classList.contains('open')) return;
+        if (!isMobile()) {
+          dock.classList.remove('dock-hidden');
+          lastY = window.pageYOffset || document.documentElement.scrollTop || 0;
+          return;
+        }
         var y = window.pageYOffset || document.documentElement.scrollTop || 0;
-        if (y <= 40) { dock.classList.remove('dock-hidden'); lastY = y; return; }
-        if (Math.abs(y - lastY) < 6) return;
-        dock.classList.toggle('dock-hidden', y > lastY && y > 60);
+        var dy = y - lastY;
+        if (y <= 24) {
+          dock.classList.remove('dock-hidden');
+        } else if (dy > 2 && y > 48) {
+          dock.classList.add('dock-hidden');
+        } else if (dy < -1) {
+          dock.classList.remove('dock-hidden');
+        }
         lastY = y;
+      }
+
+      window.addEventListener('scroll', function () {
+        if (!ticking) {
+          ticking = true;
+          window.requestAnimationFrame(updateDock);
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', function () {
+        if (!isMobile()) dock.classList.remove('dock-hidden');
       }, { passive: true });
     }
 

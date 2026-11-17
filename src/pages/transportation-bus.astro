@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
 import {
   MALA_TO_TSR, TSR_TO_MALA,
   MALA_TO_ALV, ALV_TO_MALA,
@@ -26,7 +27,7 @@ import {
 
     <!-- Live Search -->
     <div class="card-base" style="margin:1.25rem 0;padding:1rem 1.25rem">
-      <input id="board-search" type="search" class="inp" placeholder="Search by board name, stop or timing (e.g. Kodakara, 07:15, Poyya, Eravathur, Fast)..." autocomplete="off">
+      <div class="search-input-box"><Icon name="search" class="search-icon" /><input id="board-search" type="search" class="inp inp-search" placeholder="Search by board name, stop or timing (e.g. Kodakara, 07:15, Poyya, Eravathur, Fast)..." autocomplete="off"></div>
     </div>
 
     <!-- 1. THRISSUR CORRIDOR -->
