@@ -175,3 +175,5 @@
 {"id": 49, "ts": 1794880708.5626752, "username": "admin@kalolsavam.example.com", "ip_hash": "145d12b6c288d1587bf925b65c9f88ae", "event": "admin_action", "detail": "participant_import|p+28/p~0/e+56/e~0/err0"}
 {"id": 50, "ts": 1794881010.033962, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+100/p~0/e+125/e~0/err0"}
 {"id": 51, "ts": 1794881155.8458908, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+100/p~0/e+152/e~0/err0"}
+{"id": 52, "ts": 1794881366.0791545, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+26/p~0/e+32/e~0/err0"}
+{"id": 52, "ts": 1794881366.0791545, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+26/p~0/e+32/e~0/err0"}
