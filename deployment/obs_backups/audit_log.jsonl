@@ -177,3 +177,4 @@
 {"id": 51, "ts": 1794881155.8458908, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+100/p~0/e+152/e~0/err0"}
 {"id": 52, "ts": 1794881366.0791545, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+26/p~0/e+32/e~0/err0"}
 {"id": 52, "ts": 1794881366.0791545, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+26/p~0/e+32/e~0/err0"}
+{"id": 52, "ts": 1794881366.0791545, "username": "admin@kalolsavam.example.com", "ip_hash": "1e6e6f83bc1db3547c71dee70055c3e8", "event": "admin_action", "detail": "participant_import|p+26/p~0/e+32/e~0/err0"}
