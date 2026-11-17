@@ -225,3 +225,10 @@
 {"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
 {"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
 {"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
+{"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
+{"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
+{"id": 67, "ts": 1794888094.5958743, "username": "anmary@theresa.com", "ip_hash": "89e14768c4575d484be1c411559a3308", "event": "login_ok", "detail": "status=200"}
+{"id": 68, "ts": 1794888548.6355083, "username": "admin@kalolsavam.example.com", "ip_hash": "cddd2826e9946aca49b1477364b537d4", "event": "admin_action", "detail": "create_user|id=5,role=stagemaster"}
+{"id": 68, "ts": 1794888548.6355083, "username": "admin@kalolsavam.example.com", "ip_hash": "cddd2826e9946aca49b1477364b537d4", "event": "admin_action", "detail": "create_user|id=5,role=stagemaster"}
+{"id": 68, "ts": 1794888548.6355083, "username": "admin@kalolsavam.example.com", "ip_hash": "cddd2826e9946aca49b1477364b537d4", "event": "admin_action", "detail": "create_user|id=5,role=stagemaster"}
+{"id": 69, "ts": 1794888673.7955904, "username": "melvin@dev.com", "ip_hash": "4deabf3103da5086dae9e4f49c1962fb", "event": "login_ok", "detail": "status=200"}

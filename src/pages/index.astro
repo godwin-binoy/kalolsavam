@@ -4,34 +4,104 @@ import Card from '../components/Card.astro';
 import ActionItem from '../components/ActionItem.astro';
 import Icon from '../components/Icon.astro';
 import { BASE, url } from '../lib/url';
-}).slice(0, 7);
+---
+<BaseLayout active="home">
+  <section class="hero">
+    <div class="hero-in">
+      <div class="hero-text">
+        <span class="badge-gov" data-i18n="hero.badge">One Kalolsavam, One Platform</span>
+        <h1 class="page-title" data-i18n="hero.title">Mala Sub-District<br>School Kalolsavam</h1>
+        <p data-i18n="hero.desc">Welcome to the official web desk for participants, parents, and teachers. Track real-time stage events, access verified result declarations, and download stage photographs.</p>
+        <div class="row hero-cta">
+          <a class="btn-primary dark" href="#services" data-i18n="btn.explore">Explore Services</a>
+          <a class="btn-primary ghost" href={url('/venues-live')} data-i18n="btn.live">Live Stages</a>
+        </div>
+      </div>
+      <div class="hero-mark">
+        <img src={BASE + 'assets/img/master-logo.webp'} alt="Kalolsavam Master Logo" width="380" height="380" decoding="async">
+      </div>
+    </div>
+  </section>
 
-        if (!matches.length){
-          dropdown.innerHTML = '<div style="padding:1rem;color:var(--muted);text-align:center">No matches found.</div>';
-          dropdown.classList.remove('hidden');
-          return;
-        }
+  <section id="services" class="main-container">
+    <div class="sec-head" style="margin-bottom:1.75rem">
+      <h2 class="section-title" data-i18n="sec.services">Festival Services & Portals</h2>
+      <p data-i18n="sec.services.desc">Search literally anything — stage numbers, items, bus routes, toilets, lunch, medical, or results</p>
+    </div>
 
-        dropdown.innerHTML = matches.map(function(m){
-          return '<a href="' + BASE + m.href.replace(/^\/+/, '') + '" class="search-result-item">' +
-            '<div style="min-width:0;flex:1">' +
-              '<div style="display:flex;align-items:center;gap:.6rem;margin-bottom:.2rem">' +
-                '<span style="font-size:.7rem;padding:.15rem .55rem;background:var(--bg-alt);border:1px solid var(--border);border-radius:999px;color:var(--brand);font-weight:700">' + esc(m.cat) + '</span>' +
-                '<strong style="font-size:.95rem">' + esc(m.title) + '</strong>' +
-              '</div>' +
-              '<div style="font-size:.82rem;color:var(--muted)">' + esc(m.desc) + '</div>' +
-            '</div>' +
-            '<span style="font-size:1.1rem;color:var(--subtle)">&rarr;</span>' +
-          '</a>';
-        }).join('');
-        dropdown.classList.remove('hidden');
-      });
+    <!-- Universal Search Bar (powered by assets/js/search.js + data/search-index.js) -->
+    <div class="search-wrapper">
+      <div class="search-input-box">
+        <Icon name="search" class="search-icon" />
+        <input id="global-search" type="search" placeholder="Search anything — events, venues, buses, facilities, contacts (Ctrl+K)" data-i18n-placeholder="search.placeholder" autocomplete="off" spellcheck="false">
+      </div>
+      <div id="search-results-dropdown" class="hidden"></div>
+    </div>
 
-      document.addEventListener('click', function(ev){
-        if (!input.contains(ev.target) && !dropdown.contains(ev.target)){
-          dropdown.classList.add('hidden');
-        }
-      });
-    })();
-  </script>
+    <div class="grid-3">
+      <!-- 1 · Stages -->
+      <Card title="Stages & Venues" titleI18n="card.stages.title" subtitle="Live Tracker" subtitleI18n="card.stages.sub" tone="blue" icon="map-pin">
+        <ActionItem href="/venues-find" icon="search" iconTone="c-indigo" title="Find by Item" titleI18n="card.stages.find" />
+        <ActionItem href="/venues-location" icon="map-pin" iconTone="c-emerald" title="Location" titleI18n="card.stages.loc" />
+        <ActionItem href="/venues-live" icon="bolt" iconTone="c-rose" title="Live Updates" titleI18n="card.stages.live" />
+      </Card>
+
+      <!-- 2 · Facilities -->
+      <Card title="Facilities" titleI18n="card.fac.title" subtitle="Campus Facilities" subtitleI18n="card.fac.sub" tone="teal" icon="sparkle">
+        <ActionItem href="/facilities-green-room" icon="user" iconTone="c-teal" title="Green Room" titleI18n="card.fac.green" />
+        <ActionItem href="/facilities-toilet" icon="water" iconTone="c-blue" title="Toilet" titleI18n="card.fac.toilet" />
+        <ActionItem href="/facilities" icon="grid" iconTone="c-indigo" title="See All" titleI18n="card.fac.all" />
+      </Card>
+
+      <!-- 3 · Media -->
+      <Card title="Media & Streaming" titleI18n="card.media.title" subtitle="Official Media" subtitleI18n="card.media.sub" tone="pink" icon="video">
+        <ActionItem href="/media" icon="grid" iconTone="c-blue" title="Stage Photos" titleI18n="card.media.photos" />
+        <ActionItem href="/live-stream" icon="bolt" iconTone="c-rose" title="Live Streaming" titleI18n="card.media.live" />
+      </Card>
+
+      <!-- 4 · Results -->
+      <Card title="Results" titleI18n="card.results.title" subtitle="Official Government Portal" subtitleI18n="card.results.sub" tone="orange" icon="clipboard-check">
+        <a class="fest-action-item results-cta" href="https://ulsavam.kite.kerala.gov.in/2026/subdistrict-kalolsavam-2026/index.php/home/subdistrictHome/235/Mk12cUVZdjFFcnhVSkx1MzY4dnRIdz09" target="_blank" rel="noopener">
+          <span class="fest-item-icon c-amber results-cta-icon"><Icon name="clipboard-check" /></span>
+          <span style="font-size:1.05rem;font-weight:800;color:var(--brand)" data-i18n="card.results.check">Check Official Results</span>
+          <span class="text-muted xs" data-i18n="card.results.hint">Tap to open the government portal</span>
+        </a>
+      </Card>
+
+      <!-- 5 · Transportation -->
+      <Card title="Transportation" titleI18n="card.trans.title" subtitle="Bus & Auto" subtitleI18n="card.trans.sub" tone="purple" icon="bus">
+        <ActionItem href="/transportation-bus" icon="bus" iconTone="c-blue" title="Bus Timings" titleI18n="card.trans.bus" />
+        <ActionItem href="/transportation-auto" icon="car" iconTone="c-emerald" title="Auto Drivers" titleI18n="card.trans.auto" />
+      </Card>
+
+      <!-- 6 · Help -->
+      <Card title="Help & Medical" titleI18n="card.help.title" subtitle="Emergency Directory" subtitleI18n="card.help.sub" tone="rose" icon="phone">
+        <ActionItem href="/help" icon="medical" iconTone="c-rose" title="First Aid" titleI18n="card.help.firstaid" />
+        <ActionItem href="/help" icon="building" iconTone="c-amber" title="Convener Desk" titleI18n="card.help.convener" />
+      </Card>
+    </div>
+
+    <!-- Meet Team & Venue Info -->
+    <div class="grid-2" style="margin-top:2.5rem;gap:1.5rem;align-items:stretch">
+      <Card title="Meet Our Team" titleI18n="card.dev.title" subtitle="Platform Creators & Backstage Crew" subtitleI18n="card.dev.sub" tone="indigo" icon="user">
+        <p class="text-muted sm" style="margin-bottom:1rem" data-i18n="card.dev.desc">Choose an option below to explore the team and backstage crew behind this platform.</p>
+        <div class="grid-2" style="gap:1rem">
+          <ActionItem href="/developers#developers" icon="user" iconTone="c-indigo" title="Meet Developers" titleI18n="card.dev.devbtn" />
+          <ActionItem href="/developers#volunteers" icon="users" iconTone="c-emerald" title="Meet Volunteers" titleI18n="card.dev.volbtn" />
+        </div>
+      </Card>
+
+      <div class="fest-card fest-card-padded">
+        <div>
+          <span class="badge-gov" style="margin-bottom:.5rem" data-i18n="card.venue.badge">Event Venue Location</span>
+          <h3 class="card-title" style="margin-bottom:.35rem" data-i18n="card.venue.title">St. Antony's Higher Secondary School</h3>
+          <p class="text-muted sm" style="margin:0" data-i18n="card.venue.addr">Mala, Thrissur District, Kerala — 680732</p>
+        </div>
+        <a href="https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" target="_blank" rel="noopener" class="btn-primary ghost" style="display:inline-flex;align-items:center;gap:.6rem">
+          <span data-i18n="card.venue.btn">Open in Google Maps</span>
+          <Icon name="map-pin" style="width:1.1rem;height:1.1rem" />
+        </a>
+      </div>
+    </div>
+  </section>
 </BaseLayout>
