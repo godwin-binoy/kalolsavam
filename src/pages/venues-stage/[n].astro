@@ -20,6 +20,13 @@ const cleanName = stage.name.replace(/^Venue \d+\s*-\s*/, '');
 const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
   (it) => it.venue_n === Number(stage.n)
 );
+
+// Determine distinct blueprints to avoid any duplicate rendering
+const hasCampus = Boolean(stage.campus_blueprint);
+const hasRoom = Boolean(stage.room_blueprint && stage.room_blueprint !== stage.campus_blueprint);
+const bothBlueprints = hasCampus && hasRoom;
+const singleBlueprint = (hasCampus && !hasRoom) || (!hasCampus && hasRoom);
+const singleBpPath = stage.campus_blueprint || stage.room_blueprint;
 ---
 <BaseLayout title={`Venue ${stage.n}: ${cleanName} | Mala Kalolsavam`} active="venues">
   <div class="main-container">
@@ -71,7 +78,7 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
     <section class="card-base" style="margin-bottom:2.5rem">
       <div class="sec-head" style="margin-bottom:1.5rem">
         <h2 style="font-size:1.35rem;margin-bottom:.35rem">Directions & Location Map</h2>
-        <p>Location blueprints and walking directions to {cleanName}.</p>
+        <p>Location blueprints and navigation directions to {cleanName}.</p>
       </div>
 
       <!-- Google Maps Button -->
@@ -82,10 +89,9 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
         </a>
       </div>
 
-      <!-- Blueprints Grid -->
-      <div class="grid-2" style="gap:1.5rem">
-        <!-- Campus Building Blueprint -->
-        {stage.campus_blueprint && (
+      <!-- Case A: BOTH Campus & Room Blueprints Available -->
+      {bothBlueprints && (
+        <div class="grid-2" style="gap:1.5rem">
           <div class="blueprint-card">
             <div class="bp-header">
               <strong>1. Building on Campus</strong>
@@ -95,10 +101,7 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
               <img src={BASE + 'assets/img/blueprints/' + stage.campus_blueprint} alt={`${stage.name} Building Map`} loading="lazy" />
             </div>
           </div>
-        )}
 
-        <!-- Room / Venue Layout Blueprint -->
-        {stage.room_blueprint && (
           <div class="blueprint-card">
             <div class="bp-header">
               <strong>2. Floor &amp; Venue Layout</strong>
@@ -108,15 +111,29 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
               <img src={BASE + 'assets/img/blueprints/' + stage.room_blueprint} alt={`${stage.name} Room Blueprint`} loading="lazy" />
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {!stage.campus_blueprint && (
+      <!-- Case B: EXACTLY ONE Blueprint Available (No Duplicate) -->
+      {singleBlueprint && (
+        <div class="blueprint-card single-bp-wrapper">
+          <div class="bp-header">
+            <strong>Location &amp; Venue Blueprint</strong>
+            <span class="text-muted xs">{stage.building_name}</span>
+          </div>
+          <div class="bp-img-wrapper">
+            <img src={BASE + 'assets/img/blueprints/' + singleBpPath} alt={`${stage.name} Blueprint`} loading="lazy" />
+          </div>
+        </div>
+      )}
+
+      <!-- Case C: Off-Campus Notice (GMLPS / Vyapara Bhavan) -->
+      {!hasCampus && !hasRoom && (
         <div class="notice-box" style="padding:1.25rem;background:var(--bg-alt);border-radius:var(--radius-inner);border:1px solid var(--border)">
           <strong>Off-Campus Venue:</strong>
           <p class="text-muted sm" style="margin:.35rem 0 0">
-            {stage.n === 3 && "GMLPS Mala is in the adjacent school compound, directly accessible via the connecting gate (~2 min walk)."}
-            {stage.n === 7 && "Vyapara Bhavan Old Hall is located in Mala Town (~500m from St. Antony's HSS). Use the Google Maps navigation button above."}
+            {stage.n === 3 && "GMLPS Mala is located in the adjacent school compound, directly accessible via the connecting gate (~2 min walk)."}
+            {stage.n === 7 && "Vyapara Bhavan Old Hall is located in Mala Town (~500m from St. Antony's HSS). Use the Google Maps navigation button above for turn-by-turn directions."}
           </p>
         </div>
       )}
@@ -168,6 +185,10 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
       overflow: hidden;
       background: var(--surface);
     }
+    .single-bp-wrapper {
+      max-width: 720px;
+      margin: 0 auto;
+    }
     .bp-header {
       padding: 0.75rem 1rem;
       border-bottom: 1px solid var(--border);
@@ -177,7 +198,7 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
       background: var(--bg-alt);
     }
     .bp-img-wrapper {
-      padding: 1rem;
+      padding: 1.25rem;
       display: flex;
       justify-content: center;
       background: #ffffff;
@@ -186,7 +207,7 @@ const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
       background: #111821;
     }
     .bp-img-wrapper img {
-      max-height: 380px;
+      max-height: 420px;
       width: auto;
       object-fit: contain;
       border-radius: 6px;

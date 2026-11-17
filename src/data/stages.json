@@ -10,7 +10,7 @@
     "slug": "venue-1",
     "building_name": "St. Antony's HSS Main Ground",
     "campus_blueprint": "Campus/Gorund.png",
-    "room_blueprint": "Campus/Gorund.png",
+    "room_blueprint": "",
     "google_map": "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala"
   },
   {
@@ -24,7 +24,7 @@
     "slug": "venue-2",
     "building_name": "High School Main Auditorium",
     "campus_blueprint": "Campus/HS-hall.png",
-    "room_blueprint": "Campus/HS-hall.png",
+    "room_blueprint": "",
     "google_map": "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala"
   },
   {
@@ -360,7 +360,7 @@
     "slug": "venue-26",
     "building_name": "St. Antony's Main Ground Pavilion",
     "campus_blueprint": "Campus/Gorund.png",
-    "room_blueprint": "Campus/Gorund.png",
+    "room_blueprint": "",
     "google_map": "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala"
   }
 ]
