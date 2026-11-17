@@ -245,9 +245,9 @@ export const AUTO_DRIVERS: AutoDriver[] = [
 ];
 
 export const GREEN_ROOMS = [
-  { name: "HS Block Green Rooms", sub: "Boys & Girls · Ground & 1st Floor", desc: "Designated dressing rooms in the High School building for HS & UP participants with full-length mirrors and power outlets.", loc: "High School Block (Near Rooms 5A–7B)" },
-  { name: "HSS Block Green Rooms", sub: "Boys & Girls · 1st & 2nd Floor", desc: "Spacious green rooms for Higher Secondary general & dance items, near Seminar Hall and A1/B1 classes.", loc: "HSS Block (Near A1/B1 & Seminar Hall)" },
-  { name: "GMLPS Mala Green Rooms", sub: "LP & UP Categories", desc: "Dedicated dressing rooms for Lower Primary and Upper Primary participants at GMLPS Mala compound.", loc: "GMLPS Mala Campus (Adjacent Compound)" },
+  { name: "HS Block Green Rooms", sub: "Boys & Girls · High School Block", desc: "Designated dressing and pre-stage waiting areas in the High School building for participants.", loc: "High School Block" },
+  { name: "HSS Block Green Rooms", sub: "Boys & Girls · Higher Secondary Block", desc: "Designated dressing and pre-stage waiting areas in the Higher Secondary building for participants.", loc: "HSS Block" },
+  { name: "GMLPS Mala Green Rooms", sub: "LP & UP Categories", desc: "Designated dressing and pre-stage waiting areas at GMLPS Mala compound.", loc: "GMLPS Mala Compound" },
 ];
 
 export const TOILET_BLOCKS = [
@@ -288,7 +288,7 @@ export const LIVE_STREAMS: LiveStreamItem[] = [
   },
   {
     stage: "Stage 5",
-    title: "HSS Seminar Hall",
+    title: "Silver Jubilee Hall III Floor",
     channel: "Seminar Hall Stream",
     desc: "Live stream of literary, elocution, and stage events from Stage 5.",
     url: "https://www.youtube.com/",
@@ -297,8 +297,8 @@ export const LIVE_STREAMS: LiveStreamItem[] = [
 ];
 
 export const FACILITIES: FacilityItem[] = [
-  { title: "Green Room", sub: "Dressing · Annex 1st Floor", desc: "Rooms G1–G6 for dressing and pre-stage waiting.", location: "Annex Block, 1st Floor", href: "/facilities-green-room", tone: "teal", icon: "user" },
-  { title: "Toilet", sub: "Washrooms · 3 Blocks", desc: "Washroom blocks A, B, C across the campus.", location: "Blocks A, B, C", href: "/facilities-toilet", tone: "blue", icon: "water" },
+  { title: "Green Room", sub: "Dressing · HS, HSS & GMLPS", desc: "Designated dressing and pre-stage waiting areas across the campus.", location: "HS Block, HSS Block & GMLPS Mala", href: "/facilities-green-room", tone: "teal", icon: "user" },
+  { title: "Toilet", sub: "Washrooms · 3 Blocks", desc: "Separate washrooms for boys, girls, and staff across HS, HSS, and GMLPS Mala.", location: "HS, HSS & GMLPS Blocks", href: "/facilities-toilet", tone: "blue", icon: "water" },
   { title: "Drinking Water", sub: "Filtered · 4 Stations", desc: "Filtered RO water dispensers with disposable cups.", location: "4 Campus Stations", href: "/facilities-water", tone: "teal", icon: "sparkle" },
   { title: "Dining Hall", sub: "Oottupura · Main Block GF", desc: "Free meals for participants and accompanying teachers. Lunch from 12:30–14:30.", location: "Main Block, Ground Floor", href: "/facilities-dining", tone: "orange", icon: "grid" },
   { title: "Help Desk", sub: "Convener · Main Gate", desc: "General convener, chest-number queries, schedule changes, and volunteer dispatch.", location: "Main Gate / Control Room", href: "/help", tone: "purple", icon: "building" },

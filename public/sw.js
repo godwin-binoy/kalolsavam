@@ -48,6 +48,8 @@ const PRECACHE_FLEET = [
   'assets/css/tokens.css',
   'assets/js/common.js',
   'assets/js/lang.js',
+  'assets/js/search.js',
+  'data/search-index.js',
   'assets/img/logo.webp',
   'assets/img/master-logo.webp',
   'manifest.json'

@@ -6,7 +6,7 @@ import { DINING_HALLS, GREEN_ROOMS, TOILET_BLOCKS, WATER_STATIONS } from '../dat
 
 export function getStaticPaths() {
   return [
-    { params: { kind: 'green-room' }, props: { title: 'Green Rooms', badge: 'Green Room', intro: 'Designated dressing and waiting rooms (G1–G6) on the Annex Block first floor.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
+    { params: { kind: 'green-room' }, props: { title: 'Green Rooms', badge: 'Green Room', intro: 'Designated dressing and waiting areas across HS Block, HSS Block, and GMLPS Mala.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
     { params: { kind: 'toilet' }, props: { title: 'Toilet Blocks', badge: 'Toilet', intro: 'Washrooms across the campus, with separate blocks for boys, girls, and staff.', tone: 'blue', cols: 3, icon: 'water', items: TOILET_BLOCKS } },
     { params: { kind: 'water' }, props: { title: 'Drinking Water Stations', badge: 'Drinking Water', intro: 'Filtered RO drinking water points available across the campus.', tone: 'teal', cols: 2, icon: 'sparkle', items: WATER_STATIONS } },
     { params: { kind: 'dining' }, props: { title: 'Dining Hall (Oottupura)', badge: 'Dining Hall', intro: 'Free meals and light refreshments for participants, teachers, and volunteers.', tone: 'orange', cols: 2, icon: 'grid', items: DINING_HALLS } },
