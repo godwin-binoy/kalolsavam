@@ -1,522 +1,1178 @@
 [
   {
     "code": "101",
-    "title": "സംഘനൃത്തം LP",
+    "title": "Sanghanritham LP",
     "category": "LP General",
     "venue_id": 1,
     "day": "2026-11-17",
-    "scheduled_time": "10.30 am"
+    "scheduled_time": "10:30 am"
   },
   {
     "code": "102",
-    "title": "ഭരതനാട്യം UP",
+    "title": "Bharathanatyam UP",
     "category": "UP General",
     "venue_id": 1,
     "day": "2026-11-17",
-    "scheduled_time": "12.20 pm"
+    "scheduled_time": "12:20 pm"
   },
   {
     "code": "103",
-    "title": "ഭരതനാട്യം HS (G)",
+    "title": "Bharathanatyam HS (G)",
     "category": "HS General",
     "venue_id": 1,
     "day": "2026-11-17",
-    "scheduled_time": "01.50 pm"
+    "scheduled_time": "01:50 pm"
   },
   {
     "code": "104",
-    "title": "ഭരതനാട്യം HSS (G)",
+    "title": "Bharathanatyam HSS (G)",
     "category": "HSS General",
     "venue_id": 1,
     "day": "2026-11-17",
-    "scheduled_time": "03.00 pm"
+    "scheduled_time": "03:00 pm"
   },
   {
     "code": "105",
-    "title": "നാടോടി നൃത്തം LP",
+    "title": "Nadodi Nritham LP",
     "category": "LP General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "106",
-    "title": "നാടോടിനൃത്തം HSS (G)",
+    "title": "Nadodi Nritham HSS (G)",
     "category": "HSS General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "12.30 pm"
+    "scheduled_time": "12:30 pm"
   },
   {
     "code": "107",
-    "title": "നാടോടിനൃത്തം HS (M)",
+    "title": "Nadodi Nritham HS (B)",
     "category": "HS General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "01.30 pm"
+    "scheduled_time": "01:30 pm"
   },
   {
     "code": "108",
-    "title": "നാടോടിനൃത്തം UP",
+    "title": "Nadodi Nritham UP",
     "category": "UP General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "01.40 pm"
+    "scheduled_time": "01:40 pm"
   },
   {
     "code": "109",
-    "title": "നാടോടിനൃത്തം HSS (M)",
-    "category": "HSS General",
+    "title": "Sanghanritham UP",
+    "category": "UP General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "03.10 pm"
+    "scheduled_time": "03:10 pm"
   },
   {
     "code": "110",
-    "title": "നാടോടിനൃത്തം HS (G)",
+    "title": "Nadodi Nritham HS (G)",
     "category": "HS General",
     "venue_id": 2,
     "day": "2026-11-17",
-    "scheduled_time": "04.10 pm"
+    "scheduled_time": "04:10 pm"
   },
   {
     "code": "111",
-    "title": "നാടകം HS",
+    "title": "Nadakam HS",
     "category": "HS General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "112",
-    "title": "നാടകം HSS",
+    "title": "Nadakam HSS",
     "category": "HSS General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "10.30 am"
+    "scheduled_time": "10:30 am"
   },
   {
     "code": "113",
-    "title": "ചാക്യാർകൂത്ത് UP",
+    "title": "Nadakam UP",
     "category": "UP General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "12.30 pm"
+    "scheduled_time": "12:30 pm"
   },
   {
     "code": "114",
-    "title": "കൂടിയാട്ടം HSS",
+    "title": "Chavittunadakam HSS",
     "category": "HSS General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "01.10 pm"
+    "scheduled_time": "01:10 pm"
   },
   {
     "code": "115",
-    "title": "കൂടിയാട്ടം HS",
+    "title": "Chavittunadakam HS",
     "category": "HS General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "02.30 pm"
+    "scheduled_time": "01:30 pm"
   },
   {
     "code": "116",
-    "title": "മേളം HSS",
+    "title": "Mookabhinayam (Mime) HSS",
     "category": "HSS General",
     "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "03.00 pm"
+    "scheduled_time": "02:30 pm"
   },
   {
     "code": "117",
-    "title": "മോഹിനിയാട്ടം UP",
-    "category": "UP General",
-    "venue_id": 4,
+    "title": "Mookabhinayam (Mime) HS",
+    "category": "HS General",
+    "venue_id": 3,
     "day": "2026-11-17",
-    "scheduled_time": "10.00 am"
+    "scheduled_time": "03:00 pm"
   },
   {
     "code": "118",
-    "title": "കേരളനടനം UP",
-    "category": "UP General",
-    "venue_id": 4,
+    "title": "Prasangam Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "10.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "119",
-    "title": "കേരളനടനം HS",
-    "category": "HS General",
-    "venue_id": 4,
+    "title": "Prasangam Sanskrit HS",
+    "category": "HS Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "11.00 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "120",
-    "title": "മോഹിനിയാട്ടം HS",
-    "category": "HS General",
-    "venue_id": 4,
+    "title": "Ganalapanam Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "11.25 am"
+    "scheduled_time": "09:40 am"
   },
   {
     "code": "121",
-    "title": "കേരളനടനം HSS",
-    "category": "HSS General",
-    "venue_id": 4,
+    "title": "Padyam Chollal Sanskrit UP (B)",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "11.50 am"
+    "scheduled_time": "11:00 am"
   },
   {
     "code": "122",
-    "title": "മോഹിനിയാട്ടം HSS",
-    "category": "HSS General",
-    "venue_id": 4,
+    "title": "Padyam Chollal Sanskrit UP (G)",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "12.30 pm"
+    "scheduled_time": "12:10 pm"
   },
   {
     "code": "123",
-    "title": "വട്ടപ്പാട്ട് UP",
-    "category": "UP Arabic",
-    "venue_id": 4,
+    "title": "Aksharaslokam / Ashtapadi Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
     "day": "2026-11-17",
-    "scheduled_time": "01.00 pm"
+    "scheduled_time": "01:30 pm"
   },
   {
     "code": "124",
-    "title": "വട്ടപ്പാട്ട് HS",
-    "category": "HS Arabic",
-    "venue_id": 4,
+    "title": "Kathakali / Storytelling LP",
+    "category": "LP General",
+    "venue_id": 6,
     "day": "2026-11-17",
-    "scheduled_time": "01.30 pm"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "125",
-    "title": "വട്ടപ്പാട്ട് HSS",
-    "category": "HSS General",
-    "venue_id": 4,
+    "title": "Recitation LP",
+    "category": "LP General",
+    "venue_id": 6,
     "day": "2026-11-17",
-    "scheduled_time": "02.30 pm"
+    "scheduled_time": "10:30 am"
   },
   {
     "code": "126",
-    "title": "കുച്ചുപ്പുടി UP",
-    "category": "UP General",
-    "venue_id": 5,
+    "title": "Samoohagaanam / Group Song LP",
+    "category": "LP General",
+    "venue_id": 7,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "127",
-    "title": "കുച്ചുപ്പുടി HS",
-    "category": "HS General",
-    "venue_id": 5,
+    "title": "Action Song (English) LP",
+    "category": "LP General",
+    "venue_id": 8,
     "day": "2026-11-17",
-    "scheduled_time": "10.00 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "128",
-    "title": "കുച്ചുപ്പുടി HSS",
-    "category": "HSS General",
-    "venue_id": 5,
+    "title": "Poem Recitation (English) LP",
+    "category": "LP General",
+    "venue_id": 8,
     "day": "2026-11-17",
-    "scheduled_time": "11.30 am"
+    "scheduled_time": "01:30 pm"
   },
   {
     "code": "129",
-    "title": "ചിത്രരചന (പെൻസിൽ / ജലച്ചായം / എണ്ണച്ചായം)",
-    "category": "HS General",
+    "title": "Upanyasam (Essay) Sanskrit UP",
+    "category": "UP Sanskrit",
     "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "130",
-    "title": "പെൻസിൽ ഡ്രോയിംഗ് LP/UP/HS/HSS",
-    "category": "LP General",
-    "venue_id": 11,
+    "title": "Upanyasam (Essay) Sanskrit HS",
+    "category": "HS Sanskrit",
+    "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "131",
-    "title": "വാട്ടർ കളറിംഗ് UP/HS/HSS",
-    "category": "UP General",
-    "venue_id": 12,
+    "title": "Upanyasam (Essay) Sanskrit HSS",
+    "category": "HSS General",
+    "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "132",
-    "title": "കാർട്ടൂൺ രചന HS/HSS",
-    "category": "HS General",
-    "venue_id": 13,
+    "title": "Kadharachana (Story) Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "11:30 am"
   },
   {
     "code": "133",
-    "title": "കൊളാഷ് നിർമ്മാണം / ക്ലേ മോഡലിംഗ്",
-    "category": "HSS General",
-    "venue_id": 14,
+    "title": "Kadharachana (Story) Sanskrit HS",
+    "category": "HS Sanskrit",
+    "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "11:30 am"
   },
   {
     "code": "134",
-    "title": "സംസ്കൃതം പ്രശ്നോത്തരി UP/HS",
-    "category": "UP Sanskrit",
-    "venue_id": 15,
+    "title": "Kadharachana (Story) Sanskrit HSS",
+    "category": "HSS General",
+    "venue_id": 10,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "11:30 am"
   },
   {
     "code": "135",
-    "title": "അറബിക് പ്രശ്നോത്തരി LP/UP/HS",
-    "category": "LP Arabic",
+    "title": "Kavitharachana (Poem) Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 11,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "136",
+    "title": "Kavitharachana (Poem) Sanskrit HS",
+    "category": "HS Sanskrit",
+    "venue_id": 11,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "137",
+    "title": "Kavitharachana (Poem) Sanskrit HSS",
+    "category": "HSS General",
+    "venue_id": 11,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "138",
+    "title": "Samasyapooranam Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 12,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "139",
+    "title": "Samasyapooranam Sanskrit HS",
+    "category": "HS Sanskrit",
+    "venue_id": 12,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "140",
+    "title": "Essay Writing - English HS",
+    "category": "HS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "141",
+    "title": "Essay Writing - English HSS",
+    "category": "HSS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "142",
+    "title": "Poem Writing - English UP",
+    "category": "UP General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "143",
+    "title": "Poem Writing - English HS",
+    "category": "HS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "144",
+    "title": "Poem Writing - English HSS",
+    "category": "HSS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "145",
+    "title": "Story Writing - English HS",
+    "category": "HS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "146",
+    "title": "Story Writing - English HSS",
+    "category": "HSS General",
+    "venue_id": 13,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "147",
+    "title": "Story Writing - Kannada & Tamil HS",
+    "category": "HS General",
+    "venue_id": 14,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "148",
+    "title": "Poem Writing - Tamil HS",
+    "category": "HS General",
+    "venue_id": 14,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "149",
+    "title": "Story Writing - Hindi UP",
+    "category": "UP General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "150",
+    "title": "Story Writing - Hindi HS",
+    "category": "HS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "151",
+    "title": "Story Writing - Hindi HSS",
+    "category": "HSS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "152",
+    "title": "Essay Writing - Hindi HS",
+    "category": "HS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "153",
+    "title": "Essay Writing - Hindi HSS",
+    "category": "HSS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "154",
+    "title": "Poem Writing - Hindi HS",
+    "category": "HS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "155",
+    "title": "Poem Writing - Hindi HSS",
+    "category": "HSS General",
+    "venue_id": 15,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "156",
+    "title": "Chithra Rachana Pencil LP",
+    "category": "LP General",
     "venue_id": 16,
     "day": "2026-11-17",
-    "scheduled_time": "09.30 am"
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "157",
+    "title": "Water Colouring LP",
+    "category": "LP General",
+    "venue_id": 16,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "158",
+    "title": "Chithra Rachana Pencil UP",
+    "category": "UP General",
+    "venue_id": 17,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "159",
+    "title": "Water Colouring UP",
+    "category": "UP General",
+    "venue_id": 17,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "160",
+    "title": "Chithra Rachana Pencil HS",
+    "category": "HS General",
+    "venue_id": 18,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "161",
+    "title": "Chithra Rachana Pencil HSS",
+    "category": "HSS General",
+    "venue_id": 18,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "162",
+    "title": "Water Colouring HS",
+    "category": "HS General",
+    "venue_id": 18,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "163",
+    "title": "Water Colouring HSS",
+    "category": "HSS General",
+    "venue_id": 18,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "164",
+    "title": "Oil Painting HS",
+    "category": "HS General",
+    "venue_id": 19,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "165",
+    "title": "Oil Painting HSS",
+    "category": "HSS General",
+    "venue_id": 19,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "166",
+    "title": "Cartoon Rachana HS",
+    "category": "HS General",
+    "venue_id": 19,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "167",
+    "title": "Cartoon Rachana HSS",
+    "category": "HSS General",
+    "venue_id": 19,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "168",
+    "title": "Collage Nirmanam HSS",
+    "category": "HSS General",
+    "venue_id": 19,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "169",
+    "title": "Story Writing - Malayalam UP",
+    "category": "UP General",
+    "venue_id": 20,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "170",
+    "title": "Story Writing - Malayalam HS",
+    "category": "HS General",
+    "venue_id": 20,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "171",
+    "title": "Poem Writing - Malayalam UP",
+    "category": "UP General",
+    "venue_id": 20,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "172",
+    "title": "Poem Writing - Malayalam HS",
+    "category": "HS General",
+    "venue_id": 20,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "173",
+    "title": "Essay Writing - Malayalam HS",
+    "category": "HS General",
+    "venue_id": 20,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "174",
+    "title": "Story Writing - Malayalam HSS",
+    "category": "HSS General",
+    "venue_id": 21,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "175",
+    "title": "Poem Writing - Malayalam HSS",
+    "category": "HSS General",
+    "venue_id": 21,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "176",
+    "title": "Essay Writing - Malayalam HSS",
+    "category": "HSS General",
+    "venue_id": 21,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "177",
+    "title": "Story Writing - Urdu HS",
+    "category": "HS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "178",
+    "title": "Story Writing - Urdu HSS",
+    "category": "HSS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "179",
+    "title": "Poem Writing - Urdu HS",
+    "category": "HS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "180",
+    "title": "Poem Writing - Urdu HSS",
+    "category": "HSS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "181",
+    "title": "Essay Writing - Urdu HS",
+    "category": "HS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "182",
+    "title": "Essay Writing - Urdu HSS",
+    "category": "HSS General",
+    "venue_id": 22,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "183",
+    "title": "Arabic Quiz LP",
+    "category": "LP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "184",
+    "title": "Arabic Quiz UP",
+    "category": "UP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "185",
+    "title": "Arabic Handwriting LP",
+    "category": "LP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "10:00 am"
+  },
+  {
+    "code": "186",
+    "title": "Arabic Aksharakkali / Word Game LP",
+    "category": "LP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "10:30 am"
+  },
+  {
+    "code": "187",
+    "title": "Arabic Translation UP",
+    "category": "UP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "11:00 am"
+  },
+  {
+    "code": "188",
+    "title": "Arabic Padakeli UP",
+    "category": "UP Arabic",
+    "venue_id": 23,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "189",
+    "title": "Story Writing - Arabic HS",
+    "category": "HS Arabic",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "190",
+    "title": "Story Writing - Arabic HSS",
+    "category": "HSS General",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "191",
+    "title": "Poem Writing - Arabic HS",
+    "category": "HS Arabic",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "192",
+    "title": "Poem Writing - Arabic HSS",
+    "category": "HSS General",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "193",
+    "title": "Essay Writing - Arabic HS",
+    "category": "HS Arabic",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "194",
+    "title": "Essay Writing - Arabic HSS",
+    "category": "HSS General",
+    "venue_id": 24,
+    "day": "2026-11-17",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "195",
+    "title": "Arabic Prashnothari (Quiz) HS",
+    "category": "HS Arabic",
+    "venue_id": 25,
+    "day": "2026-11-17",
+    "scheduled_time": "09:30 am"
+  },
+  {
+    "code": "196",
+    "title": "Arabic Note / Caption Writing HS",
+    "category": "HS Arabic",
+    "venue_id": 25,
+    "day": "2026-11-17",
+    "scheduled_time": "10:00 am"
+  },
+  {
+    "code": "197",
+    "title": "Arabic Translation HS",
+    "category": "HS Arabic",
+    "venue_id": 25,
+    "day": "2026-11-17",
+    "scheduled_time": "10:30 am"
+  },
+  {
+    "code": "198",
+    "title": "Arabic Poster Making HS",
+    "category": "HS Arabic",
+    "venue_id": 25,
+    "day": "2026-11-17",
+    "scheduled_time": "11:00 am"
+  },
+  {
+    "code": "199",
+    "title": "Arabic Dictionary Making HS",
+    "category": "HS Arabic",
+    "venue_id": 25,
+    "day": "2026-11-17",
+    "scheduled_time": "11:30 am"
   },
   {
     "code": "201",
-    "title": "സംഘഗാനം LP",
-    "category": "LP General",
+    "title": "Sanghagaanam UP / HS",
+    "category": "HS General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "09:00 am"
   },
   {
     "code": "202",
-    "title": "സംഘഗാനം UP",
-    "category": "UP General",
+    "title": "Sanghagaanam LP",
+    "category": "LP General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "10.00 am"
+    "scheduled_time": "10:10 am"
   },
   {
     "code": "203",
-    "title": "സംഘഗാനം HS",
-    "category": "HS General",
+    "title": "Sanghagaanam HSS",
+    "category": "HSS General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "11.00 am"
+    "scheduled_time": "10:40 am"
   },
   {
     "code": "204",
-    "title": "സംഘഗാനം HSS",
-    "category": "HSS General",
+    "title": "Deshabhakthigaanam UP",
+    "category": "UP General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "12.00 pm"
+    "scheduled_time": "11:00 am"
   },
   {
     "code": "205",
-    "title": "മാപ്പിളപ്പാട്ട് സംഘം UP",
-    "category": "UP Arabic",
+    "title": "Deshabhakthigaanam HS",
+    "category": "HS General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "01.00 pm"
+    "scheduled_time": "11:50 am"
   },
   {
     "code": "206",
-    "title": "മാപ്പിളപ്പാട്ട് സംഘം HS",
-    "category": "HS Arabic",
+    "title": "Kuchuppudi HS (G)",
+    "category": "HS General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "02.00 pm"
+    "scheduled_time": "12:10 pm"
   },
   {
     "code": "207",
-    "title": "മാപ്പിളപ്പാട്ട് സംഘം HSS",
-    "category": "HSS General",
+    "title": "Kuchuppudi UP",
+    "category": "UP General",
     "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "03.00 pm"
+    "scheduled_time": "01:50 pm"
   },
   {
     "code": "208",
-    "title": "ദേശഭക്തിഗാനം LP/UP/HS/HSS",
+    "title": "Keralanadanam HS (G)",
     "category": "HS General",
-    "venue_id": 2,
+    "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "02:30 pm"
   },
   {
     "code": "209",
-    "title": "ലളിതഗാനം LP/UP/HS/HSS",
-    "category": "UP General",
-    "venue_id": 2,
+    "title": "Keralanadanam HSS (G)",
+    "category": "HSS General",
+    "venue_id": 1,
     "day": "2026-11-18",
-    "scheduled_time": "11.00 am"
+    "scheduled_time": "04:15 pm"
   },
   {
     "code": "210",
-    "title": "ശാസ്തീയ സംഗീതം UP/HS/HSS",
+    "title": "English Skit HS",
     "category": "HS General",
     "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "09:00 am"
   },
   {
     "code": "211",
-    "title": "കഥകളി സംഗീതം / അഷ്ടപദി",
-    "category": "HS Sanskrit",
+    "title": "English Skit HSS",
+    "category": "HSS General",
     "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "01.00 pm"
+    "scheduled_time": "09:50 am"
   },
   {
     "code": "212",
-    "title": "ഒപ്പന UP",
-    "category": "UP Arabic",
-    "venue_id": 4,
+    "title": "English Skit UP",
+    "category": "UP General",
+    "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "10:20 am"
   },
   {
     "code": "213",
-    "title": "ഒപ്പന HS",
-    "category": "HS Arabic",
-    "venue_id": 4,
+    "title": "Prasangam English UP",
+    "category": "UP General",
+    "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "11.30 am"
+    "scheduled_time": "10:40 am"
   },
   {
     "code": "214",
-    "title": "ഒപ്പന HSS",
-    "category": "HSS General",
-    "venue_id": 4,
+    "title": "Prasangam English HS",
+    "category": "HS General",
+    "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "02.00 pm"
+    "scheduled_time": "11:00 am"
   },
   {
     "code": "215",
-    "title": "മാർഗ്ഗംകളി UP/HS/HSS",
-    "category": "HS General",
-    "venue_id": 5,
+    "title": "Prasangam English HSS",
+    "category": "HSS General",
+    "venue_id": 3,
     "day": "2026-11-18",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "11:30 am"
+  },
+  {
+    "code": "216",
+    "title": "English Poem Recitation HS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-18",
+    "scheduled_time": "12:10 pm"
+  },
+  {
+    "code": "217",
+    "title": "English Poem Recitation HSS",
+    "category": "HSS General",
+    "venue_id": 3,
+    "day": "2026-11-18",
+    "scheduled_time": "01:30 pm"
+  },
+  {
+    "code": "218",
+    "title": "English Poem Recitation UP",
+    "category": "UP General",
+    "venue_id": 3,
+    "day": "2026-11-18",
+    "scheduled_time": "02:00 pm"
+  },
+  {
+    "code": "219",
+    "title": "Arabic Recitation & Cultural Items",
+    "category": "HS Arabic",
+    "venue_id": 9,
+    "day": "2026-11-18",
+    "scheduled_time": "09:00 am"
   },
   {
     "code": "301",
-    "title": "തിരുവാതിരക്കളി UP",
-    "category": "UP General",
+    "title": "Mohiniyattam HS",
+    "category": "HS General",
     "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "09:00 am"
   },
   {
     "code": "302",
-    "title": "തിരുവാതിരക്കളി HS",
-    "category": "HS General",
+    "title": "Mohiniyattam HSS",
+    "category": "HSS General",
     "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "11.00 am"
+    "scheduled_time": "09:40 am"
   },
   {
     "code": "303",
-    "title": "തിരുവാതിരക്കളി HSS",
+    "title": "Thiruvathirakkali HSS",
     "category": "HSS General",
     "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "01.30 pm"
+    "scheduled_time": "09:50 am"
   },
   {
     "code": "304",
-    "title": "ഡഫ്മുട്ട് UP/HS/HSS",
-    "category": "HS Arabic",
-    "venue_id": 2,
+    "title": "Thiruvathirakkali UP",
+    "category": "UP General",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "10:00 am"
   },
   {
     "code": "305",
-    "title": "കോൽക്കളി UP/HS/HSS",
-    "category": "HS Arabic",
-    "venue_id": 2,
+    "title": "Margamkali HS",
+    "category": "HS General",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "01.00 pm"
+    "scheduled_time": "10:15 am"
   },
   {
     "code": "306",
-    "title": "പ്രസംഗം മലയാളം LP/UP/HS/HSS",
-    "category": "UP General",
-    "venue_id": 5,
+    "title": "Margamkali HSS",
+    "category": "HSS General",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "10:50 am"
   },
   {
     "code": "307",
-    "title": "പ്രസംഗം ഇംഗ്ലീഷ് UP/HS/HSS",
-    "category": "HS General",
-    "venue_id": 6,
+    "title": "Oppana UP",
+    "category": "UP Arabic",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "11:20 am"
   },
   {
     "code": "308",
-    "title": "പ്രസംഗം ഹിന്ദി UP/HS/HSS",
+    "title": "Oppana HSS",
     "category": "HSS General",
-    "venue_id": 7,
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "12:05 pm"
   },
   {
     "code": "309",
-    "title": "പ്രസംഗം സംസ്കൃതം UP/HS",
-    "category": "UP Sanskrit",
-    "venue_id": 8,
+    "title": "Oppana HS",
+    "category": "HS Arabic",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "12:15 pm"
   },
   {
     "code": "310",
-    "title": "പ്രസംഗം അറബിക് LP/UP/HS",
-    "category": "LP Arabic",
-    "venue_id": 9,
+    "title": "Thiruvathirakkali HS",
+    "category": "HS General",
+    "venue_id": 1,
     "day": "2026-11-19",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "01:00 pm"
   },
   {
     "code": "311",
-    "title": "ബാൻഡ് മേളം (Band Display)",
+    "title": "Kavithaparayanam Malayalam HSS",
+    "category": "HSS General",
+    "venue_id": 3,
+    "day": "2026-11-19",
+    "scheduled_time": "09:00 am"
+  },
+  {
+    "code": "312",
+    "title": "Kavithaparayanam Malayalam UP",
+    "category": "UP General",
+    "venue_id": 3,
+    "day": "2026-11-19",
+    "scheduled_time": "09:40 am"
+  },
+  {
+    "code": "313",
+    "title": "Kavithaparayanam Malayalam HS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-19",
+    "scheduled_time": "11:40 am"
+  },
+  {
+    "code": "314",
+    "title": "Kavithaparayanam Malayalam LP",
+    "category": "LP General",
+    "venue_id": 3,
+    "day": "2026-11-19",
+    "scheduled_time": "12:30 pm"
+  },
+  {
+    "code": "315",
+    "title": "Prasangam & Recitation (Arabic)",
+    "category": "HS Arabic",
+    "venue_id": 9,
+    "day": "2026-11-19",
+    "scheduled_time": "09:00 am"
+  },
+  {
+    "code": "316",
+    "title": "Band Display (Band Melam) HS",
     "category": "HS General",
     "venue_id": 26,
     "day": "2026-11-19",
-    "scheduled_time": "11.00 am"
+    "scheduled_time": "11:00 am"
   },
   {
     "code": "401",
-    "title": "കവിതാപാരായണം മലയാളം LP/UP/HS/HSS",
-    "category": "LP General",
-    "venue_id": 1,
+    "title": "Vanchippattu HS",
+    "category": "HS General",
+    "venue_id": 2,
     "day": "2026-11-20",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "01:30 pm"
   },
   {
     "code": "402",
-    "title": "അക്ഷരശ്ലോകം / കാവ്യകേളി",
-    "category": "HS Sanskrit",
-    "venue_id": 2,
+    "title": "Chenda / Maddalam HS",
+    "category": "HS General",
+    "venue_id": 3,
     "day": "2026-11-20",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "09:00 am"
   },
   {
     "code": "403",
-    "title": "ഗാനാലാപനം / കവിത സംസ്കൃതം",
-    "category": "UP Sanskrit",
+    "title": "Chendamelam HSS",
+    "category": "HSS General",
     "venue_id": 3,
     "day": "2026-11-20",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "09:30 am"
   },
   {
     "code": "404",
-    "title": "ഖുർആൻ പാരായണം / അറബിക് ഗാനം",
+    "title": "Melam HS",
+    "category": "HS General",
+    "venue_id": 3,
+    "day": "2026-11-20",
+    "scheduled_time": "10:00 am"
+  },
+  {
+    "code": "405",
+    "title": "Recitation / Quran Parayanam LP",
+    "category": "LP Arabic",
+    "venue_id": 4,
+    "day": "2026-11-20",
+    "scheduled_time": "09:00 am"
+  },
+  {
+    "code": "406",
+    "title": "Recitation / Quran Parayanam UP",
     "category": "UP Arabic",
     "venue_id": 4,
     "day": "2026-11-20",
-    "scheduled_time": "09.00 am"
+    "scheduled_time": "11:00 am"
+  },
+  {
+    "code": "407",
+    "title": "Recitation / Quran Parayanam HS",
+    "category": "HS Arabic",
+    "venue_id": 4,
+    "day": "2026-11-20",
+    "scheduled_time": "12:05 pm"
+  },
+  {
+    "code": "408",
+    "title": "Recitation HSS",
+    "category": "HSS General",
+    "venue_id": 4,
+    "day": "2026-11-20",
+    "scheduled_time": "12:10 pm"
+  },
+  {
+    "code": "409",
+    "title": "Padyam Chollal Sanskrit UP",
+    "category": "UP Sanskrit",
+    "venue_id": 5,
+    "day": "2026-11-20",
+    "scheduled_time": "09:00 am"
+  },
+  {
+    "code": "410",
+    "title": "Padyam Chollal Sanskrit HSS",
+    "category": "HSS General",
+    "venue_id": 5,
+    "day": "2026-11-20",
+    "scheduled_time": "09:25 am"
+  },
+  {
+    "code": "411",
+    "title": "Kathakali Sangeetham UP",
+    "category": "UP General",
+    "venue_id": 5,
+    "day": "2026-11-20",
+    "scheduled_time": "11:40 am"
+  },
+  {
+    "code": "412",
+    "title": "Kathakali Sangeetham HS",
+    "category": "HS General",
+    "venue_id": 5,
+    "day": "2026-11-20",
+    "scheduled_time": "12:10 pm"
+  },
+  {
+    "code": "413",
+    "title": "Kathaprasangam HS",
+    "category": "HS General",
+    "venue_id": 5,
+    "day": "2026-11-20",
+    "scheduled_time": "02:30 pm"
   }
 ]

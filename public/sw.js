@@ -33,7 +33,6 @@ const PRECACHE_FLEET = [
   'venues-stage/24/',
   'venues-stage/25/',
   'venues-stage/26/',
-  'venues-stage/26/',
   'facilities/',
   'facilities-green-room/',
   'facilities-toilet/',

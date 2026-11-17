@@ -343,3 +343,13 @@ html.dark .stage-live-card .stage-state[data-state="BREAK"]{background:rgba(146,
   background:var(--accent);
   box-shadow:0 0 0 3px var(--accent-bg);
 }
+
+/* Tiny Accuracy Disclaimer Banner */
+.disclaimer-banner{
+  width:100%;padding:.35rem 1rem;
+  background:var(--bg-alt);
+  border-bottom:1px solid var(--border);
+  color:var(--muted);
+  font-size:.74rem;font-weight:500;line-height:1.35;text-align:center;
+}
+@media(min-width:640px){.disclaimer-banner{padding:.35rem 2rem;font-size:.78rem}}

@@ -46,12 +46,6 @@ const navKey = (k: string) => `nav.${k}`;
 <link rel="icon" type="image/webp" href={BASE + 'assets/img/logo.webp'}>
 <script is:inline>try{if(localStorage.getItem('kal_theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}</script>
 <script is:inline src={BASE + 'assets/js/lang.js?v=' + VERSION}></script>
-<style>
-  
-  }
-  
-  }
-</style>
 </head>
 <body data-nav={active} data-base={BASE} data-api={API_BASE}>
 <script is:inline src={BASE + 'config.js'}></script>
@@ -97,6 +91,7 @@ const navKey = (k: string) => `nav.${k}`;
       </button>
     </div>
   <div class="dev-banner" role="status" aria-live="polite"><span class="dev-banner-dot" aria-hidden="true"></span><span data-i18n="banner.dev">This website is under active development — schedules and features are being updated.</span></div>
+<div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
 <main id="main"><slot /></main>
 <footer class="ftr">
   <div class="ftr-in">
