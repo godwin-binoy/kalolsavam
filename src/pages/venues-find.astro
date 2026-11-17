@@ -2,7 +2,8 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
 import { FESTIVAL_SCHEDULE } from '../data/schedule';
-import { url } from '../lib/url';
+import stages from '../data/stages.json';
+import { BASE, url } from '../lib/url';
 
 const CATEGORIES = [
   { slug: "lp-general", name: "LP General", tone: "blue" },
@@ -18,22 +19,30 @@ const CATEGORIES = [
 
 const categoryTiles = CATEGORIES.map((c) => {
   const count = FESTIVAL_SCHEDULE.filter((it) => it.cat === c.name).length;
-  return {
-    ...c,
-    count,
-  };
+  return { ...c, count };
 });
+
+const venueMap: Record<number, { name: string; loc: string }> = {};
+for (const s of stages) {
+  venueMap[s.n] = { name: s.name, loc: s.loc };
+}
+
+const allScheduleItems = FESTIVAL_SCHEDULE.map((it) => ({
+  ...it,
+  venue_name: venueMap[it.venue_n]?.name || `Venue ${it.venue_n}`,
+  venue_loc: venueMap[it.venue_n]?.loc || '',
+}));
 ---
 <BaseLayout title="Find Venue by Item | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Categories" title="Find Venue by Item" intro="Select a category below to explore its scheduled competitions, venues, and timings." />
+    <PageHead badge="Categories & Items" title="Find Venue by Item" intro="Select a category below or search any item name to view its competition venue, blueprints, and schedule." />
 
     <!-- Search Input -->
     <div class="card-base" style="margin-bottom:2rem;padding:1.25rem">
-      <input id="q-global" type="search" class="inp" placeholder="Search category name — e.g. LP, UP, HS, HSS, Sanskrit, Arabic…" autocomplete="off">
+      <input id="q-global" type="search" class="inp" placeholder="Search by item name or category — e.g. Oppana, Bharathanatyam, Sanskrit, LP…" autocomplete="off">
     </div>
 
-    <!-- Compact Squircle Category Buttons -->
+    <!-- Category Squircle Buttons -->
     <div id="cat-tiles-grid" class="cat-grid">
       {categoryTiles.map((c) => (
         <a href={url(`/category/${c.slug}`)} class={`cat-tile banner-${c.tone}`} data-cat-text={`${c.name} ${c.slug}`.toLowerCase()}>
@@ -46,7 +55,29 @@ const categoryTiles = CATEGORIES.map((c) => {
       ))}
     </div>
 
-    <p id="empty-cat-cards" class="text-muted center" style="margin-top:3rem" hidden>No matching categories found.</p>
+    <!-- Direct Matching Item Results Grid (Shown when searching) -->
+    <div id="direct-items-grid" class="grid-3" style="margin-top:2rem;gap:1.25rem;display:none">
+      {allScheduleItems.map((it) => (
+        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card direct-item-card" data-item-search={`${it.item} ${it.cat} ${it.venue_name} ${it.venue_loc}`.toLowerCase()} style="text-decoration:none;color:inherit;display:none">
+          <div class="fest-header banner-blue" style="padding:.9rem 1.15rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
+              <span style="font-size:.72rem;padding:.15rem .55rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">Venue #{it.venue_n}</span>
+              <span style="font-size:.72rem;opacity:.9">{it.cat}</span>
+            </div>
+            <h3 class="fest-title" style="font-size:1.05rem">{it.item}</h3>
+          </div>
+          <div class="fest-body" style="padding:.9rem 1.1rem;gap:.4rem;font-size:.85rem">
+            <div><strong>Venue:</strong> {it.venue_name}</div>
+            <div class="text-muted xs">{it.venue_loc}</div>
+            <div style="margin-top:auto;color:var(--brand);font-weight:700;font-size:.8rem;padding-top:.4rem;border-top:1px solid var(--border)">
+              View Venue Blueprints &rarr;
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+
+    <p id="empty-cat-cards" class="text-muted center" style="margin-top:3rem" hidden>No matching items or categories found.</p>
   </div>
 
   <style>
@@ -79,9 +110,6 @@ const categoryTiles = CATEGORIES.map((c) => {
       transform: translateY(-3px) scale(1.015);
       box-shadow: 0 14px 28px -8px rgba(0, 0, 0, 0.35);
     }
-    .cat-tile:active {
-      transform: translateY(-1px) scale(0.985);
-    }
     .tile-content {
       display: flex;
       flex-direction: column;
@@ -97,7 +125,6 @@ const categoryTiles = CATEGORIES.map((c) => {
       padding: 0.2rem 0.65rem;
       border-radius: 999px;
       width: fit-content;
-      line-height: 1.2;
     }
     .tile-title {
       font-family: Georgia, 'Times New Roman', serif;
@@ -114,41 +141,54 @@ const categoryTiles = CATEGORIES.map((c) => {
       font-size: 1.5rem;
       font-weight: 700;
       opacity: 0.85;
-      transition: transform 0.18s ease, opacity 0.18s ease;
+      transition: transform 0.18s ease;
       flex-shrink: 0;
       margin-left: 0.75rem;
-    }
-    .cat-tile:hover .tile-arrow {
-      transform: translateX(4px);
-      opacity: 1;
     }
   </style>
 
   <script is:inline>
     (function(){
       var q = document.getElementById('q-global');
-      var grid = document.getElementById('cat-tiles-grid');
+      var tileGrid = document.getElementById('cat-tiles-grid');
+      var itemGrid = document.getElementById('direct-items-grid');
       var emp = document.getElementById('empty-cat-cards');
-      if (!q || !grid) return;
-      var tiles = Array.from(grid.querySelectorAll('.cat-tile'));
+      if (!q) return;
+
+      var tiles = Array.from(tileGrid.querySelectorAll('.cat-tile'));
+      var itemCards = Array.from(itemGrid.querySelectorAll('.direct-item-card'));
 
       q.addEventListener('input', function(){
         var val = q.value.trim().toLowerCase();
         var tokens = val.split(/\s+/).filter(Boolean);
-        var visibleCount = 0;
 
-        tiles.forEach(function(tile){
-          var txt = tile.getAttribute('data-cat-text') || '';
-          var matches = (!tokens.length) || tokens.every(function(t){ return txt.indexOf(t) >= 0; });
-          if (matches){
-            tile.style.display = 'flex';
-            visibleCount++;
-          } else {
-            tile.style.display = 'none';
-          }
+        if (!tokens.length){
+          tiles.forEach(function(t){ t.style.display = 'flex'; });
+          tileGrid.style.display = 'grid';
+          itemGrid.style.display = 'none';
+          itemCards.forEach(function(c){ c.style.display = 'none'; });
+          if (emp) emp.hidden = true;
+          return;
+        }
+
+        var visibleTiles = 0;
+        tiles.forEach(function(t){
+          var txt = t.getAttribute('data-cat-text') || '';
+          var matches = tokens.every(function(tk){ return txt.indexOf(tk) >= 0; });
+          t.style.display = matches ? 'flex' : 'none';
+          if (matches) visibleTiles++;
         });
 
-        if (emp) emp.hidden = visibleCount > 0;
+        var visibleItems = 0;
+        itemCards.forEach(function(c){
+          var txt = c.getAttribute('data-item-search') || '';
+          var matches = tokens.every(function(tk){ return txt.indexOf(tk) >= 0; });
+          c.style.display = matches ? 'flex' : 'none';
+          if (matches) visibleItems++;
+        });
+
+        itemGrid.style.display = visibleItems > 0 ? 'grid' : 'none';
+        if (emp) emp.hidden = (visibleTiles + visibleItems) > 0;
       });
     })();
   </script>

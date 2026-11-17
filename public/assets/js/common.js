@@ -73,12 +73,15 @@
     var html = document.documentElement, themeBtn = el('theme'), menu = el('menu'),
         mnav = el('mnav'), header = document.querySelector('.hdr'), dock = document.querySelector('.utility-dock');
 
-    if (themeBtn) {
-      themeBtn.addEventListener('click', function () {
-        var dark = html.classList.toggle('dark');
-        try { localStorage.setItem('kal_theme', dark ? 'dark' : 'light'); } catch (e) {}
-      });
-    }
+    // Resilient theme toggle using event delegation on document
+    document.addEventListener('click', function (ev) {
+      var btn = ev.target && ev.target.closest ? ev.target.closest('#theme') : null;
+      if (btn) {
+        ev.preventDefault();
+        var isDark = document.documentElement.classList.toggle('dark');
+        try { localStorage.setItem('kal_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+      }
+    }, true);
 
     if (menu && mnav) {
       function closeDrawer() {

@@ -1,10 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHead from '../../components/PageHead.astro';
-import Card from '../../components/Card.astro';
 import { FESTIVAL_SCHEDULE } from '../../data/schedule';
 import stages from '../../data/stages.json';
-import { url } from '../../lib/url';
+import { BASE, url } from '../../lib/url';
 
 export function getStaticPaths() {
   const CATEGORIES = [
@@ -46,16 +45,16 @@ const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
       </a>
     </div>
 
-    <PageHead badge="Competition Category" title={name} intro={`${desc} · ${items.length} events scheduled.`} />
+    <PageHead badge="Competition Category" title={name} intro={`${desc} · ${items.length} events scheduled. Tap any item card to open its venue directions and blueprints.`} />
 
-    <!-- Live Search within Category -->
-    <div class="card-base" style="margin-bottom:2rem">
+    <!-- Live Filter within Category -->
+    <div class="card-base" style="margin-bottom:2rem;padding:1.15rem">
       <input id="q-cat" type="search" class="inp" placeholder={`Filter ${name} items by name, venue or timing…`} autocomplete="off">
     </div>
 
     <div id="items-grid" class="grid-3" style="gap:1.25rem">
       {items.map((it) => (
-        <div class="fest-card single-item-card" data-search-txt={`${it.item} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time}`.toLowerCase()}>
+        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card single-item-card" data-search-txt={`${it.item} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time}`.toLowerCase()} style="text-decoration:none;color:inherit">
           <div class={`fest-header banner-${tone}`} style="padding:1rem 1.25rem">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
               <span style="font-size:.72rem;padding:.2rem .65rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">
@@ -71,8 +70,12 @@ const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
             <div style="margin-top:.4rem;color:var(--accent);font-weight:600">
               ⏱ {it.day} · {it.time}
             </div>
+            <div style="margin-top:auto;display:flex;align-items:center;justify-content:space-between;color:var(--brand);font-weight:700;font-size:.82rem;border-top:1px solid var(--border);padding-top:.5rem">
+              <span>Open Venue Blueprints &amp; Map</span>
+              <span style="font-size:1.1rem">&rarr;</span>
+            </div>
           </div>
-        </div>
+        </a>
       ))}
     </div>
 

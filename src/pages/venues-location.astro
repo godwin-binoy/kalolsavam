@@ -1,9 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
-import Card from '../components/Card.astro';
-import ActionItem from '../components/ActionItem.astro';
 import stages from '../data/stages.json';
+import { BASE, url } from '../lib/url';
 
 const sortedVenues = [...stages].sort((a, b) => Number(a.n) - Number(b.n));
 ---
@@ -12,13 +11,27 @@ const sortedVenues = [...stages].sort((a, b) => Number(a.n) - Number(b.n));
     <PageHead badge="Locations & Blueprints" title="All 26 Festival Venues" intro="Complete list of competition stages and off-stage halls. Tap any venue for campus blueprints, floor layouts, directions, and schedule." />
     <div class="grid-3">
       {sortedVenues.map((s) => (
-        <Card title={s.name} badge={`Venue #${s.n}`} tone={s.kind === 'stage' ? 'rose' : 'blue'} icon={s.icon ? s.icon.replace('.svg', '') : 'map-pin'} href={`/venues-stage/${s.n}`}>
-          <p class="text-muted sm">{s.short}</p>
-          <div style="margin-bottom:.5rem;font-size:.82rem;color:var(--brand);font-weight:600">
-            📍 {s.building_name}
+        <a href={url(`/venues-stage/${s.n}`)} class="fest-card" data-tone={s.kind === 'stage' ? 'rose' : 'blue'} style="text-decoration:none;color:inherit">
+          <div class={`fest-header ${s.kind === 'stage' ? 'banner-rose' : 'banner-blue'}`}>
+            <span style="font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;opacity:.9;display:block;margin-bottom:.25rem">Venue #{s.n}</span>
+            <h3 class="fest-title" style="font-size:1.22rem;line-height:1.2">{s.name}</h3>
           </div>
-          <ActionItem href={`/venues-stage/${s.n}`} icon="map-pin" iconTone={s.kind === 'stage' ? 'c-rose' : 'c-blue'} title="Open Blueprints & Schedule" />
-        </Card>
+          <div class="fest-body">
+            <p class="text-muted sm" style="margin:0">{s.short}</p>
+            <div style="font-size:.85rem;color:var(--brand);font-weight:600">
+              📍 {s.building_name}
+            </div>
+            <div class="fest-action-item" style="margin-top:auto">
+              <span class="left">
+                <span class={`fest-item-icon ${s.kind === 'stage' ? 'c-rose' : 'c-blue'}`}>
+                  <span class="icn" style={`--icon-url:url('${BASE}assets/svg/map-pin.svg')`}></span>
+                </span>
+                <span>Open Blueprints &amp; Schedule</span>
+              </span>
+              <span class="fest-arrow" style={`--icon-url:url('${BASE}assets/svg/arrow-right.svg')`} aria-hidden="true"></span>
+            </div>
+          </div>
+        </a>
       ))}
     </div>
   </div>
