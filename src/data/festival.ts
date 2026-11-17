@@ -245,28 +245,29 @@ export const AUTO_DRIVERS: AutoDriver[] = [
 ];
 
 export const GREEN_ROOMS = [
-  { name: "Rooms G1 & G2", sub: "Boys · Annex 1st Floor", desc: "Dressing space for male participants in the HS General category.", loc: "Annex Block, 1st Floor, East Stairs" },
-  { name: "Rooms G3 & G4", sub: "Girls · Annex 1st Floor", desc: "Dressing space for female participants. Full-length mirrors and electrical points.", loc: "Annex Block, 1st Floor, West Stairs" },
-  { name: "Rooms G5 & G6", sub: "Common · Annex 1st Floor", desc: "Shared rooms for HSS General and team items.", loc: "Annex Block, 1st Floor, North Wing" },
+  { name: "HS Block Green Rooms", sub: "Boys & Girls · Ground & 1st Floor", desc: "Designated dressing rooms in the High School building for HS & UP participants with full-length mirrors and power outlets.", loc: "High School Block (Near Rooms 5A–7B)" },
+  { name: "HSS Block Green Rooms", sub: "Boys & Girls · 1st & 2nd Floor", desc: "Spacious green rooms for Higher Secondary general & dance items, near Seminar Hall and A1/B1 classes.", loc: "HSS Block (Near A1/B1 & Seminar Hall)" },
+  { name: "GMLPS Mala Green Rooms", sub: "LP & UP Categories", desc: "Dedicated dressing rooms for Lower Primary and Upper Primary participants at GMLPS Mala compound.", loc: "GMLPS Mala Campus (Adjacent Compound)" },
 ];
 
 export const TOILET_BLOCKS = [
-  { name: "Block A", sub: "Main Block · Ground Floor", desc: "Main washroom block. Separate sections for boys and girls.", loc: "Main Block, GF, North Corridor" },
-  { name: "Block B", sub: "Annex Block · 1st Floor", desc: "Nearest washroom to the green rooms.", loc: "Annex Block, 1st Floor, Next to G3" },
-  { name: "Block C", sub: "Ground Wing · Near Stage 2", desc: "Open-air stage side washroom.", loc: "Ground Wing, East of Stage 2" },
+  { name: "HS Block Washrooms", sub: "Separate Boys & Girls", desc: "Full-capacity washrooms for boys and girls located in the High School building.", loc: "HS Block (East & West wings)" },
+  { name: "HSS Block Washrooms", sub: "Separate Boys & Girls", desc: "Modern washrooms for boys and girls located in the Higher Secondary block.", loc: "HSS Block (Ground & Upper floors)" },
+  { name: "GMLPS Mala Washrooms", sub: "Students & Escort Staff", desc: "Dedicated clean toilet facilities at GMLPS Mala compound.", loc: "GMLPS Mala Ground Floor" },
 ];
 
 export const WATER_STATIONS = [
-  { name: "Station W1", sub: "Main Block · Ground Floor", desc: "Filtered RO drinking water cooler with disposable cups.", loc: "Main Block, GF, Central Verandah" },
-  { name: "Station W2", sub: "Annex Block · Near Green Rooms", desc: "Dedicated chilled water dispenser for stage performers.", loc: "Annex Block, Ground Floor Entrance" },
-  { name: "Station W3", sub: "Main Ground · Stage 1 Side", desc: "High-capacity water point for spectators and teams.", loc: "Main Ground, West Side near Canteen" },
-  { name: "Station W4", sub: "Dining Hall (Oottupura)", desc: "Filtered drinking water and handwash counters.", loc: "Main Block, GF, Dining Wing" },
+  { name: "HS Block Water Point", sub: "High School Verandah", desc: "Filtered RO drinking water dispenser with disposable cups.", loc: "HS Block Central Verandah" },
+  { name: "HSS Block Water Point", sub: "Higher Secondary Entrance", desc: "Continuous chilled RO drinking water dispenser.", loc: "HSS Block Ground Floor" },
+  { name: "GMLPS Mala Water Point", sub: "GMLPS Courtyard", desc: "Filtered drinking water station for performers and escorts.", loc: "GMLPS Mala Main Porch" },
+  { name: "Main Ground & Dining Wing", sub: "Stage 1 & Oottupura", desc: "High-capacity drinking water station for audiences and dining hall guests.", loc: "Near Main Ground Flagpost & Dining Hall" },
 ];
 
 export const DINING_HALLS = [
-  { name: "Main Oottupura", sub: "Lunch · 12:30 – 14:30", desc: "Free traditional meals for registered participants, escort teachers, and volunteers.", loc: "Main Block, Ground Floor, East Wing" },
+  { name: "Main Oottupura (Dining Hall)", sub: "Lunch · 12:30 – 14:30", desc: "Free traditional meals for registered participants, escort teachers, and festival volunteers.", loc: "Main Block, Ground Floor, East Wing" },
   { name: "Refreshment Counter", sub: "Light Snacks · All Day", desc: "Drinking water, lime juice, and light refreshments for performers between items.", loc: "Near Main Ground Flag Post" },
 ];
+
 
 export const LIVE_STREAMS: LiveStreamItem[] = [
   {

@@ -1,14 +1,251 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHead from '../../components/PageHead.astro';
+import Icon from '../../components/Icon.astro';
 import stages from '../../data/stages.json';
+import { FESTIVAL_SCHEDULE } from '../../data/schedule';
+import { BASE, url } from '../../lib/url';
 
 export function getStaticPaths() {
-  const STAGE_IDS = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 26]);
-  const stageItems = stages.filter(s => s.kind === 'stage' || STAGE_IDS.has(Number(s.n)));
-  return stageItems.map((s) => ({ params: { n: String(s.n) }, props: { stage: s } }));
+  return stages.map((s) => ({
+    params: { n: String(s.n) },
+    props: { stage: s },
+  }));
 }
+
 const { stage } = Astro.props;
+const isStage = stage.kind === 'stage';
+const cleanName = stage.name.replace(/^Venue \d+\s*-\s*/, '');
+
+const scheduledCompetitions = FESTIVAL_SCHEDULE.filter(
+  (it) => it.venue_n === Number(stage.n)
+);
 ---
-<BaseLayout title={`Stage ${stage.n} · ${stage.name} | Mala Kalolsavam`} active="venues">
-  <div class="main-container"></div>
+<BaseLayout title={`Venue ${stage.n}: ${cleanName} | Mala Kalolsavam`} active="venues">
+  <div class="main-container">
+    <div style="margin-bottom:1.25rem">
+      <a href={url('/venues-location')} class="btn-link" style="color:var(--brand);font-weight:700">
+        &larr; Back to All Venues
+      </a>
+    </div>
+
+    <!-- 1. Venue Title & Stage Status -->
+    <div class="page-head" style="margin-bottom:1.5rem">
+      <div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem">
+        <span class={isStage ? "badge-live" : "badge-gov"}>
+          {isStage ? "Live Competition Stage" : "Off-stage Venue"}
+        </span>
+        <span class="badge-gov">Venue #{stage.n}</span>
+      </div>
+      <h1 class="page-title">{stage.name}</h1>
+      <p>{stage.building_name} · {stage.loc}</p>
+    </div>
+
+    <!-- Live Stage Tracker (If it's an on-stage venue) -->
+    {isStage && (
+      <section class="card-base live-stage-banner" style="margin-bottom:2rem;border-left:4px solid var(--accent)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;margin-bottom:.75rem">
+          <h2 style="font-size:1.15rem;margin:0">Live Stage Tracker</h2>
+          <span id="stage-status-badge" class="badge-live" data-state="IDLE">
+            <span class="live-dot"></span>
+            <span id="stage-status-label">IDLE</span>
+          </span>
+        </div>
+        <div class="grid-2" style="gap:1rem;font-size:.92rem">
+          <div style="padding:.75rem;background:var(--bg-alt);border-radius:8px">
+            <span class="text-muted xs" style="display:block;text-transform:uppercase;font-weight:700">Currently On Stage</span>
+            <div id="stage-now-val" style="font-size:1.05rem;font-weight:700;margin-top:.2rem">—</div>
+          </div>
+          <div style="padding:.75rem;background:var(--bg-alt);border-radius:8px">
+            <span class="text-muted xs" style="display:block;text-transform:uppercase;font-weight:700">Up Next (Queue)</span>
+            <div id="stage-queue-val" style="font-size:1.05rem;font-weight:700;margin-top:.2rem;color:var(--brand)">—</div>
+          </div>
+        </div>
+        <div id="stage-announcement-box" style="margin-top:.75rem;font-size:.85rem;color:var(--muted);display:none">
+          <strong>Announcement:</strong> <span id="stage-announcement-text"></span>
+        </div>
+      </section>
+    )}
+
+    <!-- 2. Directions & Blueprints Section -->
+    <section class="card-base" style="margin-bottom:2.5rem">
+      <div class="sec-head" style="margin-bottom:1.5rem">
+        <h2 style="font-size:1.35rem;margin-bottom:.35rem">Directions & Location Map</h2>
+        <p>Location blueprints and walking directions to {cleanName}.</p>
+      </div>
+
+      <!-- Google Maps Button -->
+      <div style="margin-bottom:1.75rem">
+        <a href={stage.google_map} target="_blank" rel="noopener" class="btn-primary" style="display:inline-flex;align-items:center;gap:.6rem">
+          <Icon name="map-pin" style="width:1.15rem;height:1.15rem" />
+          <span>Open in Google Maps &amp; Navigation</span>
+        </a>
+      </div>
+
+      <!-- Blueprints Grid -->
+      <div class="grid-2" style="gap:1.5rem">
+        <!-- Campus Building Blueprint -->
+        {stage.campus_blueprint && (
+          <div class="blueprint-card">
+            <div class="bp-header">
+              <strong>1. Building on Campus</strong>
+              <span class="text-muted xs">{stage.building_name}</span>
+            </div>
+            <div class="bp-img-wrapper">
+              <img src={BASE + 'assets/img/blueprints/' + stage.campus_blueprint} alt={`${stage.name} Building Map`} loading="lazy" />
+            </div>
+          </div>
+        )}
+
+        <!-- Room / Venue Layout Blueprint -->
+        {stage.room_blueprint && (
+          <div class="blueprint-card">
+            <div class="bp-header">
+              <strong>2. Floor &amp; Venue Layout</strong>
+              <span class="text-muted xs">{cleanName}</span>
+            </div>
+            <div class="bp-img-wrapper">
+              <img src={BASE + 'assets/img/blueprints/' + stage.room_blueprint} alt={`${stage.name} Room Blueprint`} loading="lazy" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {!stage.campus_blueprint && (
+        <div class="notice-box" style="padding:1.25rem;background:var(--bg-alt);border-radius:var(--radius-inner);border:1px solid var(--border)">
+          <strong>Off-Campus Venue:</strong>
+          <p class="text-muted sm" style="margin:.35rem 0 0">
+            {stage.n === 3 && "GMLPS Mala is in the adjacent school compound, directly accessible via the connecting gate (~2 min walk)."}
+            {stage.n === 7 && "Vyapara Bhavan Old Hall is located in Mala Town (~500m from St. Antony's HSS). Use the Google Maps navigation button above."}
+          </p>
+        </div>
+      )}
+    </section>
+
+    <!-- 3. Pre-Scheduled Competitions List -->
+    <section class="card-base">
+      <div class="sec-head" style="margin-bottom:1.25rem;display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap">
+        <div>
+          <h2 style="font-size:1.35rem;margin-bottom:.35rem">Scheduled Competitions</h2>
+          <p>Official timetable of items assigned to Venue #{stage.n}.</p>
+        </div>
+        <span class="badge-gov">{scheduledCompetitions.length} Items</span>
+      </div>
+
+      {scheduledCompetitions.length > 0 ? (
+        <div style="overflow-x:auto">
+          <table class="tbl minimal-tbl">
+            <thead>
+              <tr>
+                <th style="width:7.5rem">Time</th>
+                <th style="width:11rem">Day</th>
+                <th>Competition Item</th>
+                <th style="text-align:right">Category</th>
+              </tr>
+            </thead>
+            <tbody>
+              {scheduledCompetitions.map((it) => (
+                <tr>
+                  <td class="mono" style="font-weight:700;color:var(--brand)">{it.time}</td>
+                  <td class="text-muted sm">{it.day}</td>
+                  <td><strong>{it.item}</strong></td>
+                  <td style="text-align:right"><span class="badge-gov">{it.cat}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <p class="text-muted center" style="padding:2rem 0;margin:0">No competition items assigned to this venue yet.</p>
+      )}
+    </section>
+  </div>
+
+  <style>
+    .blueprint-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-inner);
+      overflow: hidden;
+      background: var(--surface);
+    }
+    .bp-header {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-alt);
+    }
+    .bp-img-wrapper {
+      padding: 1rem;
+      display: flex;
+      justify-content: center;
+      background: #ffffff;
+    }
+    html.dark .bp-img-wrapper {
+      background: #111821;
+    }
+    .bp-img-wrapper img {
+      max-height: 380px;
+      width: auto;
+      object-fit: contain;
+      border-radius: 6px;
+    }
+  </style>
+
+  {isStage && (
+    <script is:inline define:vars={{ venueId: Number(stage.n) }}>
+      (function(){
+        var K = window.Kal;
+        var badge = document.getElementById('stage-status-badge');
+        var label = document.getElementById('stage-status-label');
+        var nowEl = document.getElementById('stage-now-val');
+        var queueEl = document.getElementById('stage-queue-val');
+        var annBox = document.getElementById('stage-announcement-box');
+        var annTxt = document.getElementById('stage-announcement-text');
+
+        function fetchLiveStatus(){
+          if (!K) return;
+          K.fetchJSON('/api/v1/public/status').then(function(d){
+            var venues = (d && d.venues) || [];
+            var v = venues.find(function(x){ return Number(x.id) === venueId; });
+            if (!v) return;
+
+            var st = v.state || 'IDLE';
+            if (badge) badge.setAttribute('data-state', st);
+            if (label) label.textContent = st;
+
+            if (nowEl){
+              if (v.now){
+                var parts = [];
+                if (v.now.roll) parts.push('Chest #' + v.now.roll);
+                if (v.now.event) parts.push(v.now.event);
+                nowEl.innerHTML = parts.join(' · ');
+              } else {
+                nowEl.textContent = 'Idle';
+              }
+            }
+
+            if (queueEl){
+              var ups = (v.upcoming || []).slice(0, 4);
+              queueEl.innerHTML = ups.length ? ups.map(function(u){ return '#' + u.roll; }).join(', ') : 'None';
+            }
+
+            if (annBox && annTxt){
+              if (v.announcement && v.announcement.trim()){
+                annTxt.textContent = v.announcement;
+                annBox.style.display = 'block';
+              } else {
+                annBox.style.display = 'none';
+              }
+            }
+          }).catch(function(){});
+        }
+
+        if (K){
+          K.poll(fetchLiveStatus, 8000);
+        }
+      })();
+    </script>
+  )}
 </BaseLayout>
