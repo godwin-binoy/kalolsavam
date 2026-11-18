@@ -72,7 +72,7 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Hindi Padyam Chollal HSS", cat: "HSS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "10:20 AM" },
   { item: "Hindi Prasangam HS", cat: "HS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "10:40 AM" },
   { item: "Hindi Prasangam HSS", cat: "HSS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "11:00 AM" },
-  { item: "Hindi Sanghagaanam UP", cat: "UP General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "11:10 AM" },
+  { item: "Padyam Chollal Tamil HS", cat: "HS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "11:10 AM" },
   { item: "Urdu Sanghagaanam HS", cat: "HS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "12:30 PM" },
   { item: "Urdu Padyam Chollal UP", cat: "UP General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "01:30 PM" },
   { item: "Urdu Prasangam HSS", cat: "HSS General", venue_n: 6, day: "Wednesday (18.11.2026)", time: "01:45 PM" },

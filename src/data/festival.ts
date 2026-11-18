@@ -252,27 +252,27 @@ export const AUTO_DRIVERS: AutoDriver[] = [
 ];
 
 export const GREEN_ROOMS = [
-  { name: "HS Block Green Rooms", sub: "Boys & Girls · High School Block", desc: "Designated dressing and pre-stage waiting areas in the High School building for participants.", loc: "High School Block" },
-  { name: "HSS Block Green Rooms", sub: "Boys & Girls · Higher Secondary Block", desc: "Designated dressing and pre-stage waiting areas in the Higher Secondary building for participants.", loc: "HSS Block" },
-  { name: "GMLPS Mala Green Rooms", sub: "LP & UP Categories", desc: "Designated dressing and pre-stage waiting areas at GMLPS Mala compound.", loc: "GMLPS Mala Compound" },
+  { name: "HS Block Green Rooms", sub: "Boys & Girls · High School Block", desc: "Designated dressing and pre-stage waiting areas in the High School building for participants.", loc: "High School Block", blueprint: "Campus/HS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "HSS Block Green Rooms", sub: "Boys & Girls · Higher Secondary Block", desc: "Designated dressing and pre-stage waiting areas in the Higher Secondary building for participants.", loc: "HSS Block", blueprint: "Campus/HSS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "GMLPS Mala Green Rooms", sub: "LP & UP Categories", desc: "Designated dressing and pre-stage waiting areas at GMLPS Mala compound.", loc: "GMLPS Mala Compound", blueprint: "", map: "https://maps.google.com/?q=GMLPS+Mala+Thrissur+Kerala" },
 ];
 
 export const TOILET_BLOCKS = [
-  { name: "HS Block Washrooms", sub: "Separate Boys & Girls", desc: "Full-capacity washrooms for boys and girls located in the High School building.", loc: "HS Block (East & West wings)" },
-  { name: "HSS Block Washrooms", sub: "Separate Boys & Girls", desc: "Modern washrooms for boys and girls located in the Higher Secondary block.", loc: "HSS Block (Ground & Upper floors)" },
-  { name: "GMLPS Mala Washrooms", sub: "Students & Escort Staff", desc: "Dedicated clean toilet facilities at GMLPS Mala compound.", loc: "GMLPS Mala Ground Floor" },
+  { name: "HS Block Washrooms", sub: "Separate Boys & Girls", desc: "Full-capacity washrooms for boys and girls located in the High School building.", loc: "HS Block (East & West wings)", blueprint: "Campus/HS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "HSS Block Washrooms", sub: "Separate Boys & Girls", desc: "Modern washrooms for boys and girls located in the Higher Secondary block.", loc: "HSS Block (Ground & Upper floors)", blueprint: "Campus/HSS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "GMLPS Mala Washrooms", sub: "Students & Escort Staff", desc: "Dedicated clean toilet facilities at GMLPS Mala compound.", loc: "GMLPS Mala Ground Floor", blueprint: "", map: "https://maps.google.com/?q=GMLPS+Mala+Thrissur+Kerala" },
 ];
 
 export const WATER_STATIONS = [
-  { name: "HS Block Water Point", sub: "High School Verandah", desc: "Filtered RO drinking water dispenser with disposable cups.", loc: "HS Block Central Verandah" },
-  { name: "HSS Block Water Point", sub: "Higher Secondary Entrance", desc: "Continuous chilled RO drinking water dispenser.", loc: "HSS Block Ground Floor" },
-  { name: "GMLPS Mala Water Point", sub: "GMLPS Courtyard", desc: "Filtered drinking water station for performers and escorts.", loc: "GMLPS Mala Main Porch" },
-  { name: "Main Ground & Dining Wing", sub: "Stage 1 & Oottupura", desc: "High-capacity drinking water station for audiences and dining hall guests.", loc: "Near Main Ground Flagpost & Dining Hall" },
+  { name: "HS Block Water Point", sub: "High School Verandah", desc: "Filtered RO drinking water dispenser with disposable cups.", loc: "HS Block Central Verandah", blueprint: "Campus/HS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "HSS Block Water Point", sub: "Higher Secondary Entrance", desc: "Continuous chilled RO drinking water dispenser.", loc: "HSS Block Ground Floor", blueprint: "Campus/HSS.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "GMLPS Mala Water Point", sub: "GMLPS Courtyard", desc: "Filtered drinking water station for performers and escorts.", loc: "GMLPS Mala Main Porch", blueprint: "", map: "https://maps.google.com/?q=GMLPS+Mala+Thrissur+Kerala" },
+  { name: "Main Ground & Dining Wing", sub: "Stage 1 & Oottupura", desc: "High-capacity drinking water station for audiences and dining hall guests.", loc: "Near Main Ground Flagpost & Dining Hall", blueprint: "Campus/Gorund.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
 ];
 
 export const DINING_HALLS = [
-  { name: "Main Oottupura (Dining Hall)", sub: "Lunch · 12:30 – 14:30", desc: "Free traditional meals for registered participants, escort teachers, and festival volunteers.", loc: "Main Block, Ground Floor, East Wing" },
-  { name: "Refreshment Counter", sub: "Light Snacks · All Day", desc: "Drinking water, lime juice, and light refreshments for performers between items.", loc: "Near Main Ground Flag Post" },
+  { name: "Main Oottupura (Dining Hall)", sub: "Lunch · 12:30 – 14:30", desc: "Free traditional meals for registered participants, escort teachers, and festival volunteers.", loc: "Main Block, Ground Floor, East Wing", blueprint: "Campus/Gorund.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
+  { name: "Refreshment Counter", sub: "Light Snacks · All Day", desc: "Drinking water, lime juice, and light refreshments for performers between items.", loc: "Near Main Ground Flag Post", blueprint: "Campus/Gorund.png", map: "https://maps.google.com/?q=St.+Antony's+Higher+Secondary+School+Mala+Thrissur+Kerala" },
 ];
 
 

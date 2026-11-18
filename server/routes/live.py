@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..auth import check_stage, get_db, get_user_stages, has_role, require_staff
+from ..auth import check_stage, get_db, get_user_stages, has_role, require_photo_staff, require_staff
 from .public import invalidate_public_cache
 
 router = APIRouter()
@@ -76,13 +76,13 @@ def board(request: Request, user=Depends(require_staff)):
 
 
 @router.get("/stream")
-async def stream(request: Request, user=Depends(require_staff)):
+async def stream(request: Request, user=Depends(require_photo_staff)):
     if len(request.app.state.subscribers) >= _MAX_SSE_SUBSCRIBERS:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, "too_many_streams")
 
     async def gen():
         q: asyncio.Queue = asyncio.Queue(maxsize=128)
-        venues = None if has_role(user, "admin") else set(get_user_stages(user))
+        venues = None if has_role(user, "admin", "dataworker") else set(get_user_stages(user))
         request.app.state.subscribers[q] = venues
         try:
             yield "retry: 3000\nevent: hello\ndata: {}\n\n"

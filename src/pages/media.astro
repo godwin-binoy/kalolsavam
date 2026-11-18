@@ -4,48 +4,113 @@ import PageHead from '../components/PageHead.astro';
 ---
 <BaseLayout title="Media & Photos | Mala Kalolsavam" active="media">
   <div class="main-container">
-    <PageHead badge="Official Media" title="Download Your Stage Photos" intro="Enter your register number and name exactly as printed on your participation card." />
-    <div class="card-base" style="max-width:500px;margin:0 auto">
+    <PageHead badge="Official Media" title="Download Your Stage Photos" intro="Enter your register number and name to view and download your published stage photographs." />
+    <div class="card-base" style="max-width:520px;margin:0 auto">
       <form id="photo-lookup-form">
         <label style="display:block;margin-bottom:.9rem">
-          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Register Number (4-5 digits)</span>
-          <input id="reg-no" class="inp" required maxlength="5" pattern="\d{4,5}" inputmode="numeric">
+          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Register Number (4–5 digits)</span>
+          <input id="reg-no" class="inp" required maxlength="5" pattern="\d{4,5}" inputmode="numeric" placeholder="e.g. 1024">
         </label>
         <label style="display:block;margin-bottom:.9rem">
-          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Full Name</span>
-          <input id="reg-name" class="inp" required maxlength="200">
+          <span class="sm text-muted" style="display:block;margin-bottom:.35rem">Participant Name</span>
+          <input id="reg-name" class="inp" required maxlength="200" placeholder="Enter your name">
         </label>
         <button type="submit" class="btn-primary dark" style="margin-top:.5rem;width:100%">Find My Photos</button>
         <p id="lookup-msg" class="text-muted sm center" style="margin:1rem 0 0" role="status" aria-live="polite"></p>
       </form>
     </div>
-    <div id="gallery" class="grid-3" style="margin-top:3rem"></div>
+
+    <div id="student-summary" class="card-base hidden" style="max-width:720px;margin:1.75rem auto 0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem">
+      <div>
+        <strong id="st-name" style="font-size:1.1rem"></strong>
+        <div id="st-school" class="text-muted sm"></div>
+      </div>
+      <button type="button" id="download-all-btn" class="btn-primary sm hidden">Download All Photos</button>
+    </div>
+
+    <div id="gallery" class="grid-3" style="margin-top:2rem"></div>
   </div>
+
+  <div id="media-lightbox" class="hidden" style="position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:1rem">
+    <button type="button" id="media-lb-close" aria-label="Close preview" style="position:fixed;top:1rem;right:1rem;width:2.5rem;height:2.5rem;border-radius:999px;background:#111;color:#fff;border:1px solid rgba(255,255,255,.3);font-size:1.25rem;cursor:pointer">&times;</button>
+    <img id="media-lb-img" src="" alt="Preview" style="max-width:94vw;max-height:88vh;border-radius:10px">
+  </div>
+
   <script is:inline>
     (function(){
       var K = window.Kal, form = K && K.el('photo-lookup-form');
       if (!form) return;
       var msg = K.el('lookup-msg'), gal = K.el('gallery');
+      var sumBox = K.el('student-summary'), dlAllBtn = K.el('download-all-btn');
+      var lb = K.el('media-lightbox'), lbImg = K.el('media-lb-img'), lbClose = K.el('media-lb-close');
+      var currentUrls = [];
+
       form.addEventListener('submit', async function(e){
         e.preventDefault();
-        msg.textContent = 'Searching…'; gal.innerHTML = '';
+        msg.textContent = 'Searching…';
+        gal.innerHTML = '';
+        sumBox.classList.add('hidden');
+        dlAllBtn.classList.add('hidden');
+        currentUrls = [];
+
         try {
           var data = await K.fetchJSON('/api/v1/photos/public/lookup', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ register_no: K.el('reg-no').value.trim(), name: K.el('reg-name').value.trim() })
           });
-          if (!data.photos || !data.photos.length){ msg.textContent = 'Profile found, but no published photos are available yet.'; return; }
-          msg.textContent = 'Found ' + data.photos.length + ' photo(s).';
+
+          if (data.participant){
+            K.el('st-name').textContent = data.participant.name + ' (Reg #' + data.participant.register_no + ')';
+            K.el('st-school').textContent = data.participant.school_name || '';
+            sumBox.classList.remove('hidden');
+          }
+
+          if (!data.photos || !data.photos.length){
+            msg.textContent = 'Profile found, but no published photos are available yet. Please check back shortly!';
+            return;
+          }
+
+          msg.textContent = 'Found ' + data.photos.length + ' published photo(s).';
+          currentUrls = data.photos.map(function(p){ return K.url(p.url + '&dl=1'); });
+          if (currentUrls.length > 1) dlAllBtn.classList.remove('hidden');
+
           gal.innerHTML = data.photos.map(function(p){
             var u = K.url(p.url);
-            return '<div class="fest-card"><img src="' + K.esc(u) + '" alt="Stage photo" loading="lazy" style="width:100%;display:block">' +
-              '<div class="fest-body"><p class="sm text-muted" style="margin:0">Item(s): ' + K.esc((p.entries || []).join(', ')) + '</p>' +
-              '<a href="' + K.esc(u + '&dl=1') + '" class="btn-primary dark sm" style="width:100%;text-align:center">Download</a></div></div>';
+            return '<div class="fest-card">' +
+              '<img src="' + K.esc(u) + '" alt="Stage photo" loading="lazy" data-zoom style="width:100%;height:260px;object-fit:cover;display:block;cursor:zoom-in">' +
+              '<div class="fest-body" style="gap:.6rem">' +
+                (p.venue_name ? '<span class="badge-gov" style="width:fit-content">' + K.esc(p.venue_name) + '</span>' : '') +
+                '<p class="sm text-muted" style="margin:0"><strong>Item(s):</strong> ' + K.esc((p.entries || []).join(', ')) + '</p>' +
+                '<a href="' + K.esc(u + '&dl=1') + '" class="btn-primary dark sm" style="width:100%;text-align:center;margin-top:auto">Download Photo</a>' +
+              '</div></div>';
           }).join('');
         } catch (err){
-          msg.textContent = err && err.status === 429 ? 'Too many attempts. Wait a minute and try again.' : (err && err.status === 404 ? 'No match found. Check your register number and name spelling.' : 'Network error. Please try again.');
+          msg.textContent = err && err.status === 429
+            ? 'Too many attempts. Wait a minute and try again.'
+            : (err && err.status === 404
+              ? 'No match found. Check your register number and name spelling.'
+              : 'Network error. Please try again.');
         }
       });
+
+      dlAllBtn.addEventListener('click', function(){
+        currentUrls.forEach(function(href, idx){
+          setTimeout(function(){
+            var a = document.createElement('a');
+            a.href = href; a.download = '';
+            document.body.appendChild(a); a.click(); a.remove();
+          }, idx * 450);
+        });
+      });
+
+      gal.addEventListener('click', function(ev){
+        var img = ev.target.closest('img[data-zoom]');
+        if (!img) return;
+        lbImg.src = img.src;
+        lb.classList.remove('hidden');
+      });
+      if (lbClose) lbClose.addEventListener('click', function(){ lb.classList.add('hidden'); });
+      if (lb) lb.addEventListener('click', function(ev){ if (ev.target === lb) lb.classList.add('hidden'); });
     })();
   </script>
 </BaseLayout>

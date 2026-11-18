@@ -11,12 +11,35 @@
 <body class="login-body" data-portal="dataworker">
 <div id="app" class="hidden">
   <main>
+    <section class="panel" style="margin-bottom:1.25rem">
+      <div class="row" style="justify-content:space-between">
+        <div class="row">
+          <h2 style="margin:0">Live Stage Updates</h2>
+          <span id="dw-conn" class="badge">connecting…</span>
+        </div>
+        <button type="button" id="toggle-live-stages" class="small">Hide / Show</button>
+      </div>
+      <div id="dw-live-strip" class="live-strip"></div>
+    </section>
+
+    <div class="tabs" id="dw-tabs">
+      <button type="button" class="tab active" data-status="queued">Pending Queue</button>
+      <button type="button" class="tab" data-status="published">Published Batches</button>
+    </div>
+
     <div id="batches-view" class="grid"></div>
     <div id="batch-detail-view" class="hidden" style="margin-top:1rem">
-      <button id="back-to-batches" class="btn-link">&larr; Back to Queue</button>
-      <div id="batch-content" style="margin-top:1rem"></div>
+      <div class="row" style="margin-bottom:1rem;justify-content:space-between">
+        <button id="back-to-batches" class="btn-link">&larr; Back to Batches</button>
+        <button id="dw-publish-top" class="primary success hidden">&#10004; Publish Batch</button>
+      </div>
+      <div id="batch-content"></div>
     </div>
   </main>
+</div>
+<div id="dw-lightbox" class="lightbox hidden" role="dialog" aria-modal="true">
+  <button type="button" id="dw-lb-close" class="lightbox-close" aria-label="Close zoom">&times;</button>
+  <img id="dw-lb-img" src="" alt="Zoomed photo">
 </div>
 <script src="/config.js"></script>
 <script src="/assets/js/common.js"></script>

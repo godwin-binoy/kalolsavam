@@ -1,8 +1,9 @@
-"""Photo API: stage upload, Data Worker assignment, HMAC-signed public lookup, worker jobs."""
+"""Photo API: stage upload, Data Worker assignment, school-team lookup, HMAC-signed public lookup, worker jobs."""
 from __future__ import annotations
 
 import hashlib
 import hmac
+import re
 import time
 import uuid
 from pathlib import Path
@@ -33,6 +34,10 @@ _EXT_TO_MIME = {".jpg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"
 
 def _strip(v: object) -> object:
     return v.strip() if isinstance(v, str) else v
+
+
+def _norm_name(s: str) -> str:
+    return re.sub(r"[\s.]+", " ", (s or "").strip().lower()).strip()
 
 
 class PhotoBatchIn(BaseModel):
@@ -163,12 +168,25 @@ async def upload_file(
 
 
 @router.get("/batches")
-def list_batches(request: Request, user=Depends(require_photo_staff)):
+def list_batches(request: Request, status: str = "queued", user=Depends(require_photo_staff)):
+    where = "WHERE b.status IN ('queued', 'published', 'staging')" if status == "all" else (
+        "WHERE b.status = 'published'" if status == "published" else "WHERE b.status = 'queued'"
+    )
+    order = "DESC" if status == "published" else "ASC"
     batches = get_db(request).q(
-        "SELECT b.*, v.name AS venue_name, "
-        "(SELECT COUNT(*) FROM photo_assets a WHERE a.batch_id = b.id) AS asset_count "
-        "FROM photo_batches b LEFT JOIN venues v ON v.id = b.venue_id "
-        "WHERE b.status = 'queued' ORDER BY b.created_at ASC"
+        f"""
+        SELECT b.*, v.name AS venue_name,
+               (SELECT COUNT(*) FROM photo_assets a WHERE a.batch_id = b.id) AS asset_count,
+               (SELECT COUNT(*) FROM photo_assets a WHERE a.batch_id = b.id AND a.kind = 'slip') AS slip_count,
+               (SELECT COUNT(*) FROM photo_assets a WHERE a.batch_id = b.id AND a.kind = 'stage') AS stage_count,
+               (SELECT COUNT(DISTINCT a.id) FROM photo_assets a
+                JOIN photo_asset_entries pae ON pae.photo_asset_id = a.id
+                WHERE a.batch_id = b.id AND a.kind = 'stage') AS assigned_stage_count
+        FROM photo_batches b
+        LEFT JOIN venues v ON v.id = b.venue_id
+        {where}
+        ORDER BY b.created_at {order} LIMIT 100
+        """  # noqa: S608
     )
     return {"batches": [dict(b) for b in batches]}
 
@@ -176,7 +194,7 @@ def list_batches(request: Request, user=Depends(require_photo_staff)):
 @router.get("/batches/{batch_id}")
 def get_batch(batch_id: int, request: Request, user=Depends(require_photo_staff)):
     db = get_db(request)
-    b = db.one("SELECT * FROM photo_batches WHERE id = ?", (batch_id,))
+    b = db.one("SELECT b.*, v.name AS venue_name FROM photo_batches b LEFT JOIN venues v ON v.id = b.venue_id WHERE b.id = ?", (batch_id,))
     if not b:
         raise HTTPException(404, "not_found")
     assets = db.q("SELECT * FROM photo_assets WHERE batch_id = ? ORDER BY id", (batch_id,))
@@ -184,11 +202,13 @@ def get_batch(batch_id: int, request: Request, user=Depends(require_photo_staff)
     for a in assets:
         assigned = db.q(
             """
-            SELECT pae.participant_entry_id, pe.item_code, p.register_no, p.name
+            SELECT pae.participant_entry_id, pe.item_code, COALESCE(pe.item_name, '') AS item_name,
+                   p.register_no, p.name, p.school_name, p.school_code
             FROM photo_asset_entries pae
             JOIN participant_entries pe ON pe.id = pae.participant_entry_id
             JOIN participants p ON p.id = pe.participant_id
             WHERE pae.photo_asset_id = ? AND pe.deleted_at IS NULL AND p.deleted_at IS NULL
+            ORDER BY p.register_no
             """,
             (a["id"],),
         )
@@ -211,23 +231,24 @@ def search_participants_for_photos(
     user=Depends(require_photo_staff),
 ):
     term, icode = q.strip(), item_code.strip()
-    if len(term) < 2 and not icode:
+    is_num = term.isdigit()
+    if (not term or (not is_num and len(term) < 2)) and not icode:
         return {"participants": []}
     db = get_db(request)
-    if len(term) >= 2:
+    if term and (is_num or len(term) >= 2):
         safe_q = escape_like(term)
         parts = db.q(
-            "SELECT id, register_no, name, school_name FROM participants "
-            "WHERE deleted_at IS NULL AND (register_no LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\') "
-            "ORDER BY register_no LIMIT 20",
-            (f"%{safe_q}%", f"%{safe_q}%"),
+            "SELECT id, register_no, name, school_name, school_code, student_class FROM participants "
+            "WHERE deleted_at IS NULL AND (register_no LIKE ? ESCAPE '\\' OR name LIKE ? ESCAPE '\\' OR school_name LIKE ? ESCAPE '\\') "
+            "ORDER BY register_no LIMIT 25",
+            (f"%{safe_q}%", f"%{safe_q}%", f"%{safe_q}%"),
         )
     else:
         parts = db.q(
-            "SELECT DISTINCT p.id, p.register_no, p.name, p.school_name "
+            "SELECT DISTINCT p.id, p.register_no, p.name, p.school_name, p.school_code, p.student_class "
             "FROM participants p JOIN participant_entries pe ON pe.participant_id = p.id "
             "WHERE p.deleted_at IS NULL AND pe.deleted_at IS NULL AND pe.item_code = ? "
-            "ORDER BY p.register_no LIMIT 30",
+            "ORDER BY p.register_no LIMIT 35",
             (icode,),
         )
     if not parts:
@@ -235,7 +256,7 @@ def search_participants_for_photos(
     pids = [p["id"] for p in parts]
     placeholders = ",".join(["?"] * len(pids))
     entries = db.q(
-        f"SELECT id, participant_id, item_code, venue_name, perf_date FROM participant_entries "  # noqa: S608
+        f"SELECT id, participant_id, item_code, COALESCE(item_name, '') AS item_name, venue_name, perf_date FROM participant_entries "  # noqa: S608
         f"WHERE participant_id IN ({placeholders}) AND deleted_at IS NULL ORDER BY perf_date, item_code",
         tuple(pids),
     )
@@ -243,6 +264,62 @@ def search_participants_for_photos(
     for e in entries:
         by_p.setdefault(e["participant_id"], []).append(dict(e))
     return {"participants": [{**dict(p), "entries": by_p.get(p["id"], [])} for p in parts]}
+
+
+@router.get("/team-lookup")
+def lookup_school_team(
+    request: Request,
+    register_no: str,
+    item_code: str = "",
+    user=Depends(require_photo_staff),
+):
+    """Given one register number (and optional item_code), fetch the entire team from the same school."""
+    reg = register_no.strip()
+    icode = item_code.strip()
+    db = get_db(request)
+    anchor = db.one(
+        "SELECT id, register_no, name, school_name, school_code, student_class FROM participants "
+        "WHERE register_no = ? AND deleted_at IS NULL",
+        (reg,),
+    )
+    if not anchor:
+        raise HTTPException(404, "participant_not_found")
+
+    school_code = anchor["school_code"]
+    team_members: list[dict] = []
+    if icode:
+        rows = db.q(
+            """
+            SELECT p.id, p.register_no, p.name, p.school_name, p.school_code, p.student_class,
+                   pe.id AS entry_id, pe.item_code, COALESCE(pe.item_name, '') AS item_name
+            FROM participants p
+            JOIN participant_entries pe ON pe.participant_id = p.id
+            WHERE p.school_code = ? AND p.deleted_at IS NULL
+              AND pe.deleted_at IS NULL AND pe.item_code = ?
+            ORDER BY p.register_no
+            """,
+            (school_code, icode),
+        )
+        team_members = [dict(r) for r in rows]
+
+    all_school = [
+        dict(r) for r in db.q(
+            "SELECT id, register_no, name, school_name, school_code, student_class "
+            "FROM participants WHERE school_code = ? AND deleted_at IS NULL ORDER BY register_no",
+            (school_code,),
+        )
+    ]
+    if not team_members:
+        team_members = [{**dict(anchor), "entry_id": None, "item_code": icode, "item_name": ""}]
+
+    return {
+        "anchor": dict(anchor),
+        "school_name": anchor["school_name"],
+        "school_code": school_code,
+        "item_code": icode,
+        "team": team_members,
+        "school_peers": all_school,
+    }
 
 
 @router.post("/assign")
@@ -278,6 +355,9 @@ def assign_photo_by_register(
     if not venue:
         raise HTTPException(404, "venue_not_found")
 
+    ev = db.one("SELECT title FROM events WHERE code = ?", (body.item_code,))
+    ev_title = ev["title"] if ev else None
+    source = "data_worker" if has_role(user, "dataworker") else "stagemaster_quick"
     perf_date = body.perf_date or time.strftime("%Y-%m-%d")
     now = db.now()
     entry_ids: list[int] = []
@@ -300,17 +380,56 @@ def assign_photo_by_register(
                 )["c"] >= 7:
                     raise HTTPException(409, f"participant_at_7_items:{reg}")
                 cur_e = db.ex(
-                    "INSERT INTO participant_entries(participant_id, item_code, venue_id, venue_name, perf_date, created_at, updated_at) "
-                    "VALUES (?,?,?,?,?,?,?)",
-                    (p["id"], body.item_code, venue["id"], venue["name"], perf_date, now, now),
+                    "INSERT INTO participant_entries(participant_id, item_code, item_name, venue_id, venue_name, perf_date, created_at, updated_at) "
+                    "VALUES (?,?,?,?,?,?,?,?)",
+                    (p["id"], body.item_code, ev_title, venue["id"], venue["name"], perf_date, now, now),
                 )
                 eid = cur_e.lastrowid
             entry_ids.append(eid)
             db.ex(
                 "INSERT OR IGNORE INTO photo_asset_entries(photo_asset_id, participant_entry_id, source) VALUES (?,?,?)",
-                (body.asset_id, eid, "stagemaster_quick"),
+                (body.asset_id, eid, source),
             )
     return {"ok": True, "batch_id": asset["batch_id"], "entry_ids": entry_ids}
+
+
+@router.delete("/assets/{asset_id}/entries/{entry_id}")
+def unassign_photo_entry(asset_id: int, entry_id: int, request: Request, user=Depends(require_photo_staff)):
+    db = get_db(request)
+    asset = db.one(
+        "SELECT a.id, a.batch_id, b.venue_id FROM photo_assets a JOIN photo_batches b ON b.id = a.batch_id WHERE a.id = ?",
+        (asset_id,),
+    )
+    if not asset:
+        raise HTTPException(404, "asset_not_found")
+    _check_photo_stage(user, asset["venue_id"])
+    db.ex(
+        "DELETE FROM photo_asset_entries WHERE photo_asset_id = ? AND participant_entry_id = ?",
+        (asset_id, entry_id),
+    )
+    return {"ok": True, "batch_id": asset["batch_id"]}
+
+
+@router.delete("/assets/{asset_id}")
+def delete_photo_asset(asset_id: int, request: Request, user=Depends(require_photo_staff)):
+    db = get_db(request)
+    asset = db.one(
+        "SELECT a.id, a.batch_id, a.filename, b.venue_id FROM photo_assets a JOIN photo_batches b ON b.id = a.batch_id WHERE a.id = ?",
+        (asset_id,),
+    )
+    if not asset:
+        raise HTTPException(404, "asset_not_found")
+    _check_photo_stage(user, asset["venue_id"])
+    with db.transaction():
+        db.ex("DELETE FROM photo_assets WHERE id = ?", (asset_id,))
+    try:
+        storage = _storage_dir(request)
+        p = (storage / Path(asset["filename"]).name).resolve()
+        if p.is_relative_to(storage.resolve()):
+            p.unlink(missing_ok=True)
+    except OSError:
+        pass
+    return {"ok": True, "batch_id": asset["batch_id"]}
 
 
 @router.post("/batches/{batch_id}/publish")
@@ -361,44 +480,62 @@ def view_public_asset(asset_id: int, request: Request, exp: int, sig: str, dl: i
 def public_lookup(body: PhotoLookupIn, request: Request):
     db, cfg = get_db(request), get_cfg(request)
     p = db.one(
-        "SELECT id FROM participants WHERE register_no = ? AND lower(name) = lower(?) AND deleted_at IS NULL",
-        (body.register_no.strip(), body.name.strip()),
+        "SELECT id, register_no, name, school_name FROM participants WHERE register_no = ? AND deleted_at IS NULL",
+        (body.register_no.strip(),),
     )
     if not p:
         raise HTTPException(404, "not_found")
 
+    db_name = _norm_name(p["name"])
+    in_name = _norm_name(body.name)
+    in_tokens = [t for t in in_name.split(" ") if len(t) >= 2]
+    matched = (db_name == in_name) or (
+        bool(in_tokens) and all(t in db_name.split(" ") or t in db_name for t in in_tokens) and len(in_name) >= 3
+    )
+    if not matched:
+        raise HTTPException(404, "not_found")
+
     rows = db.q(
         """
-        SELECT a.id AS asset_id, pe.item_code, pe.item_name
+        SELECT a.id AS asset_id, a.uploaded_at, pe.item_code, pe.item_name,
+               COALESCE(v.name, pe.venue_name) AS venue_name
         FROM participant_entries pe
         JOIN photo_asset_entries pae ON pae.participant_entry_id = pe.id
         JOIN photo_assets a ON a.id = pae.photo_asset_id
         JOIN photo_batches b ON b.id = a.batch_id
+        LEFT JOIN venues v ON v.id = b.venue_id
         WHERE pe.participant_id = ? AND pe.deleted_at IS NULL AND a.kind = 'stage' AND b.status = 'published'
         ORDER BY a.id DESC, pe.item_code
         """,
         (p["id"],),
     )
     if not rows:
-        return {"photos": []}
+        return {
+            "participant": {"register_no": p["register_no"], "name": p["name"], "school_name": p["school_name"]},
+            "photos": [],
+        }
 
     exp = int(time.time()) + _SIGNED_URL_TTL
-    grouped: dict[int, list[str]] = {}
+    grouped: dict[int, dict] = {}
     for r in rows:
         r_dict = dict(r)
+        aid = r_dict["asset_id"]
         item_name = r_dict.get("item_name")
-        label = f"{r['item_code']} · {item_name}" if item_name else r["item_code"]
-        grouped.setdefault(r["asset_id"], []).append(label)
-
-    return {
-        "photos": [
-            {
+        label = f"{r_dict['item_code']} · {item_name}" if item_name else r_dict["item_code"]
+        if aid not in grouped:
+            grouped[aid] = {
                 "asset_id": aid,
                 "url": f"/api/v1/photos/assets/{aid}/view?exp={exp}&sig={_sign_asset(cfg.secret_key, aid, exp)}",
-                "entries": codes,
+                "venue_name": r_dict.get("venue_name") or "",
+                "uploaded_at": r_dict.get("uploaded_at"),
+                "entries": [],
             }
-            for aid, codes in grouped.items()
-        ]
+        if label not in grouped[aid]["entries"]:
+            grouped[aid]["entries"].append(label)
+
+    return {
+        "participant": {"register_no": p["register_no"], "name": p["name"], "school_name": p["school_name"]},
+        "photos": list(grouped.values()),
     }
 
 

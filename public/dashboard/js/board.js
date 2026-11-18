@@ -8,35 +8,64 @@
   var scheduleEvents = [];
   var lastAction = {};
 
-  // Photo intake state
   var photoFiles = { w1Slips: [], w1Stage: [], w2Stage: [] };
   var previewUrls = { w1Slips: [], w1Stage: [], w2Stage: [] };
-  var w2SelectedRegs = []; // [{ register_no, label }]
+  var w2SelectedRegs = []; // [{ register_no, name }]
+  var w2ItemCode = '';
 
   async function loadSchedule(){
     var r = await A.api('/api/v1/public/schedule');
     if (r.ok && r.data && Array.isArray(r.data.events)){
       scheduleEvents = r.data.events;
-      populateW2Items();
     }
   }
 
-  function populateW2Items(){
-    var sel = document.getElementById('w2-item');
-    var custom = document.getElementById('w2-item-custom');
-    if (!sel) return;
-    var prev = sel.value;
-    var opts = '<option value="">-- Select item --</option>' +
-      scheduleEvents.map(function(e){
-        return '<option value="' + esc(e.code) + '">' + esc(e.code) + ' · ' + esc(e.title) + '</option>';
-      }).join('') +
-      '<option value="__custom__">Other / Enter item code…</option>';
-    sel.innerHTML = opts;
-    if (prev) sel.value = prev;
-    if (!scheduleEvents.length){
-      sel.value = '__custom__';
+  function renderMenu(menuEl, rowsHtml){
+    if (!menuEl) return;
+    if (!rowsHtml){
+      menuEl.classList.add('hidden');
+      menuEl.innerHTML = '';
+      return;
     }
-    if (custom) custom.style.display = sel.value === '__custom__' ? 'block' : 'none';
+    menuEl.innerHTML = rowsHtml;
+    menuEl.classList.remove('hidden');
+  }
+
+  function filterEvents(query, venueName){
+    var q = (query || '').trim().toLowerCase();
+    var vLow = (venueName || '').toLowerCase();
+    var list = scheduleEvents.slice();
+    list.sort(function(a, b){
+      var aMatch = vLow && a.venue && a.venue.toLowerCase() === vLow ? 0 : 1;
+      var bMatch = vLow && b.venue && b.venue.toLowerCase() === vLow ? 0 : 1;
+      return aMatch - bMatch;
+    });
+    if (q){
+      var tokens = q.split(/\s+/).filter(Boolean);
+      list = list.filter(function(e){
+        var hay = (e.code + ' ' + e.title + ' ' + (e.category || '') + ' ' + (e.venue || '') + ' ' + (e.day || '')).toLowerCase();
+        return tokens.every(function(t){ return hay.indexOf(t) >= 0; });
+      });
+    }
+    return list.slice(0, 12);
+  }
+
+  async function searchParticipants(query, itemCode){
+    var params = [];
+    if (query) params.push('q=' + encodeURIComponent(query));
+    if (itemCode) params.push('item_code=' + encodeURIComponent(itemCode));
+    if (!params.length) return [];
+    var r = await A.api('/api/v1/photos/participants/search?' + params.join('&'));
+    return (r.ok && r.data && r.data.participants) ? r.data.participants : [];
+  }
+
+  async function fetchTeamForRegister(reg, itemCode){
+    reg = String(reg || '').trim();
+    if (!/^\d{4,5}$/.test(reg)) return null;
+    var url = '/api/v1/photos/team-lookup?register_no=' + encodeURIComponent(reg) +
+      (itemCode ? '&item_code=' + encodeURIComponent(itemCode) : '');
+    var r = await A.api(url);
+    return r.ok ? r.data : null;
   }
 
   async function loadBoard(){
@@ -105,16 +134,32 @@
             '</select>' +
           '</label>' +
         '</div>' +
-        '<label>Current Item (optional)' +
-          '<input name="current_item" maxlength="200" placeholder="Not defined" value="' + esc(st.current_item || '') + '">' +
+        '<label>Current Item (type to search DB)' +
+          '<div class="ac-wrap">' +
+            '<input name="current_item" maxlength="200" autocomplete="off" placeholder="Start typing item name or code…" value="' + esc(st.current_item || '') + '">' +
+            '<div class="ac-menu hidden" data-menu="item"></div>' +
+          '</div>' +
         '</label>' +
         '<div class="split">' +
-          '<label>Current Chest Number (optional)' +
-            '<input name="current_chest" maxlength="32" placeholder="Not defined" value="' + esc(st.current_chest || '') + '">' +
+          '<label>Current Chest / Reg No (type to search DB)' +
+            '<div class="ac-wrap">' +
+              '<input name="current_chest" maxlength="32" autocomplete="off" placeholder="Reg no, student, or school…" value="' + esc(st.current_chest || '') + '">' +
+              '<div class="ac-menu hidden" data-menu="chest"></div>' +
+            '</div>' +
           '</label>' +
-          '<label>Upcoming Chest Numbers (optional)' +
-            '<input name="upcoming_chests" maxlength="280" placeholder="Not defined (e.g. 105, 106, 107)" value="' + esc(st.upcoming_chests || '') + '">' +
+          '<label>Upcoming Chest Numbers (type to search DB)' +
+            '<div class="ac-wrap">' +
+              '<input name="upcoming_chests" maxlength="280" autocomplete="off" placeholder="Comma-separated e.g. 1054, 1082" value="' + esc(st.upcoming_chests || '') + '">' +
+              '<div class="ac-menu hidden" data-menu="upcoming"></div>' +
+            '</div>' +
           '</label>' +
+        '</div>' +
+        '<div class="quick-pills">' +
+          '<button type="button" class="quick-pill" data-next-chest>Next Chest &rarr;</button>' +
+          '<button type="button" class="quick-pill" data-ann="Reporting now — participants check in at stage">Reporting Now</button>' +
+          '<button type="button" class="quick-pill" data-ann="Short 5 min break">5m Break</button>' +
+          '<button type="button" class="quick-pill" data-ann="Lunch break">Lunch Break</button>' +
+          '<button type="button" class="quick-pill" data-ann="">Clear Notice</button>' +
         '</div>' +
         '<label>Announcements (optional)' +
           '<textarea name="announcement" rows="2" maxlength="280" placeholder="No announcement">' + esc(st.announcement || '') + '</textarea>' +
@@ -125,6 +170,107 @@
       '</form>';
 
     var form = p.querySelector('form');
+    var itemInp = form.elements.current_item;
+    var chestInp = form.elements.current_chest;
+    var upInp = form.elements.upcoming_chests;
+    var itemMenu = form.querySelector('[data-menu="item"]');
+    var chestMenu = form.querySelector('[data-menu="chest"]');
+    var upMenu = form.querySelector('[data-menu="upcoming"]');
+    var selectedCode = '';
+
+    // Current Item DB autocomplete
+    function showItemSug(){
+      var matches = filterEvents(itemInp.value, venue.name);
+      renderMenu(itemMenu, matches.map(function(e){
+        return '<button type="button" class="ac-item" data-pick-item="' + esc(e.title) + '" data-pick-code="' + esc(e.code) + '">' +
+          '<span><strong>' + esc(e.title) + '</strong> <span class="muted">(' + esc(e.code) + ')</span></span>' +
+          '<span class="xs muted">' + esc(e.scheduled_time || '') + '</span></button>';
+      }).join(''));
+    }
+    itemInp.addEventListener('focus', showItemSug);
+    itemInp.addEventListener('input', showItemSug);
+    itemMenu.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-pick-item]');
+      if (!b) return;
+      itemInp.value = b.dataset.pickItem;
+      selectedCode = b.dataset.pickCode || '';
+      itemMenu.classList.add('hidden');
+    });
+
+    // Current Chest DB autocomplete
+    var chestTimer;
+    function showChestSug(){
+      clearTimeout(chestTimer);
+      var q = chestInp.value.trim();
+      chestTimer = setTimeout(async function(){
+        var parts = await searchParticipants(q, selectedCode);
+        renderMenu(chestMenu, parts.slice(0, 10).map(function(pt){
+          return '<button type="button" class="ac-item" data-pick-chest="' + esc(pt.register_no) + '">' +
+            '<span><strong>' + esc(pt.register_no) + '</strong> · ' + esc(pt.name) + '</span>' +
+            '<span class="xs muted">' + esc(pt.school_name) + '</span></button>';
+        }).join(''));
+      }, 180);
+    }
+    chestInp.addEventListener('focus', function(){ if (chestInp.value.trim() || selectedCode) showChestSug(); });
+    chestInp.addEventListener('input', showChestSug);
+    chestMenu.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-pick-chest]');
+      if (!b) return;
+      chestInp.value = b.dataset.pickChest;
+      chestMenu.classList.add('hidden');
+    });
+
+    // Upcoming Chests DB autocomplete (searches token after last comma)
+    var upTimer;
+    function showUpSug(){
+      clearTimeout(upTimer);
+      var raw = upInp.value;
+      var last = raw.split(/[,\s]+/).pop().trim();
+      if (!last && !selectedCode){ upMenu.classList.add('hidden'); return; }
+      upTimer = setTimeout(async function(){
+        var parts = await searchParticipants(last, selectedCode);
+        renderMenu(upMenu, parts.slice(0, 10).map(function(pt){
+          return '<button type="button" class="ac-item" data-pick-up="' + esc(pt.register_no) + '">' +
+            '<span><strong>' + esc(pt.register_no) + '</strong> · ' + esc(pt.name) + '</span>' +
+            '<span class="xs muted">' + esc(pt.school_name) + '</span></button>';
+        }).join(''));
+      }, 180);
+    }
+    upInp.addEventListener('input', showUpSug);
+    upMenu.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-pick-up]');
+      if (!b) return;
+      var existing = upInp.value.split(/[,\s]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+      var typedLast = upInp.value.slice(-1) !== ',' && upInp.value.slice(-1) !== ' ' && existing.length ? existing.pop() : null;
+      if (typedLast && /^\d{4,5}$/.test(typedLast)) existing.push(typedLast);
+      if (existing.indexOf(b.dataset.pickUp) < 0) existing.push(b.dataset.pickUp);
+      upInp.value = existing.join(', ');
+      upMenu.classList.add('hidden');
+    });
+
+    document.addEventListener('click', function(ev){
+      if (!p.contains(ev.target)){
+        itemMenu.classList.add('hidden');
+        chestMenu.classList.add('hidden');
+        upMenu.classList.add('hidden');
+      }
+    });
+
+    // Quick Advance Queue + Announcement presets
+    p.querySelector('[data-next-chest]').addEventListener('click', function(){
+      var tokens = upInp.value.split(/[\s,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+      if (!tokens.length){ A.toast('No upcoming chests in queue.', true); return; }
+      chestInp.value = tokens.shift();
+      upInp.value = tokens.join(', ');
+      form.elements.state.value = 'RUNNING';
+      form.requestSubmit();
+    });
+    p.querySelectorAll('[data-ann]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        form.elements.announcement.value = btn.getAttribute('data-ann') || '';
+      });
+    });
+
     form.addEventListener('submit', async function(ev){
       ev.preventDefault();
       var btn = form.querySelector('button[type="submit"]');
@@ -137,9 +283,9 @@
             venue_id: Number(venue.id),
             active: form.elements.active.value === '1',
             state: form.elements.state.value,
-            current_item: form.elements.current_item.value.trim() || null,
-            current_chest: form.elements.current_chest.value.trim() || null,
-            upcoming_chests: form.elements.upcoming_chests.value.trim() || null,
+            current_item: itemInp.value.trim() || null,
+            current_chest: chestInp.value.trim() || null,
+            upcoming_chests: upInp.value.trim() || null,
             announcement: form.elements.announcement.value.trim()
           }
         });
@@ -186,7 +332,6 @@
     renderPreview(key, containerId);
   }
 
-  // ── Workflow 2 Register Number Chips & Suggestions ────────────────────────
   function renderRegChips(){
     var box = document.getElementById('w2-reg-chips');
     if (!box) return;
@@ -201,39 +346,37 @@
 
   function addRegChip(reg, name){
     reg = String(reg || '').trim();
-    if (!/^\d{4,5}$/.test(reg)){
-      A.toast('Register number must be 4 or 5 digits.', true);
-      return;
-    }
-    if (w2SelectedRegs.some(function(x){ return x.register_no === reg; })) return;
+    if (!/^\d{4,5}$/.test(reg)) return false;
+    if (w2SelectedRegs.some(function(x){ return x.register_no === reg; })) return true;
     w2SelectedRegs.push({ register_no: reg, name: name || '' });
     renderRegChips();
+    return true;
   }
 
-  function currentW2ItemCode(){
-    var sel = document.getElementById('w2-item');
-    var custom = document.getElementById('w2-item-custom');
-    if (!sel) return '';
-    return sel.value === '__custom__' ? (custom ? custom.value.trim() : '') : sel.value.trim();
+  async function autoFetchSchoolTeam(reg){
+    var data = await fetchTeamForRegister(reg, w2ItemCode);
+    var banner = document.getElementById('w2-team-banner');
+    if (!data){
+      A.toast('Register #' + reg + ' not found in database.', true);
+      return;
+    }
+    var team = data.team || [];
+    team.forEach(function(m){ addRegChip(m.register_no, m.name); });
+    if (banner){
+      banner.innerHTML = 'School: <strong>' + esc(data.school_name) + '</strong> · Added <strong>' + team.length + '</strong> participant(s)' +
+        (data.school_peers && data.school_peers.length > team.length
+          ? ' <button type="button" class="quick-pill" id="w2-add-all-school">Add all ' + data.school_peers.length + ' from school</button>'
+          : '');
+      var addAll = document.getElementById('w2-add-all-school');
+      if (addAll){
+        addAll.addEventListener('click', function(){
+          data.school_peers.forEach(function(m){ addRegChip(m.register_no, m.name); });
+          A.toast('Added all ' + data.school_peers.length + ' students from ' + data.school_name);
+        });
+      }
+    }
   }
 
-  async function fetchSuggestions(query, itemCode){
-    var params = [];
-    if (query && query.length >= 2) params.push('q=' + encodeURIComponent(query));
-    if (itemCode) params.push('item_code=' + encodeURIComponent(itemCode));
-    var sugBox = document.getElementById('w2-reg-suggestions');
-    if (!params.length){ if (sugBox) sugBox.innerHTML = ''; return; }
-    var r = await A.api('/api/v1/photos/participants/search?' + params.join('&'));
-    if (!r.ok || !sugBox) return;
-    var parts = r.data.participants || [];
-    sugBox.innerHTML = parts.slice(0, 8).map(function(p){
-      return '<button type="button" class="small" style="margin:.15rem .3rem .15rem 0" ' +
-        'data-pick-reg="' + esc(p.register_no) + '" data-pick-name="' + esc(p.name) + '">' +
-        '+ ' + esc(p.register_no) + ' · ' + esc(p.name) + '</button>';
-    }).join('') || '<span class="muted xs">No matching registered students.</span>';
-  }
-
-  // ── Photo Upload Execution ────────────────────────────────────────────────
   async function uploadBulk(btn){
     var venueId = Number(document.getElementById('photo-venue-select').value);
     if (!venueId){ A.toast('Select a stage first.', true); return; }
@@ -270,9 +413,10 @@
 
   async function uploadQuick(btn){
     var venueId = Number(document.getElementById('photo-venue-select').value);
-    var itemCode = currentW2ItemCode();
+    var itemInput = document.getElementById('w2-item-input');
+    var code = w2ItemCode || (itemInput ? itemInput.value.trim() : '');
     if (!venueId){ A.toast('Select a stage first.', true); return; }
-    if (!itemCode){ A.toast('Select or enter an item first.', true); return; }
+    if (!code){ A.toast('Select or type an item first.', true); return; }
     if (!w2SelectedRegs.length){ A.toast('Add at least one register number.', true); return; }
     if (!photoFiles.w2Stage.length){ A.toast('Add at least one stage photo.', true); return; }
 
@@ -301,7 +445,7 @@
           body: {
             asset_id: up.data.asset_id,
             venue_id: venueId,
-            item_code: itemCode,
+            item_code: code,
             register_nos: regs,
             perf_date: today
           }
@@ -314,7 +458,7 @@
 
       photoFiles.w2Stage = [];
       renderPreview('w2Stage', 'w2-stage-preview');
-      A.toast('Uploaded & published ' + regs.join(', ') + ' (' + itemCode + ').');
+      A.toast('Published to ' + regs.join(', ') + '!');
     } finally {
       btn.disabled = false;
     }
@@ -360,6 +504,108 @@
       appendFiles('w2Stage', 'w2-stage-preview', this.files); this.value = '';
     });
 
+    // Workflow 2 Item DB Autocomplete
+    var w2ItemInp = document.getElementById('w2-item-input');
+    var w2ItemMenu = document.getElementById('w2-item-menu');
+    var w2ItemPicked = document.getElementById('w2-item-picked');
+    function showW2ItemSug(){
+      var vid = Number(document.getElementById('photo-venue-select').value);
+      var vObj = boardData.find(function(b){ return b.venue.id === vid; });
+      var matches = filterEvents(w2ItemInp.value, vObj ? vObj.venue.name : '');
+      renderMenu(w2ItemMenu, matches.map(function(e){
+        return '<button type="button" class="ac-item" data-w2-code="' + esc(e.code) + '" data-w2-title="' + esc(e.title) + '">' +
+          '<span><strong>' + esc(e.title) + '</strong> <span class="muted">(' + esc(e.code) + ')</span></span>' +
+          '<span class="xs muted">' + esc(e.venue || '') + '</span></button>';
+      }).join(''));
+    }
+    w2ItemInp.addEventListener('focus', showW2ItemSug);
+    w2ItemInp.addEventListener('input', function(){
+      w2ItemCode = '';
+      if (w2ItemPicked) w2ItemPicked.textContent = '';
+      showW2ItemSug();
+    });
+    w2ItemMenu.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-w2-code]');
+      if (!b) return;
+      w2ItemCode = b.dataset.w2Code;
+      w2ItemInp.value = b.dataset.w2Title + ' (' + w2ItemCode + ')';
+      if (w2ItemPicked) w2ItemPicked.textContent = 'Item code: ' + w2ItemCode;
+      w2ItemMenu.classList.add('hidden');
+    });
+
+    // Use On-Stage Item & Chest shortcuts
+    document.getElementById('w2-use-current-item').addEventListener('click', function(){
+      var vid = Number(document.getElementById('photo-venue-select').value);
+      var b = boardData.find(function(x){ return x.venue.id === vid; });
+      var cur = b && b.state && b.state.current_item;
+      if (!cur){ A.toast('No item currently set on stage.', true); return; }
+      var evObj = scheduleEvents.find(function(e){ return e.title.toLowerCase() === cur.toLowerCase(); });
+      w2ItemCode = evObj ? evObj.code : cur;
+      w2ItemInp.value = evObj ? (evObj.title + ' (' + evObj.code + ')') : cur;
+      if (w2ItemPicked) w2ItemPicked.textContent = 'Item code: ' + w2ItemCode;
+    });
+    document.getElementById('w2-use-current-chest').addEventListener('click', function(){
+      var vid = Number(document.getElementById('photo-venue-select').value);
+      var b = boardData.find(function(x){ return x.venue.id === vid; });
+      var ch = b && b.state && b.state.current_chest;
+      if (!ch){ A.toast('No chest number currently set on stage.', true); return; }
+      autoFetchSchoolTeam(ch);
+    });
+    document.getElementById('w2-clear-regs').addEventListener('click', function(){
+      w2SelectedRegs = [];
+      renderRegChips();
+      var ban = document.getElementById('w2-team-banner');
+      if (ban) ban.textContent = '';
+    });
+
+    // Workflow 2 Register Number DB Autocomplete + School Team auto-fetch
+    var regSearch = document.getElementById('w2-reg-search');
+    var regMenu = document.getElementById('w2-reg-menu');
+    var regTimer;
+    async function showRegSug(){
+      clearTimeout(regTimer);
+      var q = regSearch.value.trim();
+      if (!q && !w2ItemCode){ regMenu.classList.add('hidden'); return; }
+      regTimer = setTimeout(async function(){
+        var parts = await searchParticipants(q, w2ItemCode);
+        renderMenu(regMenu, parts.slice(0, 12).map(function(pt){
+          return '<button type="button" class="ac-item" data-pick-reg="' + esc(pt.register_no) + '" data-pick-name="' + esc(pt.name) + '">' +
+            '<span><strong>' + esc(pt.register_no) + '</strong> · ' + esc(pt.name) + '</span>' +
+            '<span class="xs muted">' + esc(pt.school_name) + '</span></button>';
+        }).join(''));
+      }, 180);
+    }
+    regSearch.addEventListener('input', showRegSug);
+    regSearch.addEventListener('focus', function(){ if (regSearch.value.trim() || w2ItemCode) showRegSug(); });
+    regMenu.addEventListener('click', function(ev){
+      var b = ev.target.closest('[data-pick-reg]');
+      if (!b) return;
+      regMenu.classList.add('hidden');
+      regSearch.value = '';
+      autoFetchSchoolTeam(b.dataset.pickReg);
+    });
+    regSearch.addEventListener('keydown', function(ev){
+      if (ev.key === 'Enter'){
+        ev.preventDefault();
+        var v = regSearch.value.trim();
+        if (/^\d{4,5}$/.test(v)){
+          regMenu.classList.add('hidden');
+          regSearch.value = '';
+          autoFetchSchoolTeam(v);
+        }
+      }
+    });
+    document.getElementById('w2-fetch-team').addEventListener('click', function(){
+      var v = regSearch.value.trim();
+      if (/^\d{4,5}$/.test(v)){
+        regMenu.classList.add('hidden');
+        regSearch.value = '';
+        autoFetchSchoolTeam(v);
+      } else {
+        A.toast('Enter a 4–5 digit register number first.', true);
+      }
+    });
+
     document.getElementById('photo-intake').addEventListener('click', function(ev){
       var rmPhoto = ev.target.closest('[data-rm-key]');
       if (rmPhoto){
@@ -369,11 +615,6 @@
         renderPreview(k, map[k]);
         return;
       }
-      var pickReg = ev.target.closest('[data-pick-reg]');
-      if (pickReg){
-        addRegChip(pickReg.dataset.pickReg, pickReg.dataset.pickName);
-        return;
-      }
       var rmReg = ev.target.closest('[data-rm-reg]');
       if (rmReg){
         w2SelectedRegs.splice(Number(rmReg.dataset.rmReg), 1);
@@ -381,35 +622,9 @@
       }
     });
 
-    var w2ItemSel = document.getElementById('w2-item');
-    var w2Custom = document.getElementById('w2-item-custom');
-    if (w2ItemSel){
-      w2ItemSel.addEventListener('change', function(){
-        if (w2Custom) w2Custom.style.display = this.value === '__custom__' ? 'block' : 'none';
-        fetchSuggestions(document.getElementById('w2-reg-search').value.trim(), currentW2ItemCode());
-      });
-    }
-
-    var sugTmr;
-    var regSearch = document.getElementById('w2-reg-search');
-    if (regSearch){
-      regSearch.addEventListener('input', function(){
-        clearTimeout(sugTmr);
-        var q = this.value.trim();
-        sugTmr = setTimeout(function(){ fetchSuggestions(q, currentW2ItemCode()); }, 240);
-      });
-      regSearch.addEventListener('keydown', function(ev){
-        if (ev.key === 'Enter'){
-          ev.preventDefault();
-          if (/^\d{4,5}$/.test(this.value.trim())){ addRegChip(this.value.trim(), ''); this.value = ''; }
-        }
-      });
-    }
-
-    document.getElementById('w2-reg-add').addEventListener('click', function(){
-      var val = regSearch ? regSearch.value.trim() : '';
-      if (/^\d{4,5}$/.test(val)){ addRegChip(val, ''); regSearch.value = ''; }
-      else A.toast('Type a 4-5 digit register number or pick from suggestions.', true);
+    document.addEventListener('click', function(ev){
+      if (!w2ItemInp.contains(ev.target) && !w2ItemMenu.contains(ev.target)) w2ItemMenu.classList.add('hidden');
+      if (!regSearch.contains(ev.target) && !regMenu.contains(ev.target)) regMenu.classList.add('hidden');
     });
 
     document.getElementById('w1-submit').addEventListener('click', function(){ uploadBulk(this); });

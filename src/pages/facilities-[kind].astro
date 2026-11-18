@@ -2,14 +2,16 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHead from '../components/PageHead.astro';
 import Card from '../components/Card.astro';
+import ActionItem from '../components/ActionItem.astro';
+import { BASE } from '../lib/url';
 import { DINING_HALLS, GREEN_ROOMS, TOILET_BLOCKS, WATER_STATIONS } from '../data/festival';
 
 export function getStaticPaths() {
   return [
-    { params: { kind: 'green-room' }, props: { title: 'Green Rooms', badge: 'Green Room', intro: 'Designated dressing and waiting areas across HS Block, HSS Block, and GMLPS Mala.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
-    { params: { kind: 'toilet' }, props: { title: 'Toilet Blocks', badge: 'Toilet', intro: 'Washrooms across the campus, with separate blocks for boys, girls, and staff.', tone: 'blue', cols: 3, icon: 'water', items: TOILET_BLOCKS } },
-    { params: { kind: 'water' }, props: { title: 'Drinking Water Stations', badge: 'Drinking Water', intro: 'Filtered RO drinking water points available across the campus.', tone: 'teal', cols: 2, icon: 'sparkle', items: WATER_STATIONS } },
-    { params: { kind: 'dining' }, props: { title: 'Dining Hall (Oottupura)', badge: 'Dining Hall', intro: 'Free meals and light refreshments for participants, teachers, and volunteers.', tone: 'orange', cols: 2, icon: 'grid', items: DINING_HALLS } },
+    { params: { kind: 'green-room' }, props: { title: 'Green Rooms', badge: 'Green Room', intro: 'Designated dressing and waiting areas across HS Block, HSS Block, and GMLPS Mala with campus blueprints.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
+    { params: { kind: 'toilet' }, props: { title: 'Toilet Blocks', badge: 'Toilet', intro: 'Washrooms across the campus, with separate blocks for boys, girls, and staff — plus location blueprints.', tone: 'blue', cols: 3, icon: 'water', items: TOILET_BLOCKS } },
+    { params: { kind: 'water' }, props: { title: 'Drinking Water Stations', badge: 'Drinking Water', intro: 'Filtered RO drinking water points across the campus with walking direction maps.', tone: 'teal', cols: 2, icon: 'sparkle', items: WATER_STATIONS } },
+    { params: { kind: 'dining' }, props: { title: 'Dining Hall (Oottupura)', badge: 'Dining Hall', intro: 'Free meals and light refreshments for participants, teachers, and volunteers with campus map.', tone: 'orange', cols: 2, icon: 'grid', items: DINING_HALLS } },
   ];
 }
 const { title, badge, intro, tone, cols, icon, items } = Astro.props;
@@ -22,6 +24,14 @@ const { title, badge, intro, tone, cols, icon, items } = Astro.props;
         <Card title={item.name} subtitle={item.sub} tone={tone} icon={icon}>
           <p class="text-muted sm">{item.desc}</p>
           <div class="fest-action-item"><span><strong>Location:</strong> {item.loc}</span></div>
+          {item.blueprint && (
+            <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:#fff;padding:.5rem">
+              <img src={BASE + 'assets/img/blueprints/' + item.blueprint} alt={`${item.name} Direction Blueprint`} loading="lazy" style="max-height:240px;width:100%;object-fit:contain;border-radius:6px" />
+            </div>
+          )}
+          {item.map && (
+            <ActionItem href={item.map} external={true} icon="map-pin" iconTone="c-emerald" title="Directions in Google Maps" />
+          )}
         </Card>
       ))}
     </div>

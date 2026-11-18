@@ -14,14 +14,14 @@
     <div id="boards" class="grid"></div>
     <section id="photo-intake" class="panel" style="margin-top:2rem;display:none">
       <h2>Photo Intake</h2>
-      <p class="muted small">Upload stage photos (max 10 MB per image). You can remove individual photos before uploading.</p>
+      <p class="muted small">Upload stage photos (max 10 MB per image). Entering <strong>one register number</strong> automatically fetches the entire team from that school for the selected item.</p>
       <div class="row" style="margin-bottom:1rem">
         <label style="margin:0;display:flex;align-items:center;gap:.5rem">Stage: <select id="photo-venue-select" style="width:auto;margin:0"></select></label>
       </div>
       <div class="split">
         <div class="panel">
-          <h3>Workflow 1 (Bulk)</h3>
-          <p class="small muted">Upload slip photos + raw stage photos for Data Workers to assign.</p>
+          <h3>Workflow 1 (Bulk Queue)</h3>
+          <p class="small muted">Upload slip photos + raw stage photos for Data Workers to assign while watching live stage updates.</p>
           <label>Slip Photos<input type="file" id="w1-slips" multiple accept="image/jpeg,image/png,image/webp"></label>
           <div id="w1-slips-preview" class="photo-preview-grid"></div>
           <label>Stage Photos<input type="file" id="w1-stage" multiple accept="image/jpeg,image/png,image/webp"></label>
@@ -29,12 +29,32 @@
           <button class="primary" type="button" id="w1-submit" style="margin-top:.5rem">Queue for Data Worker</button>
         </div>
         <div class="panel">
-          <h3>Workflow 2 (Quick)</h3>
-          <p class="small muted">Select item and any register number(s), preview photos, then upload &amp; publish.</p>
-          <label>Select Item<select id="w2-item"></select></label>
-          <input id="w2-item-custom" placeholder="Enter item code (e.g. 101)" maxlength="32" style="margin-top:.4rem;display:none">
-          <label>Register Number(s)<div class="row"><input id="w2-reg-search" placeholder="Search reg no or name…" autocomplete="off" style="flex:1"><button type="button" id="w2-reg-add" class="small">+ Add Reg #</button></div></label>
-          <div id="w2-reg-suggestions" style="margin-top:.35rem"></div>
+          <h3>Workflow 2 (Quick Publish)</h3>
+          <p class="small muted">Pick item &amp; one register number (auto-fetches whole school team), then upload &amp; publish instantly.</p>
+          <label>Competition Item (search by name or code)
+            <div class="ac-wrap">
+              <input id="w2-item-input" placeholder="Type item name or code (e.g. Oppana, 201)…" autocomplete="off">
+              <div id="w2-item-menu" class="ac-menu hidden"></div>
+            </div>
+          </label>
+          <div class="row" style="margin-top:.35rem">
+            <span class="xs muted" id="w2-item-picked"></span>
+            <button type="button" id="w2-use-current-item" class="quick-pill">Use On-Stage Item</button>
+          </div>
+          <label>Register Number(s)
+            <div class="row">
+              <div class="ac-wrap" style="flex:1">
+                <input id="w2-reg-search" placeholder="Type 1 reg no, student name, or school…" autocomplete="off">
+                <div id="w2-reg-menu" class="ac-menu hidden"></div>
+              </div>
+              <button type="button" id="w2-fetch-team" class="small primary">+ Fetch School Team</button>
+            </div>
+          </label>
+          <div class="quick-pills">
+            <button type="button" id="w2-use-current-chest" class="quick-pill">Use On-Stage Chest</button>
+            <button type="button" id="w2-clear-regs" class="quick-pill">Clear List</button>
+          </div>
+          <div id="w2-team-banner" class="xs muted" style="margin-top:.25rem"></div>
           <div id="w2-reg-chips" class="chip-list"></div>
           <label>Stage Photos<input type="file" id="w2-stage" multiple accept="image/jpeg,image/png,image/webp"></label>
           <div id="w2-stage-preview" class="photo-preview-grid"></div>

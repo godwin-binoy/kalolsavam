@@ -405,3 +405,5 @@
 {"id": 106, "ts": 1794917127.9260774, "username": "vaiga@akshara.com", "ip_hash": "0c803f1838fd00cca3548deb4e73a731", "event": "login_ok", "detail": "status=200"}
 {"id": 106, "ts": 1794917127.9260774, "username": "vaiga@akshara.com", "ip_hash": "0c803f1838fd00cca3548deb4e73a731", "event": "login_ok", "detail": "status=200"}
 {"id": 107, "ts": 1794917653.8581376, "username": "vaiga@akshara.com", "ip_hash": "0c803f1838fd00cca3548deb4e73a731", "event": "login_ok", "detail": "status=200"}
+{"id": 108, "ts": 1794958993.4081483, "username": "admin@kalolsavam.example.com", "ip_hash": "a9997e92e5e848c7ca4e699a510d6263", "event": "admin_action", "detail": "disable_user|id=9"}
+{"id": 109, "ts": 1794959034.062729, "username": "admin@kalolsavam.example.com", "ip_hash": "a9997e92e5e848c7ca4e699a510d6263", "event": "admin_action", "detail": "enable_user|id=9"}
