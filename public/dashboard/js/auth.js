@@ -178,10 +178,11 @@
       formEl = el('login-form'); msgEl = el('login-msg'); btnEl = el('login-btn');
       A.state.onAuthLost = function () {
         A.clearTokens();
-        var had = false;
-        try { had = !!sessionStorage.getItem('kal_user'); } catch (e) {}
         dropUser();
-        if (had) location.reload();
+        var app = el('app'); if (app) app.classList.add('hidden');
+        var lc = document.querySelector('.login-card'); if (lc) lc.classList.remove('hidden');
+        document.body.classList.add('login-body');
+        msg('Session expired. Please sign in again.', 'err');
       };
       if (formEl) {
         formEl.addEventListener('submit', function (ev) {

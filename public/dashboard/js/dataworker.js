@@ -154,13 +154,13 @@
           '<div class="panel">' +
             '<h3>Quick School-Team Assign</h3>' +
             '<p class="xs muted">Enter the item and ONE register number to fetch the whole team from that school, then assign to selected or unassigned photos.</p>' +
-            '<label>Competition Item' +
+            '<div class="field"><label for="dw-item-input">Competition Item</label>' +
               '<div class="ac-wrap">' +
                 '<input id="dw-item-input" placeholder="Search item name or code…" autocomplete="off">' +
                 '<div id="dw-item-menu" class="ac-menu hidden"></div>' +
               '</div>' +
-            '</label>' +
-            '<label>One Register Number (fetches whole school team)' +
+            '</div>' +
+            '<div class="field"><label for="dw-reg-input">One Register Number (fetches whole school team)</label>' +
               '<div class="row">' +
                 '<div class="ac-wrap" style="flex:1">' +
                   '<input id="dw-reg-input" placeholder="Type reg no, name, or school…" autocomplete="off">' +
@@ -168,7 +168,7 @@
                 '</div>' +
                 '<button type="button" id="dw-fetch-team" class="small primary">+ Team</button>' +
               '</div>' +
-            '</label>' +
+            '</div>' +
             '<div id="dw-team-info" class="xs muted" style="margin-top:.35rem"></div>' +
             '<div id="dw-team-chips" class="chip-list"></div>' +
             '<div class="row" style="margin-top:.75rem">' +

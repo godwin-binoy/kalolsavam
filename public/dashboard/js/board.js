@@ -7,10 +7,11 @@
   var boardData = [];
   var scheduleEvents = [];
   var lastAction = {};
+  var syncTimer = null;
 
   var photoFiles = { w1Slips: [], w1Stage: [], w2Stage: [] };
   var previewUrls = { w1Slips: [], w1Stage: [], w2Stage: [] };
-  var w2SelectedRegs = []; // [{ register_no, name }]
+  var w2SelectedRegs = [];
   var w2ItemCode = '';
 
   async function loadSchedule(){
@@ -68,10 +69,18 @@
     return r.ok ? r.data : null;
   }
 
-  async function loadBoard(){
+  async function loadBoard(force){
+    if (!force && boardsEl && boardsEl.contains(document.activeElement)){
+      var tag = (document.activeElement.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+    }
     var r = await A.api('/api/v1/live/board');
     if (!r.ok){
-      if (r.status === 401 || r.status === 403){ location.reload(); return; }
+      if (r.status === 401) return;
+      if (r.status === 403){
+        boardsEl.innerHTML = '<div class="panel"><p class="err">Access denied for Stage Control. Please sign in with a stagemaster or admin account.</p></div>';
+        return;
+      }
       A.toast('Could not load board: ' + (r.detail || r.status), true);
       return;
     }
@@ -107,10 +116,11 @@
     var st = v.state || {};
     var isActive = venue.active !== 0 && venue.active !== false;
     var stateName = st.state || 'IDLE';
+    var uid = String(venue.id);
 
     var p = document.createElement('section');
     p.className = 'panel';
-    p.dataset.venue = venue.id;
+    p.dataset.venue = uid;
 
     p.innerHTML =
       '<div class="row">' +
@@ -120,39 +130,39 @@
       '</div>' +
       '<form class="stage-control-form">' +
         '<div class="split">' +
-          '<label>Stage Active' +
-            '<select name="active">' +
+          '<div class="field"><label for="act-' + uid + '">Stage Active</label>' +
+            '<select id="act-' + uid + '" name="active">' +
               '<option value="1"' + (isActive ? ' selected' : '') + '>Active</option>' +
               '<option value="0"' + (!isActive ? ' selected' : '') + '>Inactive</option>' +
             '</select>' +
-          '</label>' +
-          '<label>Stage Status' +
-            '<select name="state">' +
+          '</div>' +
+          '<div class="field"><label for="st-' + uid + '">Stage Status</label>' +
+            '<select id="st-' + uid + '" name="state">' +
               ['IDLE', 'RUNNING', 'PAUSED', 'BREAK', 'FINISHED'].map(function(s){
                 return '<option' + (s === stateName ? ' selected' : '') + '>' + s + '</option>';
               }).join('') +
             '</select>' +
-          '</label>' +
+          '</div>' +
         '</div>' +
-        '<label>Current Item (type to search DB)' +
+        '<div class="field"><label for="ci-' + uid + '">Current Item (type to search DB)</label>' +
           '<div class="ac-wrap">' +
-            '<input name="current_item" maxlength="200" autocomplete="off" placeholder="Start typing item name or code…" value="' + esc(st.current_item || '') + '">' +
+            '<input id="ci-' + uid + '" name="current_item" maxlength="200" autocomplete="off" placeholder="Start typing item name or code…" value="' + esc(st.current_item || '') + '">' +
             '<div class="ac-menu hidden" data-menu="item"></div>' +
           '</div>' +
-        '</label>' +
+        '</div>' +
         '<div class="split">' +
-          '<label>Current Chest / Reg No (type to search DB)' +
+          '<div class="field"><label for="cc-' + uid + '">Current Chest / Reg No</label>' +
             '<div class="ac-wrap">' +
-              '<input name="current_chest" maxlength="32" autocomplete="off" placeholder="Reg no, student, or school…" value="' + esc(st.current_chest || '') + '">' +
+              '<input id="cc-' + uid + '" name="current_chest" maxlength="32" autocomplete="off" placeholder="Reg no, student, or school…" value="' + esc(st.current_chest || '') + '">' +
               '<div class="ac-menu hidden" data-menu="chest"></div>' +
             '</div>' +
-          '</label>' +
-          '<label>Upcoming Chest Numbers (type to search DB)' +
+          '</div>' +
+          '<div class="field"><label for="uc-' + uid + '">Upcoming Chest Numbers</label>' +
             '<div class="ac-wrap">' +
-              '<input name="upcoming_chests" maxlength="280" autocomplete="off" placeholder="Comma-separated e.g. 1054, 1082" value="' + esc(st.upcoming_chests || '') + '">' +
+              '<input id="uc-' + uid + '" name="upcoming_chests" maxlength="280" autocomplete="off" placeholder="Comma-separated e.g. 1054, 1082" value="' + esc(st.upcoming_chests || '') + '">' +
               '<div class="ac-menu hidden" data-menu="upcoming"></div>' +
             '</div>' +
-          '</label>' +
+          '</div>' +
         '</div>' +
         '<div class="quick-pills">' +
           '<button type="button" class="quick-pill" data-next-chest>Next Chest &rarr;</button>' +
@@ -161,9 +171,9 @@
           '<button type="button" class="quick-pill" data-ann="Lunch break">Lunch Break</button>' +
           '<button type="button" class="quick-pill" data-ann="">Clear Notice</button>' +
         '</div>' +
-        '<label>Announcements (optional)' +
-          '<textarea name="announcement" rows="2" maxlength="280" placeholder="No announcement">' + esc(st.announcement || '') + '</textarea>' +
-        '</label>' +
+        '<div class="field"><label for="ann-' + uid + '">Announcements (optional)</label>' +
+          '<textarea id="ann-' + uid + '" name="announcement" rows="2" maxlength="280" placeholder="No announcement">' + esc(st.announcement || '') + '</textarea>' +
+        '</div>' +
         '<div class="row" style="margin-top:.9rem">' +
           '<button type="submit" class="primary">Save Stage</button>' +
         '</div>' +
@@ -178,7 +188,6 @@
     var upMenu = form.querySelector('[data-menu="upcoming"]');
     var selectedCode = '';
 
-    // Current Item DB autocomplete
     function showItemSug(){
       var matches = filterEvents(itemInp.value, venue.name);
       renderMenu(itemMenu, matches.map(function(e){
@@ -197,7 +206,6 @@
       itemMenu.classList.add('hidden');
     });
 
-    // Current Chest DB autocomplete
     var chestTimer;
     function showChestSug(){
       clearTimeout(chestTimer);
@@ -220,7 +228,6 @@
       chestMenu.classList.add('hidden');
     });
 
-    // Upcoming Chests DB autocomplete (searches token after last comma)
     var upTimer;
     function showUpSug(){
       clearTimeout(upTimer);
@@ -248,15 +255,6 @@
       upMenu.classList.add('hidden');
     });
 
-    document.addEventListener('click', function(ev){
-      if (!p.contains(ev.target)){
-        itemMenu.classList.add('hidden');
-        chestMenu.classList.add('hidden');
-        upMenu.classList.add('hidden');
-      }
-    });
-
-    // Quick Advance Queue + Announcement presets
     p.querySelector('[data-next-chest]').addEventListener('click', function(){
       var tokens = upInp.value.split(/[\s,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
       if (!tokens.length){ A.toast('No upcoming chests in queue.', true); return; }
@@ -294,7 +292,7 @@
           return;
         }
         A.toast(venue.name + ' updated.');
-        await loadBoard();
+        await loadBoard(true);
       } finally {
         btn.disabled = false;
       }
@@ -302,7 +300,6 @@
     return p;
   }
 
-  // ── Photo Preview & Removal Helpers ───────────────────────────────────────
   function renderPreview(key, containerId){
     previewUrls[key].forEach(function(u){ try { URL.revokeObjectURL(u); } catch(e){} });
     previewUrls[key] = [];
@@ -471,17 +468,18 @@
       onmissed: function(){ connEl.textContent = 'reconnecting…'; connEl.className = 'badge offline'; },
       '*': function(msg){
         if (msg.venue_id && lastAction[msg.venue_id] && Date.now() - lastAction[msg.venue_id] < 1200) return;
-        loadBoard();
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(function(){ loadBoard(false); }, 300);
       }
     });
   }
 
   window.onKalLogin = function(info){
     document.body.classList.remove('login-body');
-    document.querySelector('.login-card').classList.add('hidden');
+    var lc = document.querySelector('.login-card'); if (lc) lc.classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     whoEl.textContent = (info.username || info.email || 'staff') + ' · ' + (info.role || 'stagemaster');
-    loadBoard();
+    loadBoard(true);
     loadSchedule();
     startFeed();
   };
@@ -492,7 +490,7 @@
     whoEl = document.getElementById('who');
 
     document.getElementById('logout-btn').addEventListener('click', window.KalAuth.logout);
-    document.getElementById('sync-btn').addEventListener('click', loadBoard);
+    document.getElementById('sync-btn').addEventListener('click', function(){ loadBoard(true); });
 
     document.getElementById('w1-slips').addEventListener('change', function(){
       appendFiles('w1Slips', 'w1-slips-preview', this.files); this.value = '';
@@ -504,7 +502,6 @@
       appendFiles('w2Stage', 'w2-stage-preview', this.files); this.value = '';
     });
 
-    // Workflow 2 Item DB Autocomplete
     var w2ItemInp = document.getElementById('w2-item-input');
     var w2ItemMenu = document.getElementById('w2-item-menu');
     var w2ItemPicked = document.getElementById('w2-item-picked');
@@ -533,7 +530,6 @@
       w2ItemMenu.classList.add('hidden');
     });
 
-    // Use On-Stage Item & Chest shortcuts
     document.getElementById('w2-use-current-item').addEventListener('click', function(){
       var vid = Number(document.getElementById('photo-venue-select').value);
       var b = boardData.find(function(x){ return x.venue.id === vid; });
@@ -558,7 +554,6 @@
       if (ban) ban.textContent = '';
     });
 
-    // Workflow 2 Register Number DB Autocomplete + School Team auto-fetch
     var regSearch = document.getElementById('w2-reg-search');
     var regMenu = document.getElementById('w2-reg-menu');
     var regTimer;
@@ -623,8 +618,12 @@
     });
 
     document.addEventListener('click', function(ev){
-      if (!w2ItemInp.contains(ev.target) && !w2ItemMenu.contains(ev.target)) w2ItemMenu.classList.add('hidden');
-      if (!regSearch.contains(ev.target) && !regMenu.contains(ev.target)) regMenu.classList.add('hidden');
+      document.querySelectorAll('.ac-wrap').forEach(function(wrap){
+        if (!wrap.contains(ev.target)){
+          var m = wrap.querySelector('.ac-menu');
+          if (m) m.classList.add('hidden');
+        }
+      });
     });
 
     document.getElementById('w1-submit').addEventListener('click', function(){ uploadBulk(this); });

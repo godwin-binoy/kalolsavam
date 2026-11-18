@@ -31,17 +31,19 @@
         <div class="panel">
           <h3>Workflow 2 (Quick Publish)</h3>
           <p class="small muted">Pick item &amp; one register number (auto-fetches whole school team), then upload &amp; publish instantly.</p>
-          <label>Competition Item (search by name or code)
+          <div class="field">
+            <label for="w2-item-input">Competition Item (search by name or code)</label>
             <div class="ac-wrap">
               <input id="w2-item-input" placeholder="Type item name or code (e.g. Oppana, 201)…" autocomplete="off">
               <div id="w2-item-menu" class="ac-menu hidden"></div>
             </div>
-          </label>
+          </div>
           <div class="row" style="margin-top:.35rem">
             <span class="xs muted" id="w2-item-picked"></span>
             <button type="button" id="w2-use-current-item" class="quick-pill">Use On-Stage Item</button>
           </div>
-          <label>Register Number(s)
+          <div class="field">
+            <label for="w2-reg-search">Register Number(s)</label>
             <div class="row">
               <div class="ac-wrap" style="flex:1">
                 <input id="w2-reg-search" placeholder="Type 1 reg no, student name, or school…" autocomplete="off">
@@ -49,7 +51,7 @@
               </div>
               <button type="button" id="w2-fetch-team" class="small primary">+ Fetch School Team</button>
             </div>
-          </label>
+          </div>
           <div class="quick-pills">
             <button type="button" id="w2-use-current-chest" class="quick-pill">Use On-Stage Chest</button>
             <button type="button" id="w2-clear-regs" class="quick-pill">Clear List</button>

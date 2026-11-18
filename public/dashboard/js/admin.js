@@ -28,7 +28,7 @@
         '<td><button data-edit-v="' + v.id + '">Edit</button> <button class="danger" data-del="/venues/' + v.id + '" data-tab="venues">Delete</button></td></tr>';
     }).join('');
     return '<div class="panel"><h2>Venues (' + vs.length + ')</h2><table><thead><tr><th>ID</th><th>Name</th><th>Kind</th><th>Active</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div>' +
+      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div></div>' +
       '<div class="panel"><h3>New venue</h3><form id="venue-form" class="row"><input id="v-name" placeholder="Name" required maxlength="120" style="flex:1">' +
       '<select id="v-kind"><option>stage</option><option>room</option><option>hall</option><option>ground</option></select><button class="primary" type="submit">Add</button></form></div>';
   };
@@ -48,7 +48,7 @@
         '<td><button data-edit-e="' + e.id + '">Edit</button> <button class="danger" data-del="/events/' + e.id + '" data-tab="events">Delete</button></td></tr>';
     }).join('');
     return '<div class="panel"><h2>Events (' + cache.events.length + ')</h2><table><thead><tr><th>Code</th><th>Title</th><th>Category</th><th>Venue</th><th>When</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="6" class="muted">none</td></tr>') + '</tbody></table></div>' +
+      '<tbody>' + (rows || '<tr><td colspan="6" class="muted">none</td></tr>') + '</tbody></table></div></div>' +
       '<div class="panel"><h3>New event</h3><form id="event-form" class="row"><input id="e-code" placeholder="Code" required style="width:7rem">' +
       '<input id="e-title" placeholder="Title" required style="flex:1;min-width:11rem"><input id="e-cat" placeholder="Category (e.g. HS General)" maxlength="64" style="width:11rem">' +
       '<select id="e-venue"><option value="">— venue —</option>' + cache.venues.map(function(v){ return '<option value="' + v.id + '">' + esc(v.name) + '</option>'; }).join('') + '</select>' +
@@ -66,7 +66,7 @@
 
   VIEWS.participants = async function(){
     await fetchVenues();
-    var r = await call('/participants' + (partSearchQ ? '?q=' + encodeURIComponent(partSearchQ) : ''));
+    var r = await call('/participants?limit=150' + (partSearchQ ? '&q=' + encodeURIComponent(partSearchQ) : ''));
     if (!r.ok) return '<div class="panel"><p class="err">Failed to load participants.</p></div>';
     var rows = (r.data.participants || []).map(function(p){
       return '<tr><td class="mono">' + esc(p.register_no) + '</td><td>' + esc(p.name) + '</td>' +
@@ -138,7 +138,7 @@
       return '<label class="small" style="display:inline-flex;gap:.3rem;align-items:center;margin:0 .6rem 0 0"><input type="checkbox" class="u-stage" value="' + v.id + '" style="width:auto;margin:0"> ' + esc(v.name) + '</label>';
     }).join('');
     return '<div class="panel"><h2>Staff accounts (' + cache.users.length + ')</h2><table><thead><tr><th>Email</th><th>Role</th><th>Stages</th><th>Status</th><th></th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div>' +
+      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div></div>' +
       '<div class="panel"><h3>New account</h3><form id="user-form" class="row"><input id="u-email" type="email" placeholder="email@example.com" required style="flex:1">' +
       '<input id="u-pass" type="password" placeholder="password (12+)" required minlength="12" style="flex:1"><select id="u-role"><option value="stagemaster">stagemaster</option><option value="dataworker">dataworker</option><option value="admin">admin</option></select>' +
       '<button class="primary" type="submit">Create</button></form><p class="small muted" style="margin-top:.8rem">Assign stages (stagemasters):</p><div class="row">' + stageOpts + '</div></div>';
@@ -159,7 +159,7 @@
         '<td class="small mono">' + esc((a.ip_hash || '').slice(0, 10)) + '…</td><td>' + esc(a.event) + '</td><td class="small">' + esc(a.detail || '') + '</td></tr>';
     }).join('');
     return '<div class="panel"><h2>Audit log (latest 200)</h2><table><thead><tr><th>Time</th><th>User</th><th>IP hash</th><th>Event</th><th>Detail</th></tr></thead>' +
-      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div>';
+      '<tbody>' + (rows || '<tr><td colspan="5" class="muted">none</td></tr>') + '</tbody></table></div></div>';
   };
 
   VIEWS.ops = async function(){
@@ -273,7 +273,7 @@
   }
 
   window.onKalLogin = function(info){
-    if (String(info.role || '').toLowerCase() !== 'admin'){ el('login-msg').textContent = 'Admin console only.'; return; }
+    if (String(info.role || '').toLowerCase() !== 'admin'){ A.clearTokens(); var lm = el('login-msg'); lm.textContent = 'Admin console only.'; lm.className = 'msg err'; return; }
     document.body.classList.remove('login-body');
     var lc = document.querySelector('.login-card'); if (lc) lc.classList.add('hidden');
     el('app').classList.remove('hidden');
