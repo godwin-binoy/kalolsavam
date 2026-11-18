@@ -25,7 +25,8 @@
   async function refreshLiveStages(){
     try {
       var d = await K.fetchJSON('/api/v1/public/status');
-      var venues = (d && d.venues) || [];
+      var STAGE_IDS = { 1:1, 2:1, 3:1, 4:1, 5:1, 6:1, 7:1, 8:1, 9:1, 26:1 };
+      var venues = ((d && d.venues) || []).filter(function(v){ return STAGE_IDS[Number(v.id)]; });
       if (!liveStrip) return;
       liveStrip.innerHTML = venues.map(function(v){
         var st = String(v.state || 'IDLE');

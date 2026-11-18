@@ -49,7 +49,7 @@ def status(request: Request):
                    ls.state, ls.current_item, ls.current_chest, ls.upcoming_chests, ls.announcement
             FROM venues v
             LEFT JOIN live_state ls ON ls.venue_id = v.id
-            WHERE v.kind = 'stage' OR v.id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 26)
+            WHERE v.id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 26)
             ORDER BY v.id
         """)
         out = []
@@ -152,7 +152,7 @@ def dashboard_stats(request: Request):
                        ls.current_item, ls.current_chest, ls.announcement
                 FROM venues v
                 LEFT JOIN live_state ls ON ls.venue_id = v.id
-                WHERE v.kind = 'stage' OR v.id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 26)
+                WHERE v.id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 26)
                 ORDER BY v.id
             """)
         ]

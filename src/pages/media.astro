@@ -43,7 +43,27 @@ import PageHead from '../components/PageHead.astro';
       var msg = K.el('lookup-msg'), gal = K.el('gallery');
       var sumBox = K.el('student-summary'), dlAllBtn = K.el('download-all-btn');
       var lb = K.el('media-lightbox'), lbImg = K.el('media-lb-img'), lbClose = K.el('media-lb-close');
-      var currentUrls = [];
+      var currentPhotos = [];
+
+      async function savePhoto(photoUrl, filename, btn){
+        if (btn) btn.disabled = true;
+        try {
+          var res = await fetch(photoUrl, { credentials: 'omit' });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          var blob = await res.blob();
+          var objUrl = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = objUrl;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          setTimeout(function(){ a.remove(); URL.revokeObjectURL(objUrl); }, 1500);
+        } catch (err){
+          window.open(photoUrl, '_blank', 'noopener');
+        } finally {
+          if (btn) btn.disabled = false;
+        }
+      }
 
       form.addEventListener('submit', async function(e){
         e.preventDefault();
@@ -51,7 +71,7 @@ import PageHead from '../components/PageHead.astro';
         gal.innerHTML = '';
         sumBox.classList.add('hidden');
         dlAllBtn.classList.add('hidden');
-        currentUrls = [];
+        currentPhotos = [];
 
         try {
           var data = await K.fetchJSON('/api/v1/photos/public/lookup', {
@@ -71,17 +91,22 @@ import PageHead from '../components/PageHead.astro';
           }
 
           msg.textContent = 'Found ' + data.photos.length + ' published photo(s).';
-          currentUrls = data.photos.map(function(p){ return K.url(p.url + '&dl=1'); });
-          if (currentUrls.length > 1) dlAllBtn.classList.remove('hidden');
+          currentPhotos = data.photos.map(function(p){
+            return {
+              url: K.url(p.url + '&dl=1'),
+              name: 'kalolsavam-photo-' + p.asset_id + '.jpg'
+            };
+          });
+          if (currentPhotos.length > 1) dlAllBtn.classList.remove('hidden');
 
-          gal.innerHTML = data.photos.map(function(p){
+          gal.innerHTML = data.photos.map(function(p, idx){
             var u = K.url(p.url);
             return '<div class="fest-card">' +
               '<img src="' + K.esc(u) + '" alt="Stage photo" loading="lazy" data-zoom style="width:100%;height:260px;object-fit:cover;display:block;cursor:zoom-in">' +
               '<div class="fest-body" style="gap:.6rem">' +
                 (p.venue_name ? '<span class="badge-gov" style="width:fit-content">' + K.esc(p.venue_name) + '</span>' : '') +
                 '<p class="sm text-muted" style="margin:0"><strong>Item(s):</strong> ' + K.esc((p.entries || []).join(', ')) + '</p>' +
-                '<a href="' + K.esc(u + '&dl=1') + '" class="btn-primary dark sm" style="width:100%;text-align:center;margin-top:auto">Download Photo</a>' +
+                '<button type="button" data-dl-idx="' + idx + '" class="btn-primary dark sm" style="width:100%;margin-top:auto">Download Photo</button>' +
               '</div></div>';
           }).join('');
         } catch (err){
@@ -93,22 +118,31 @@ import PageHead from '../components/PageHead.astro';
         }
       });
 
-      dlAllBtn.addEventListener('click', function(){
-        currentUrls.forEach(function(href, idx){
-          setTimeout(function(){
-            var a = document.createElement('a');
-            a.href = href; a.download = '';
-            document.body.appendChild(a); a.click(); a.remove();
-          }, idx * 450);
-        });
-      });
-
       gal.addEventListener('click', function(ev){
+        var dlBtn = ev.target.closest('[data-dl-idx]');
+        if (dlBtn){
+          var item = currentPhotos[Number(dlBtn.getAttribute('data-dl-idx'))];
+          if (item) savePhoto(item.url, item.name, dlBtn);
+          return;
+        }
         var img = ev.target.closest('img[data-zoom]');
         if (!img) return;
         lbImg.src = img.src;
         lb.classList.remove('hidden');
       });
+
+      dlAllBtn.addEventListener('click', async function(){
+        dlAllBtn.disabled = true;
+        try {
+          for (var i = 0; i < currentPhotos.length; i++){
+            await savePhoto(currentPhotos[i].url, currentPhotos[i].name);
+            await new Promise(function(r){ setTimeout(r, 300); });
+          }
+        } finally {
+          dlAllBtn.disabled = false;
+        }
+      });
+
       if (lbClose) lbClose.addEventListener('click', function(){ lb.classList.add('hidden'); });
       if (lb) lb.addEventListener('click', function(ev){ if (ev.target === lb) lb.classList.add('hidden'); });
     })();

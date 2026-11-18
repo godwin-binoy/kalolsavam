@@ -102,7 +102,7 @@ def seed_stages(stages_file: Path = typer.Option(Path("src/data/stages.json"), "
             vid = int(s["n"])
             db.ex(
                 "INSERT INTO venues(id, name, kind, slug, active) VALUES (?,?,?,?,1) "
-                "ON CONFLICT(id) DO UPDATE SET name = excluded.name, slug = excluded.slug",
+                "ON CONFLICT(id) DO UPDATE SET name = excluded.name, kind = excluded.kind, slug = excluded.slug",
                 (vid, s["name"], s.get("kind") or "stage", s.get("slug") or f"stage-{vid}"),
             )
     typer.echo(f"Seeded/updated {len(items)} stages.")

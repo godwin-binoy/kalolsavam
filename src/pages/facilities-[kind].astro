@@ -8,17 +8,41 @@ import { DINING_HALLS, GREEN_ROOMS, TOILET_BLOCKS, WATER_STATIONS } from '../dat
 
 export function getStaticPaths() {
   return [
-    { params: { kind: 'green-room' }, props: { title: 'Green Rooms', badge: 'Green Room', intro: 'Designated dressing and waiting areas across HS Block, HSS Block, and GMLPS Mala with campus blueprints.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
-    { params: { kind: 'toilet' }, props: { title: 'Toilet Blocks', badge: 'Toilet', intro: 'Washrooms across the campus, with separate blocks for boys, girls, and staff — plus location blueprints.', tone: 'blue', cols: 3, icon: 'water', items: TOILET_BLOCKS } },
-    { params: { kind: 'water' }, props: { title: 'Drinking Water Stations', badge: 'Drinking Water', intro: 'Filtered RO drinking water points across the campus with walking direction maps.', tone: 'teal', cols: 2, icon: 'sparkle', items: WATER_STATIONS } },
-    { params: { kind: 'dining' }, props: { title: 'Dining Hall (Oottupura)', badge: 'Dining Hall', intro: 'Free meals and light refreshments for participants, teachers, and volunteers with campus map.', tone: 'orange', cols: 2, icon: 'grid', items: DINING_HALLS } },
+    { params: { kind: 'green-room' }, props: { kind: 'green-room', title: 'Green Rooms', badge: 'Green Room', intro: 'Dressing and waiting areas across HS Block, HSS Block, and GMLPS Mala with campus blueprints.', tone: 'teal', cols: 3, icon: 'user', items: GREEN_ROOMS } },
+    { params: { kind: 'toilet' }, props: { kind: 'toilet', title: 'Toilet Blocks', badge: 'Toilet', intro: 'Washroom locations for boys, girls, and staff with campus blueprints for directions.', tone: 'blue', cols: 3, icon: 'water', items: TOILET_BLOCKS } },
+    { params: { kind: 'water' }, props: { kind: 'water', title: 'Drinking Water Stations', badge: 'Drinking Water', intro: 'Drinking water points across campus with walking direction maps.', tone: 'teal', cols: 2, icon: 'sparkle', items: WATER_STATIONS } },
+    { params: { kind: 'dining' }, props: { kind: 'dining', title: 'Dining Hall (Oottupura)', badge: 'Dining Hall', intro: 'Dining hall and refreshment area for participants, teachers, and volunteers with campus map.', tone: 'orange', cols: 2, icon: 'grid', items: DINING_HALLS } },
   ];
 }
-const { title, badge, intro, tone, cols, icon, items } = Astro.props;
+const { kind, title, badge, intro, tone, cols, icon, items } = Astro.props;
 ---
 <BaseLayout title={`${title} | Mala Kalolsavam`} active="facilities">
   <div class="main-container">
     <PageHead badge={badge} title={title} intro={intro} />
+
+    {kind === 'toilet' && (
+      <section class="card-base" style="margin-bottom:2rem">
+        <div class="sec-head" style="margin-bottom:1.25rem">
+          <h2 style="font-size:1.25rem;margin-bottom:.3rem">Campus Blueprints for Toilets</h2>
+          <p class="sm">Use these campus layout maps to locate washrooms in the Main Ground, High School (HS), and Higher Secondary (HSS) blocks.</p>
+        </div>
+        <div class="grid-3" style="gap:1rem">
+          <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)">
+            <div style="padding:.55rem .85rem;background:var(--bg-alt);border-bottom:1px solid var(--border);font-weight:700;font-size:.85rem">1. Main Campus Overview</div>
+            <div style="padding:.75rem;background:#fff"><img src={BASE + 'assets/img/blueprints/Campus/Gorund.png'} alt="Main Campus Blueprint" loading="lazy" style="max-height:240px;width:100%;object-fit:contain" /></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)">
+            <div style="padding:.55rem .85rem;background:var(--bg-alt);border-bottom:1px solid var(--border);font-weight:700;font-size:.85rem">2. HS Block Washrooms</div>
+            <div style="padding:.75rem;background:#fff"><img src={BASE + 'assets/img/blueprints/Campus/HS.png'} alt="HS Block Blueprint" loading="lazy" style="max-height:240px;width:100%;object-fit:contain" /></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)">
+            <div style="padding:.55rem .85rem;background:var(--bg-alt);border-bottom:1px solid var(--border);font-weight:700;font-size:.85rem">3. HSS Block Washrooms</div>
+            <div style="padding:.75rem;background:#fff"><img src={BASE + 'assets/img/blueprints/Campus/HSS.png'} alt="HSS Block Blueprint" loading="lazy" style="max-height:240px;width:100%;object-fit:contain" /></div>
+          </div>
+        </div>
+      </section>
+    )}
+
     <div class={cols === 2 ? 'grid-2' : 'grid-3'}>
       {items.map((item) => (
         <Card title={item.name} subtitle={item.sub} tone={tone} icon={icon}>

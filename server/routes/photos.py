@@ -169,8 +169,15 @@ async def upload_file(
 
 @router.get("/batches")
 def list_batches(request: Request, status: str = "queued", user=Depends(require_photo_staff)):
-    where = "WHERE b.status IN ('queued', 'published', 'staging')" if status == "all" else (
-        "WHERE b.status = 'published'" if status == "published" else "WHERE b.status = 'queued'"
+    stage_filter = "b.venue_id IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 26)"
+    where = (
+        f"WHERE {stage_filter} AND b.status IN ('queued', 'published', 'staging')"
+        if status == "all"
+        else (
+            f"WHERE {stage_filter} AND b.status = 'published'"
+            if status == "published"
+            else f"WHERE {stage_filter} AND b.status = 'queued'"
+        )
     )
     order = "DESC" if status == "published" else "ASC"
     batches = get_db(request).q(
@@ -288,6 +295,9 @@ def lookup_school_team(
     school_code = anchor["school_code"]
     team_members: list[dict] = []
     if icode:
+        ev_match = db.one("SELECT code, title FROM events WHERE code = ? OR lower(title) = lower(?)", (icode, icode))
+        resolved_code = ev_match["code"] if ev_match else icode
+        resolved_title = ev_match["title"] if ev_match else icode
         rows = db.q(
             """
             SELECT p.id, p.register_no, p.name, p.school_name, p.school_code, p.student_class,
@@ -295,10 +305,11 @@ def lookup_school_team(
             FROM participants p
             JOIN participant_entries pe ON pe.participant_id = p.id
             WHERE p.school_code = ? AND p.deleted_at IS NULL
-              AND pe.deleted_at IS NULL AND pe.item_code = ?
+              AND pe.deleted_at IS NULL
+              AND (pe.item_code = ? OR lower(COALESCE(pe.item_name, '')) = lower(?))
             ORDER BY p.register_no
             """,
-            (school_code, icode),
+            (school_code, resolved_code, resolved_title),
         )
         team_members = [dict(r) for r in rows]
 
@@ -355,7 +366,8 @@ def assign_photo_by_register(
     if not venue:
         raise HTTPException(404, "venue_not_found")
 
-    ev = db.one("SELECT title FROM events WHERE code = ?", (body.item_code,))
+    ev = db.one("SELECT code, title FROM events WHERE code = ? OR lower(title) = lower(?)", (body.item_code, body.item_code))
+    norm_item_code = ev["code"] if ev else body.item_code
     ev_title = ev["title"] if ev else None
     source = "data_worker" if has_role(user, "dataworker") else "stagemaster_quick"
     perf_date = body.perf_date or time.strftime("%Y-%m-%d")
@@ -369,7 +381,7 @@ def assign_photo_by_register(
                 raise HTTPException(404, f"participant_not_found:{reg}")
             entry = db.one(
                 "SELECT id FROM participant_entries WHERE participant_id = ? AND item_code = ? AND deleted_at IS NULL",
-                (p["id"], body.item_code),
+                (p["id"], norm_item_code),
             )
             if entry:
                 eid = entry["id"]
@@ -382,7 +394,7 @@ def assign_photo_by_register(
                 cur_e = db.ex(
                     "INSERT INTO participant_entries(participant_id, item_code, item_name, venue_id, venue_name, perf_date, created_at, updated_at) "
                     "VALUES (?,?,?,?,?,?,?,?)",
-                    (p["id"], body.item_code, ev_title, venue["id"], venue["name"], perf_date, now, now),
+                    (p["id"], norm_item_code, ev_title, venue["id"], venue["name"], perf_date, now, now),
                 )
                 eid = cur_e.lastrowid
             entry_ids.append(eid)
@@ -476,7 +488,7 @@ def view_public_asset(asset_id: int, request: Request, exp: int, sig: str, dl: i
     return FileResponse(fpath, media_type=mime, headers=headers)
 
 
-@router.post("/public/lookup", dependencies=[Depends(rate_limit("photo_lookup", 12, 60))])
+@router.post("/public/lookup", dependencies=[Depends(rate_limit("photo_lookup", 45, 60))])
 def public_lookup(body: PhotoLookupIn, request: Request):
     db, cfg = get_db(request), get_cfg(request)
     p = db.one(
@@ -488,22 +500,27 @@ def public_lookup(body: PhotoLookupIn, request: Request):
 
     db_name = _norm_name(p["name"])
     in_name = _norm_name(body.name)
-    in_tokens = [t for t in in_name.split(" ") if len(t) >= 2]
-    matched = (db_name == in_name) or (
-        bool(in_tokens) and all(t in db_name.split(" ") or t in db_name for t in in_tokens) and len(in_name) >= 3
+    db_tokens = [t for t in db_name.split(" ") if t]
+    in_tokens = [t for t in in_name.split(" ") if t]
+    matched = (
+        db_name == in_name
+        or db_name.replace(" ", "") == in_name.replace(" ", "")
+        or (bool(in_tokens) and len(in_name.replace(" ", "")) >= 3 and all(t in db_tokens for t in in_tokens))
     )
     if not matched:
         raise HTTPException(404, "not_found")
 
     rows = db.q(
         """
-        SELECT a.id AS asset_id, a.uploaded_at, pe.item_code, pe.item_name,
+        SELECT a.id AS asset_id, a.uploaded_at, pe.item_code,
+               COALESCE(NULLIF(pe.item_name, ''), ev.title) AS item_name,
                COALESCE(v.name, pe.venue_name) AS venue_name
         FROM participant_entries pe
         JOIN photo_asset_entries pae ON pae.participant_entry_id = pe.id
         JOIN photo_assets a ON a.id = pae.photo_asset_id
         JOIN photo_batches b ON b.id = a.batch_id
         LEFT JOIN venues v ON v.id = b.venue_id
+        LEFT JOIN events ev ON ev.code = pe.item_code
         WHERE pe.participant_id = ? AND pe.deleted_at IS NULL AND a.kind = 'stage' AND b.status = 'published'
         ORDER BY a.id DESC, pe.item_code
         """,
