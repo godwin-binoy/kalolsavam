@@ -422,6 +422,45 @@ def unassign_photo_entry(asset_id: int, entry_id: int, request: Request, user=De
     return {"ok": True, "batch_id": asset["batch_id"]}
 
 
+@router.post("/assets/{asset_id}/replace")
+async def replace_photo_asset(
+    asset_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    user=Depends(require_photo_staff),
+):
+    db = get_db(request)
+    asset = db.one(
+        "SELECT a.id, a.batch_id, a.filename, b.venue_id FROM photo_assets a JOIN photo_batches b ON b.id = a.batch_id WHERE a.id = ?",
+        (asset_id,),
+    )
+    if not asset:
+        raise HTTPException(404, "asset_not_found")
+    _check_photo_stage(user, asset["venue_id"])
+
+    storage = _storage_dir(request)
+    new_fname = await _save_validated_image(file, storage)
+    old_fname = asset["filename"]
+    try:
+        with db.transaction():
+            db.ex(
+                "UPDATE photo_assets SET filename = ?, uploaded_at = ?, processed = 0, processed_at = NULL WHERE id = ?",
+                (new_fname, db.now(), asset_id),
+            )
+    except BaseException:
+        (storage / new_fname).unlink(missing_ok=True)
+        raise
+
+    if old_fname and old_fname != new_fname:
+        try:
+            old_path = (storage / Path(old_fname).name).resolve()
+            if old_path.is_relative_to(storage.resolve()):
+                old_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+    return {"ok": True, "asset_id": asset_id, "batch_id": asset["batch_id"]}
+
+
 @router.delete("/assets/{asset_id}")
 def delete_photo_asset(asset_id: int, request: Request, user=Depends(require_photo_staff)):
     db = get_db(request)
@@ -453,16 +492,16 @@ def publish_batch(batch_id: int, request: Request, user=Depends(require_photo_st
 
 
 @router.get("/staff/assets/{asset_id}/view")
-def view_staff_asset(asset_id: int, request: Request, user=Depends(require_photo_staff)):
+def view_staff_asset(asset_id: int, request: Request, dl: int = 0, user=Depends(require_photo_staff)):
     a = get_db(request).one("SELECT filename FROM photo_assets WHERE id = ?", (asset_id,))
     if not a:
         raise HTTPException(404, "not_found")
     fpath = _safe_asset_path(_storage_dir(request), a["filename"])
-    return FileResponse(
-        fpath,
-        media_type=_EXT_TO_MIME.get(fpath.suffix.lower(), "application/octet-stream"),
-        headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"},
-    )
+    mime = _EXT_TO_MIME.get(fpath.suffix.lower(), "application/octet-stream")
+    headers = {"X-Content-Type-Options": "nosniff", "Cache-Control": "private, no-store"}
+    if dl:
+        return FileResponse(fpath, media_type=mime, filename=f"stage-photo-{asset_id}{fpath.suffix.lower()}", headers=headers)
+    return FileResponse(fpath, media_type=mime, headers=headers)
 
 
 @router.get("/assets/{asset_id}/view")

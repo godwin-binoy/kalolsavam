@@ -134,7 +134,12 @@
           '<label style="margin:0;display:flex;align-items:center;gap:.45rem;font-weight:600;color:var(--text)">' +
             '<input type="checkbox" class="dw-photo-chk" value="' + s.id + '" data-assigned="' + (isAssigned ? '1' : '0') + '" style="width:auto;margin:0"> Photo #' + s.id +
           '</label>' +
-          '<button type="button" class="danger small" data-del-asset="' + s.id + '">Delete Photo</button>' +
+          '<div class="row" style="gap:.4rem">' +
+            '<button type="button" class="small" data-dl-asset="' + s.id + '">&#11015; Download</button>' +
+            '<button type="button" class="small" data-rep-asset="' + s.id + '">&#8635; Re-upload Edited</button>' +
+            '<input type="file" accept="image/jpeg,image/png,image/webp" class="hidden" data-rep-file="' + s.id + '">' +
+            '<button type="button" class="danger small" data-del-asset="' + s.id + '">Delete</button>' +
+          '</div>' +
         '</div>' +
         '<img data-auth-src="' + esc(s.url) + '" data-zoomable alt="Stage #' + s.id + '" style="width:100%;max-height:300px;object-fit:contain;border-radius:6px;margin-bottom:.6rem;cursor:zoom-in;background:#000">' +
         '<div class="chip-list">' + (tags || '<span class="muted small">Unassigned</span>') + '</div>' +
@@ -357,6 +362,49 @@
     A.on(detailContent, 'click', '[data-del-asset]', async function(b){
       if (!confirm('Permanently delete this photo?')) return;
       var d = await A.req('/api/v1/photos/assets/' + b.dataset.delAsset, { method: 'DELETE' }, 'Photo deleted.');
+      if (d) openBatch(d.batch_id);
+    });
+
+    A.on(detailContent, 'click', '[data-dl-asset]', async function(b){
+      var aid = b.dataset.dlAsset;
+      b.disabled = true;
+      try {
+        var res = await A.authorizedFetch('/api/v1/photos/staff/assets/' + aid + '/view?dl=1', { method: 'GET' });
+        if (!res.ok) throw new Error('Status ' + res.status);
+        var blob = await res.blob();
+        var ext = blob.type === 'image/png' ? '.png' : (blob.type === 'image/webp' ? '.webp' : '.jpg');
+        var u = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = u;
+        a.download = 'stage-photo-' + aid + ext;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(function(){ a.remove(); URL.revokeObjectURL(u); }, 1500);
+      } catch (e){
+        A.toast('Download failed: ' + e.message, true);
+      } finally {
+        b.disabled = false;
+      }
+    });
+
+    A.on(detailContent, 'click', '[data-rep-asset]', function(b){
+      var inp = detailContent.querySelector('[data-rep-file="' + b.dataset.repAsset + '"]');
+      if (inp) inp.click();
+    });
+
+    A.on(detailContent, 'change', '[data-rep-file]', async function(inp){
+      var f = inp.files && inp.files[0];
+      inp.value = '';
+      if (!f) return;
+      if (f.size > 10 * 1024 * 1024){
+        A.toast('Edited file exceeds 10 MB limit.', true);
+        return;
+      }
+      var aid = inp.dataset.repFile;
+      var fd = new FormData();
+      fd.append('file', f);
+      A.toast('Uploading edited photo #' + aid + '…');
+      var d = await A.req('/api/v1/photos/assets/' + aid + '/replace', { method: 'POST', body: fd }, 'Photo #' + aid + ' updated!');
       if (d) openBatch(d.batch_id);
     });
 
