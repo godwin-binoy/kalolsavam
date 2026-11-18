@@ -488,7 +488,7 @@ def view_public_asset(asset_id: int, request: Request, exp: int, sig: str, dl: i
     return FileResponse(fpath, media_type=mime, headers=headers)
 
 
-@router.post("/public/lookup", dependencies=[Depends(rate_limit("photo_lookup", 45, 60))])
+@router.post("/public/lookup", dependencies=[Depends(rate_limit("photo_lookup", 12, 60))])
 def public_lookup(body: PhotoLookupIn, request: Request):
     db, cfg = get_db(request), get_cfg(request)
     p = db.one(
