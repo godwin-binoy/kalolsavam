@@ -339,7 +339,7 @@
     "code": "243",
     "title": "Prasangam Sanskrit HS",
     "category": "HS Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "09:00 am"
   },
@@ -347,7 +347,7 @@
     "code": "244",
     "title": "Gadyaparayanam / Pathakam Sanskrit UP (B)",
     "category": "UP Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "10:00 am"
   },
@@ -355,7 +355,7 @@
     "code": "245",
     "title": "Champoo Prabhashanam Sanskrit UP (G)",
     "category": "UP Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "11:00 am"
   },
@@ -363,7 +363,7 @@
     "code": "246",
     "title": "Ganalapanam Sanskrit UP (G)",
     "category": "UP Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "12:10 pm"
   },
@@ -371,7 +371,7 @@
     "code": "247",
     "title": "Padyam Chollal Sanskrit HS",
     "category": "HS Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "01:15 pm"
   },
@@ -379,7 +379,7 @@
     "code": "248",
     "title": "Prasangam Sanskrit UP",
     "category": "UP Sanskrit",
-    "venue_id": 5,
+    "venue_id": 7,
     "day": "2026-11-18",
     "scheduled_time": "02:00 pm"
   },
@@ -475,7 +475,7 @@
     "code": "260",
     "title": "Classical Music LP",
     "category": "LP General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "09:00 am"
   },
@@ -483,7 +483,7 @@
     "code": "261",
     "title": "Classical Music HSS (B)",
     "category": "HSS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "09:10 am"
   },
@@ -491,7 +491,7 @@
     "code": "262",
     "title": "Classical Music HSS (G)",
     "category": "HSS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "09:30 am"
   },
@@ -499,7 +499,7 @@
     "code": "263",
     "title": "Classical Music HS (B)",
     "category": "HS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "10:00 am"
   },
@@ -507,7 +507,7 @@
     "code": "264",
     "title": "Classical Music HS (G)",
     "category": "HS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "10:30 am"
   },
@@ -515,7 +515,7 @@
     "code": "265",
     "title": "Classical Music UP",
     "category": "UP General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "11:00 am"
   },
@@ -523,7 +523,7 @@
     "code": "266",
     "title": "Kathakali Sangeetham HSS (B)",
     "category": "HSS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "11:50 am"
   },
@@ -531,7 +531,7 @@
     "code": "267",
     "title": "Kathakali Sangeetham HSS (G)",
     "category": "HSS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "12:10 pm"
   },
@@ -539,7 +539,7 @@
     "code": "268",
     "title": "Kathakali Sangeetham HS (B)",
     "category": "HS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "12:20 pm"
   },
@@ -547,7 +547,7 @@
     "code": "269",
     "title": "Kathakali Sangeetham HS (G)",
     "category": "HS General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "12:30 pm"
   },
@@ -555,7 +555,7 @@
     "code": "270",
     "title": "Deshabhakthigaanam LP",
     "category": "LP General",
-    "venue_id": 7,
+    "venue_id": 5,
     "day": "2026-11-18",
     "scheduled_time": "01:00 pm"
   },

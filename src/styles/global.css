@@ -365,13 +365,3 @@ html.dark .stage-live-card .stage-state[data-state="BREAK"]{background:rgba(146,
 #global-search{padding-left:3.25rem;padding-right:1.5rem;text-align:left}
 .search-cat-pill{font-size:.68rem;padding:.12rem .5rem;background:var(--bg-alt);border:1px solid var(--border);border-radius:999px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .search-empty{padding:1.5rem 1rem;text-align:center;color:var(--muted);font-size:.9rem}
-
-/* Urgent Venue Change Notice Banner */
-.venue-change-banner{
-  width:100%;padding:.48rem 1rem;
-  background:var(--badge-emergency-bg);
-  border-bottom:1px solid var(--badge-emergency-border);
-  color:var(--badge-emergency-text);
-  font-size:.8rem;font-weight:600;line-height:1.4;text-align:center;
-}
-@media(min-width:640px){.venue-change-banner{padding:.5rem 2rem;font-size:.84rem}}
