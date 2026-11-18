@@ -92,8 +92,6 @@ const navKey = (k: string) => `nav.${k}`;
         <span class="icn icn-sun" style={`--icon-url:url('${BASE}assets/svg/sun.svg')`}></span>
       </button>
     </div>
-  <div class="dev-banner" role="status" aria-live="polite"><span class="dev-banner-dot" aria-hidden="true"></span><span data-i18n="banner.dev">This website is under active development — schedules and features are being updated.</span></div>
-<div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
 <div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
 <main id="main">{active !== "home" && (
   <div class="site-search-shell">
@@ -113,6 +111,10 @@ const navKey = (k: string) => `nav.${k}`;
       <span data-i18n="footer.address">St. Antony's Higher Secondary School, Mala, Thrissur, Kerala 680732</span>
     </div>
     <div class="ftr-meta">v{VERSION} · <a href={url('/developers')} style="color:var(--footer-fg);text-decoration:underline" data-i18n="footer.dev">Meet the Developers</a></div>
+  </div>
+  <div class="ftr-notices">
+    <div class="dev-banner" role="status" aria-live="polite"><span class="dev-banner-dot" aria-hidden="true"></span><span data-i18n="banner.dev">This website is under active development — schedules and features are being updated.</span></div>
+    <div class="disclaimer-banner" role="note"><span data-i18n="banner.disclaimer">Note: Information here may contain mistakes — please verify via traditional means (printed notices / announcements) and report any errors spotted.</span></div>
   </div>
 </footer>
 

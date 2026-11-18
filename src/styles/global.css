@@ -365,3 +365,20 @@ html.dark .stage-live-card .stage-state[data-state="BREAK"]{background:rgba(146,
 #global-search{padding-left:3.25rem;padding-right:1.5rem;text-align:left}
 .search-cat-pill{font-size:.68rem;padding:.12rem .5rem;background:var(--bg-alt);border:1px solid var(--border);border-radius:999px;color:var(--brand);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
 .search-empty{padding:1.5rem 1rem;text-align:center;color:var(--muted);font-size:.9rem}
+
+/* Footer-scoped Notices */
+.ftr-notices{border-top:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.22)}
+.ftr .dev-banner{
+  padding:.65rem 1rem .2rem;
+  background:transparent;border-bottom:none;
+  color:#FDE68A;font-size:.78rem;font-weight:600;
+}
+.ftr .disclaimer-banner{
+  padding:.15rem 1rem .7rem;
+  background:transparent;border-bottom:none;
+  color:#94A3B8;font-size:.74rem;font-weight:500;
+}
+@media(min-width:640px){
+  .ftr .dev-banner{padding:.7rem 2rem .2rem;font-size:.8rem}
+  .ftr .disclaimer-banner{padding:.15rem 2rem .75rem;font-size:.76rem}
+}
