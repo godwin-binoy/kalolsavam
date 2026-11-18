@@ -245,6 +245,10 @@ def seed_schedule() -> None:
                 "venue_id = excluded.venue_id, day = excluded.day, scheduled_time = excluded.scheduled_time",
                 (str(e["code"]), e["title"], e.get("category"), int(e["venue_id"]), e.get("day"), e.get("scheduled_time")),
             )
+        if events:
+            valid_codes = [str(e["code"]) for e in events]
+            placeholders = ",".join(["?"] * len(valid_codes))
+            db.ex(f"DELETE FROM events WHERE code NOT IN ({placeholders})", tuple(valid_codes))  # noqa: S608
     typer.echo(f"Seeded {len(stages)} venues and {len(events)} schedule items successfully.")
 
 

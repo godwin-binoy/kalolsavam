@@ -109,7 +109,7 @@ def schedule(request: Request, day: str | None = None, venue_id: int | None = No
 
     def build() -> dict[str, Any]:
         q = (
-            "SELECT e.id, e.code, e.title, e.category, v.name AS venue, "
+            "SELECT e.id, e.code, e.title, e.category, e.venue_id, v.name AS venue, "
             "v.slug AS venue_slug, e.day, e.scheduled_time "
             "FROM events e LEFT JOIN venues v ON v.id = e.venue_id"
         )

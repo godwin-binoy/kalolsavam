@@ -32,23 +32,21 @@
     menuEl.classList.remove('hidden');
   }
 
-  function filterEvents(query, venueName){
+  function filterEvents(query, venueId, venueName){
     var q = (query || '').trim().toLowerCase();
     var vLow = (venueName || '').toLowerCase();
-    var list = scheduleEvents.slice();
-    list.sort(function(a, b){
-      var aMatch = vLow && a.venue && a.venue.toLowerCase() === vLow ? 0 : 1;
-      var bMatch = vLow && b.venue && b.venue.toLowerCase() === vLow ? 0 : 1;
-      return aMatch - bMatch;
+    var list = scheduleEvents.filter(function(e){
+      if (venueId != null && e.venue_id != null) return Number(e.venue_id) === Number(venueId);
+      return vLow && e.venue && e.venue.toLowerCase() === vLow;
     });
     if (q){
       var tokens = q.split(/\s+/).filter(Boolean);
       list = list.filter(function(e){
-        var hay = (e.code + ' ' + e.title + ' ' + (e.category || '') + ' ' + (e.venue || '') + ' ' + (e.day || '')).toLowerCase();
+        var hay = (e.code + ' ' + e.title + ' ' + (e.category || '') + ' ' + (e.day || '')).toLowerCase();
         return tokens.every(function(t){ return hay.indexOf(t) >= 0; });
       });
     }
-    return list.slice(0, 12);
+    return list.slice(0, 20);
   }
 
   async function searchParticipants(query, itemCode){
@@ -189,7 +187,7 @@
     var selectedCode = '';
 
     function showItemSug(){
-      var matches = filterEvents(itemInp.value, venue.name);
+      var matches = filterEvents(itemInp.value, venue.id, venue.name);
       renderMenu(itemMenu, matches.map(function(e){
         return '<button type="button" class="ac-item" data-pick-item="' + esc(e.title) + '" data-pick-code="' + esc(e.code) + '">' +
           '<span><strong>' + esc(e.title) + '</strong> <span class="muted">(' + esc(e.code) + ')</span></span>' +
@@ -508,7 +506,7 @@
     function showW2ItemSug(){
       var vid = Number(document.getElementById('photo-venue-select').value);
       var vObj = boardData.find(function(b){ return b.venue.id === vid; });
-      var matches = filterEvents(w2ItemInp.value, vObj ? vObj.venue.name : '');
+      var matches = filterEvents(w2ItemInp.value, vid, vObj ? vObj.venue.name : '');
       renderMenu(w2ItemMenu, matches.map(function(e){
         return '<button type="button" class="ac-item" data-w2-code="' + esc(e.code) + '" data-w2-title="' + esc(e.title) + '">' +
           '<span><strong>' + esc(e.title) + '</strong> <span class="muted">(' + esc(e.code) + ')</span></span>' +
