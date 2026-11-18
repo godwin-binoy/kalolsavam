@@ -360,7 +360,15 @@
       if (d) openBatch(d.batch_id);
     });
 
-    // Zoom Lightbox
+    document.addEventListener('click', function(ev){
+      document.querySelectorAll('.ac-wrap').forEach(function(wrap){
+        if (!wrap.contains(ev.target)){
+          var m = wrap.querySelector('.ac-menu');
+          if (m) m.classList.add('hidden');
+        }
+      });
+    });
+
     var lb = el('dw-lightbox'), lbImg = el('dw-lb-img');
     A.on(detailContent, 'click', 'img[data-zoomable]', function(img){
       lbImg.src = img.src;
@@ -374,7 +382,7 @@
 
   window.onKalLogin = function(info){
     document.body.classList.remove('login-body');
-    document.querySelector('.login-card').classList.add('hidden');
+    var lc = document.querySelector('.login-card'); if (lc) lc.classList.add('hidden');
     el('app').classList.remove('hidden');
     el('who').textContent = (info.email || 'staff') + ' · ' + (info.role || 'dataworker');
     loadSchedule();

@@ -85,7 +85,7 @@
   }
 
   async function login(username, password) {
-    btnEl.disabled = true;
+    if (btnEl) btnEl.disabled = true;
     msg('Signing in…');
     try {
       var r = await fetch(A.url('/api/v1/auth/login'), {
@@ -102,7 +102,12 @@
       if (v.access_token) A.setToken(v.access_token);
       if (v.refresh_token) A.setRefreshToken(v.refresh_token);
       var me = await A.api('/api/v1/auth/me');
-      var payload = buildPayload(me.ok ? me.data : (v.user || v));
+      if (!me.ok) {
+        A.clearTokens();
+        msg('Could not verify session (' + me.status + ').', 'err');
+        return false;
+      }
+      var payload = buildPayload(me.data);
       storeUser(payload);
       msg('Signed in as ' + (payload.username || 'user') + '.', 'ok');
       if (window.onKalLogin) window.onKalLogin(payload);
@@ -111,7 +116,7 @@
       msg('Network error: ' + e.message, 'err');
       return false;
     } finally {
-      btnEl.disabled = false;
+      if (btnEl) btnEl.disabled = false;
     }
   }
 
