@@ -86,8 +86,8 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
 
   // Venue 7 - Vyapara Bhavan Old (Sanskritolsavam moved from Venue 5 for Wed 18.11)
   { item: "Prasangam Sanskrit HS", cat: "HS Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "09:00 AM" },
-  { item: "Gadyaparayanam / Pathakam Sanskrit UP (B)", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "10:00 AM" },
-  { item: "Champoo Prabhashanam Sanskrit UP (G)", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "11:00 AM" },
+  { item: "Ganalapanam Sanskrit UP (B)", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "10:00 AM" },
+  { item: "Champoo Prabhashanam Sanskrit UP", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "11:00 AM" },
   { item: "Ganalapanam Sanskrit UP (G)", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "12:10 PM" },
   { item: "Padyam Chollal Sanskrit HS", cat: "HS Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "01:15 PM" },
   { item: "Prasangam Sanskrit UP", cat: "UP Sanskrit", venue_n: 7, day: "Wednesday (18.11.2026)", time: "02:00 PM" },
