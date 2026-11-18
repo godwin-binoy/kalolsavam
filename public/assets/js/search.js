@@ -1,27 +1,77 @@
-/* Universal site-wide advanced search for the search bar on every page. */
+/* Universal site-wide advanced search with phonetic & transliteration normalization. */
 (function () {
   'use strict';
 
   var SYNONYMS = {
-    'drama': 'nadakam', 'mime': 'mookabhinayam', 'speech': 'prasangam',
-    'elocution': 'prasangam', 'poem': 'kavitha padyam', 'recitation': 'padyam kavitha',
-    'song': 'gaanam pattu', 'music': 'sangeetham', 'dance': 'nritham natyam',
-    'drawing': 'chithra pencil', 'painting': 'colouring oil', 'watercolor': 'water colouring',
-    'toilet': 'washroom', 'bathroom': 'toilet', 'wc': 'toilet', 'restroom': 'toilet',
-    'food': 'dining oottupura', 'lunch': 'dining oottupura', 'eat': 'dining', 'meals': 'dining',
-    'dress': 'green room', 'makeup': 'green room', 'costume': 'green room',
-    'doctor': 'medical', 'ambulance': 'medical', 'hospital': 'medical', 'firstaid': 'medical',
-    'result': 'results', 'score': 'results', 'marks': 'results', 'points': 'results',
-    'ksrtc': 'bus', 'rickshaw': 'auto', 'taxi': 'auto',
-    'photo': 'photos', 'picture': 'photos', 'gallery': 'photos'
+    'padhyam': 'padyam kavitha kavithaparayanam recitation chollal poem',
+    'padyam': 'padhyam kavitha kavithaparayanam recitation chollal poem',
+    'chollal': 'cholal padyam padhyam kavitha recitation',
+    'cholal': 'chollal padyam padhyam kavitha recitation',
+    'kavitha': 'kavithaparayanam padyam padhyam recitation poem chollal',
+    'kavithaparayanam': 'kavitha padyam padhyam recitation poem chollal',
+    'recitation': 'padyam padhyam kavitha kavithaparayanam chollal poem',
+    'poem': 'padyam padhyam kavitha kavithaparayanam recitation',
+    'hss': 'hss higher secondary plus two plus one',
+    'hs': 'hs high school',
+    'up': 'up upper primary',
+    'lp': 'lp lower primary',
+    'gaanaalapanam': 'ganalapanam sangeetham song',
+    'ganalapanam': 'gaanaalapanam sangeetham song',
+    'shasthriya': 'shastriya sasthriya classical sangeetham',
+    'shastriya': 'shasthriya sasthriya classical sangeetham',
+    'sasthriya': 'shasthriya shastriya classical sangeetham',
+    'classical': 'shasthriya shastriya sasthriya sangeetham music',
+    'sangeetham': 'music song classical shasthriya',
+    'music': 'sangeetham classical shasthriya',
+    'dance': 'nritham natyam bharathanatyam nadodi kuchuppudi mohiniyattam keralanadanam',
+    'kuchipudi': 'kuchuppudi dance',
+    'kuchuppudi': 'kuchipudi dance',
+    'dafmuttu': 'duffmuttu',
+    'duffmuttu': 'dafmuttu',
+    'vattapattu': 'vattappattu',
+    'vattappattu': 'vattapattu',
+    'thiruvathira': 'thiruvathirakkali',
+    'thiruvathirakkali': 'thiruvathira',
+    'drama': 'nadakam',
+    'nadakam': 'drama play',
+    'mime': 'mookabhinayam',
+    'mookabhinayam': 'mime',
+    'monoact': 'mono act',
+    'drawing': 'chithra pencil',
+    'painting': 'colouring oil',
+    'watercolor': 'water colouring',
+    'toilet': 'washroom bathroom wc restroom',
+    'bathroom': 'toilet washroom',
+    'food': 'dining oottupura lunch meals',
+    'lunch': 'dining oottupura meals',
+    'doctor': 'medical firstaid ambulance',
+    'ambulance': 'medical',
+    'result': 'results',
+    'results': 'result scores marks kite ulsavam',
+    'bus': 'ksrtc travel stand',
+    'ksrtc': 'bus',
+    'auto': 'autorickshaw driver taxi',
+    'rickshaw': 'auto',
+    'photo': 'photos pictures gallery',
+    'photos': 'photo pictures gallery'
   };
 
   function norm(s) {
-    return String(s || '').toLowerCase().replace(/[\s\-_.:·,()]+/g, ' ').trim();
+    return String(s || '')
+      .toLowerCase()
+      .replace(/padhyam/g, 'padyam')
+      .replace(/kavitha\s*parayanam/g, 'kavithaparayanam')
+      .replace(/gaana+lapanam/g, 'ganalapanam')
+      .replace(/shastriya|sasthriya/g, 'shasthriya')
+      .replace(/kuchipudi/g, 'kuchuppudi')
+      .replace(/[\s\-_.:·,()]+/g, ' ')
+      .trim();
   }
+
   function compact(s) {
     return String(s || '').toLowerCase().replace(/[^a-z0-9\u0d00-\u0d7f]/g, '');
   }
+
   function isSubseq(q, target) {
     if (q.length < 3 || q.length > target.length) return false;
     var i = 0, j = 0;
@@ -55,38 +105,45 @@
     if (!q) return [];
 
     var tokens = q.split(' ').filter(Boolean);
+    var rawTokens = rawQuery.toLowerCase().split(/[\s\-_.:·,()]+/).filter(Boolean);
     var qComp = compact(rawQuery);
     var scored = [];
 
     for (var i = 0; i < data.length; i++) {
       var it = data[i];
-      var tLow = (it.t || '').toLowerCase();
-      var cLow = (it.c || '').toLowerCase();
-      var dLow = (it.d || '').toLowerCase();
-      var kLow = (it.k || '').toLowerCase();
-      var hay = tLow + ' ' + cLow + ' ' + dLow + ' ' + kLow;
-      var hayComp = compact(tLow + ' ' + kLow);
+      var tNorm = norm(it.t);
+      var cNorm = norm(it.c);
+      var dNorm = norm(it.d);
+      var kNorm = norm(it.k);
+      var hayNorm = tNorm + ' ' + cNorm + ' ' + dNorm + ' ' + kNorm;
+
+      var tRaw = (it.t || '').toLowerCase();
+      var hayRaw = tRaw + ' ' + (it.c || '').toLowerCase() + ' ' + (it.d || '').toLowerCase() + ' ' + (it.k || '').toLowerCase();
+      var hayComp = compact(hayRaw);
 
       var allMatch = true;
       var score = 0;
 
       for (var ti = 0; ti < tokens.length; ti++) {
         var tk = tokens[ti];
-        var alt = SYNONYMS[tk] ? SYNONYMS[tk].split(' ') : [];
+        var rawTk = rawTokens[ti] || tk;
+        var altList = (SYNONYMS[tk] ? SYNONYMS[tk].split(' ') : [])
+          .concat(SYNONYMS[rawTk] ? SYNONYMS[rawTk].split(' ') : []);
         var matchedTok = false;
 
-        if (tLow.indexOf(tk) === 0) { score += 90; matchedTok = true; }
-        else if (tLow.indexOf(tk) >= 0) { score += 45; matchedTok = true; }
-        else if (cLow.indexOf(tk) >= 0) { score += 30; matchedTok = true; }
-        else if (dLow.indexOf(tk) >= 0) { score += 18; matchedTok = true; }
-        else if (kLow.indexOf(tk) >= 0 || hayComp.indexOf(compact(tk)) >= 0) { score += 12; matchedTok = true; }
-        else if (alt.some(function (a) { return hay.indexOf(a) >= 0; })) { score += 10; matchedTok = true; }
+        if (tNorm.indexOf(tk) === 0 || tRaw.indexOf(rawTk) === 0) { score += 95; matchedTok = true; }
+        else if (tNorm.indexOf(tk) >= 0 || tRaw.indexOf(rawTk) >= 0) { score += 50; matchedTok = true; }
+        else if (cNorm.indexOf(tk) >= 0) { score += 35; matchedTok = true; }
+        else if (dNorm.indexOf(tk) >= 0) { score += 20; matchedTok = true; }
+        else if (kNorm.indexOf(tk) >= 0 || hayNorm.indexOf(tk) >= 0) { score += 15; matchedTok = true; }
+        else if (hayComp.indexOf(compact(tk)) >= 0 || hayComp.indexOf(compact(rawTk)) >= 0) { score += 12; matchedTok = true; }
+        else if (altList.some(function (a) { return hayNorm.indexOf(a) >= 0 || hayRaw.indexOf(a) >= 0; })) { score += 12; matchedTok = true; }
 
         if (!matchedTok) { allMatch = false; break; }
       }
 
-      if (!allMatch && qComp.length >= 4 && isSubseq(qComp, compact(tLow))) {
-        score = 6;
+      if (!allMatch && qComp.length >= 4 && isSubseq(qComp, compact(tRaw))) {
+        score = 8;
         allMatch = true;
       }
 
@@ -100,7 +157,7 @@
       return b.score - a.score || a.item.t.length - b.item.t.length;
     });
 
-    return scored.slice(0, maxResults || 12).map(function (s) { return s.item; });
+    return scored.slice(0, maxResults || 14).map(function (s) { return s.item; });
   }
 
   function renderRows(items, activeIdx) {
