@@ -9,7 +9,14 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from ..auth import check_stage, get_db, get_user_stages, has_role, require_photo_staff, require_staff
+from ..auth import (
+    check_stage,
+    get_db,
+    get_user_stages,
+    has_role,
+    require_photo_staff,
+    require_staff,
+)
 from .public import invalidate_public_cache
 
 router = APIRouter()
