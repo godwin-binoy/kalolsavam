@@ -55,7 +55,7 @@ const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
 
     <div id="items-grid" class="grid-3" style="gap:1.25rem">
       {items.map((it) => (
-        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card single-item-card" data-search-txt={`${it.item} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time} padyam padhyam chollal kavitha kavithaparayanam recitation`.toLowerCase()} style="text-decoration:none;color:inherit">
+        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card single-item-card" data-search-txt={`${it.item} ${it.venue_name} ${it.venue_loc} ${it.day} ${it.time} padyam padhyam chollal kavitha kavithaparayanam recitation kavyakeli kavyakeali aksharaslokam aksharashlokam`.toLowerCase()} style="text-decoration:none;color:inherit">
           <div class={`fest-header banner-${tone}`} style="padding:1rem 1.25rem">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.3rem">
               <span style="font-size:.72rem;padding:.2rem .65rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">
@@ -92,7 +92,7 @@ const items = FESTIVAL_SCHEDULE.filter((it) => it.cat === name).map((it) => ({
       var cards = Array.from(grid.querySelectorAll('.single-item-card'));
 
       q.addEventListener('input', function(){
-        var val = q.value.trim().toLowerCase().replace(/padhyam/g, "padyam").replace(/kavitha\s*parayanam/g, "kavithaparayanam").replace(/gaana+lapanam/g, "ganalapanam");
+        var val = q.value.trim().toLowerCase().replace(/padhyam/g, "padyam").replace(/kavya\s*k[ea]+li/g, "kavyakeli").replace(/akshara\s*sh?lokam/g, "aksharaslokam").replace(/gaana+lapanam/g, "ganalapanam");
         var tokens = val.split(/\s+/).filter(Boolean);
         var visibleCount = 0;
 

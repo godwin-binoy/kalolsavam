@@ -59,7 +59,7 @@ const allScheduleItems = FESTIVAL_SCHEDULE.map((it) => ({
     <!-- Direct Matching Item Results Grid (Shown when searching) -->
     <div id="direct-items-grid" class="grid-3" style="margin-top:2rem;gap:1.25rem;display:none">
       {allScheduleItems.map((it) => (
-        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card direct-item-card" data-item-search={`${it.item} ${it.cat} ${it.venue_name} ${it.venue_loc} padyam padhyam chollal kavitha kavithaparayanam recitation`.toLowerCase()} style="text-decoration:none;color:inherit;display:none">
+        <a href={url(`/venues-stage/${it.venue_n}`)} class="fest-card direct-item-card" data-item-search={`${it.item} ${it.cat} ${it.venue_name} ${it.venue_loc} padyam padhyam chollal kavitha kavithaparayanam recitation kavyakeli kavyakeali aksharaslokam aksharashlokam`.toLowerCase()} style="text-decoration:none;color:inherit;display:none">
           <div class="fest-header banner-blue" style="padding:.9rem 1.15rem">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem">
               <span style="font-size:.72rem;padding:.15rem .55rem;background:rgba(255,255,255,.2);border-radius:999px;font-weight:700">Venue #{it.venue_n}</span>
@@ -160,7 +160,7 @@ const allScheduleItems = FESTIVAL_SCHEDULE.map((it) => ({
       var itemCards = Array.from(itemGrid.querySelectorAll('.direct-item-card'));
 
       q.addEventListener('input', function(){
-        var val = q.value.trim().toLowerCase().replace(/padhyam/g, "padyam").replace(/kavitha\s*parayanam/g, "kavithaparayanam").replace(/gaana+lapanam/g, "ganalapanam");
+        var val = q.value.trim().toLowerCase().replace(/padhyam/g, "padyam").replace(/kavya\s*k[ea]+li/g, "kavyakeli").replace(/akshara\s*sh?lokam/g, "aksharaslokam").replace(/gaana+lapanam/g, "ganalapanam");
         var tokens = val.split(/\s+/).filter(Boolean);
 
         if (!tokens.length){
