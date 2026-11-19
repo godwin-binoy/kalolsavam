@@ -1,43 +1,33 @@
-# ── Node / Astro / Frontend ─────────────────────────────────────────────────
-node_modules/
-dist/
-.astro/
-.npm/
-.pnpm-store/
-.wrangler/
-
-# ── Python / Backend ────────────────────────────────────────────────────────
-__pycache__/
-*.py[cod]
-*$py.class
-.venv/
-venv/
-env/
-.pytest_cache/
-.coverage
-htmlcov/
-
-# ── Environment & Secrets ───────────────────────────────────────────────────
+# Environment & secrets
 .env
 .env.*
 !.env.example
 server/.env
-!server/.env.example
-deployment/secret.key
+*.key
+*.pem
 
-# ── Databases (keep the folder, ignore the data) ────────────────────────────
-deployment/*.db
-deployment/*.db-*
-deployment/backups/
+# Databases, backups, uploaded photos & runtime state
+deployment/*
 !deployment/.gitkeep
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+.kal.lock
 
-# ── OS & Editor files ───────────────────────────────────────────────────────
+# Build & dependency caches
+node_modules/
+dist/
+.astro/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# OS & editor files
 .DS_Store
 Thumbs.db
-.vscode/
-.idea/
 *.swp
-
-# Added by repo cleanup
-*.pyc
-.kal.lock
