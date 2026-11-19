@@ -63,9 +63,9 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Prasangam Malayalam HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "09:00 AM" },
   { item: "Prasangam Malayalam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "10:00 AM" },
   { item: "Prasangam Malayalam HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "10:30 AM" },
-  { item: "Kavithaparayanam HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:15 AM" },
-  { item: "Kavithaparayanam HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:20 AM" },
-  { item: "Kavithaparayanam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:25 AM" },
+  { item: "Aksharaslokam HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:15 AM" },
+  { item: "Aksharaslokam HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:20 AM" },
+  { item: "Aksharaslokam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:25 AM" },
   { item: "Kavyakeli HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:30 AM" },
   { item: "Kavyakeli HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:35 AM" },
 
@@ -115,11 +115,11 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Padyam Chollal (Arabic General) LP", cat: "LP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "09:00 AM" },
   { item: "Padyam Chollal (Arabic General) UP", cat: "UP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "11:00 AM" },
   { item: "Padyam Chollal (Arabic General) HS", cat: "HS Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "12:05 PM" },
-  { item: "Padyam Chollal (Arabic General) HSS", cat: "HSS General", venue_n: 4, day: "Friday (20.11.2026)", time: "12:10 PM" },
+  { item: "Kathaprasangam HSS", cat: "HSS General", venue_n: 4, day: "Friday (20.11.2026)", time: "12:10 PM" },
 
   // Venue 5 - Silver Jubilee Hall III Floor
-  { item: "Prasangam Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:00 AM" },
-  { item: "Padyam Chollal Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:25 AM" },
+  { item: "Padyam Chollal Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:00 AM" },
+  { item: "Prasangam Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:25 AM" },
   { item: "Pathakam HS (B)", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "09:30 AM" },
   { item: "Pathakam HS (G)", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "10:15 AM" },
   { item: "Aksharaslokam UP", cat: "UP Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "11:40 AM" },

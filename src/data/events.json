@@ -337,7 +337,7 @@
   },
   {
     "code": "343",
-    "title": "Kavithaparayanam HS",
+    "title": "Aksharaslokam HS",
     "category": "HS General",
     "venue_id": 8,
     "day": "2026-11-19",
@@ -345,7 +345,7 @@
   },
   {
     "code": "344",
-    "title": "Kavithaparayanam HSS",
+    "title": "Aksharaslokam HSS",
     "category": "HSS General",
     "venue_id": 8,
     "day": "2026-11-19",
@@ -353,7 +353,7 @@
   },
   {
     "code": "345",
-    "title": "Kavithaparayanam UP",
+    "title": "Aksharaslokam UP",
     "category": "UP General",
     "venue_id": 8,
     "day": "2026-11-19",
@@ -649,7 +649,7 @@
   },
   {
     "code": "427",
-    "title": "Padyam Chollal (Arabic General) HSS",
+    "title": "Kathaprasangam HSS",
     "category": "HSS General",
     "venue_id": 4,
     "day": "2026-11-20",
@@ -657,7 +657,7 @@
   },
   {
     "code": "428",
-    "title": "Prasangam Sanskrit HSS (SKT)",
+    "title": "Padyam Chollal Sanskrit HSS (SKT)",
     "category": "HSS General",
     "venue_id": 5,
     "day": "2026-11-20",
@@ -665,7 +665,7 @@
   },
   {
     "code": "429",
-    "title": "Padyam Chollal Sanskrit HSS (SKT)",
+    "title": "Prasangam Sanskrit HSS (SKT)",
     "category": "HSS General",
     "venue_id": 5,
     "day": "2026-11-20",

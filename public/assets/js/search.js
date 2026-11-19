@@ -3,6 +3,10 @@
   'use strict';
 
   var SYNONYMS = {
+    'kavyakeali': 'kavyakeli kavya keli',
+    'kavyakeli': 'kavyakeali kavya keli',
+    'aksharashlokam': 'aksharaslokam akshara slokam',
+    'aksharaslokam': 'aksharashlokam akshara slokam',
     'padhyam': 'padyam kavitha kavithaparayanam recitation chollal poem',
     'padyam': 'padhyam kavitha kavithaparayanam recitation chollal poem',
     'chollal': 'cholal padyam padhyam kavitha recitation',
@@ -60,10 +64,22 @@
     return String(s || '')
       .toLowerCase()
       .replace(/padhyam/g, 'padyam')
+      .replace(/kavya\s*k[ea]+li/g, 'kavyakeli')
+      .replace(/akshara\s*sh?lokam/g, 'aksharaslokam')
       .replace(/kavitha\s*parayanam/g, 'kavithaparayanam')
       .replace(/gaana+lapanam/g, 'ganalapanam')
       .replace(/shastriya|sasthriya/g, 'shasthriya')
       .replace(/kuchipudi/g, 'kuchuppudi')
+      .replace(/duff?mutt[u]?|dafmutt[u]?/g, 'duffmuttu')
+      .replace(/parichamutt[u]?(\s*kali)?/g, 'parichamuttukali')
+      .replace(/poora+k+ali/g, 'poorakkali')
+      .replace(/ma+rgam\s*kali/g, 'margamkali')
+      .replace(/lalitha\s*ga+nam/g, 'lalithagaanam')
+      .replace(/sangha\s*ga+nam/g, 'sanghagaanam')
+      .replace(/deshabhakthi\s*ga+nam/g, 'deshabhakthigaanam')
+      .replace(/ma+ppila\s*pa+ttu/g, 'mappilappattu')
+      .replace(/vattap+a+ttu/g, 'vattappattu')
+      .replace(/na+dan\s*pa+ttu/g, 'nadan pattu')
       .replace(/[\s\-_.:·,()]+/g, ' ')
       .trim();
   }
