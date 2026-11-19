@@ -39,8 +39,8 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   // Venue 5 - Silver Jubilee Hall III Floor (Yesterday's Kathakali Sangeetham HS removed)
   { item: "Ashtapadi Sanskrit HS (B)", cat: "HS Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "09:00 AM" },
   { item: "Sanghagaanam Sanskrit UP", cat: "UP Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "10:00 AM" },
-  { item: "Aksharaslokam UP", cat: "UP Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "11:30 AM" },
-  { item: "Aksharaslokam HS", cat: "HS Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "11:40 AM" },
+  { item: "Aksharaslokam Sanskrit UP", cat: "UP Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "11:30 AM" },
+  { item: "Aksharaslokam Sanskrit HS", cat: "HS Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "11:40 AM" },
   { item: "Ganalapanam Sanskrit HS (B)", cat: "HS Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "01:30 PM" },
   { item: "Ganalapanam Sanskrit HSS", cat: "HSS General", venue_n: 5, day: "Thursday (19.11.2026)", time: "02:15 PM" },
   { item: "Ganalapanam Sanskrit HS (G)", cat: "HS Sanskrit", venue_n: 5, day: "Thursday (19.11.2026)", time: "03:30 PM" },
@@ -59,24 +59,22 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Padyam Chollal Malayalam HS", cat: "HS General", venue_n: 7, day: "Thursday (19.11.2026)", time: "11:40 AM" },
   { item: "Padyam Chollal Malayalam LP", cat: "LP General", venue_n: 7, day: "Thursday (19.11.2026)", time: "12:30 PM" },
 
-  // Venue 8 - E1 Class (HSS)
-  { item: "Prasangam Malayalam HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "09:00 AM" },
-  { item: "Prasangam Malayalam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "10:00 AM" },
-  { item: "Prasangam Malayalam HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "10:30 AM" },
-  { item: "Aksharaslokam HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:15 AM" },
-  { item: "Aksharaslokam HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:20 AM" },
-  { item: "Aksharaslokam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:25 AM" },
-  { item: "Kavyakeli HS", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:30 AM" },
-  { item: "Kavyakeli HSS", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:35 AM" },
+  // Venue 8 - E1 Class (HSS) · Today is Lalithagaanam (moved from Friday)
+  { item: "Lalithagaanam LP", cat: "LP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "09:00 AM" },
+  { item: "Lalithagaanam UP", cat: "UP General", venue_n: 8, day: "Thursday (19.11.2026)", time: "11:30 AM" },
+  { item: "Lalithagaanam HS (B)", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "02:00 PM" },
+  { item: "Lalithagaanam HSS (B)", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "02:40 PM" },
+  { item: "Lalithagaanam HSS (G)", cat: "HSS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "03:20 PM" },
+  { item: "Lalithagaanam HS (G)", cat: "HS General", venue_n: 8, day: "Thursday (19.11.2026)", time: "04:00 PM" },
 
-  // Venue 9 - HS II Floor (Arabic)
-  { item: "Prasangam (Arabic) HS", cat: "HS Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:00 AM" },
-  { item: "Prasangam (Arabic) UP", cat: "UP Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:10 AM" },
-  { item: "Prasangam (Arabic) LP", cat: "LP Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:20 AM" },
-  { item: "Padyam Chollal (Arabic) HS", cat: "HS Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "10:00 AM" },
-  { item: "Padyam Chollal (Arabic) UP", cat: "UP Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "10:35 AM" },
-  { item: "Padyam Chollal (Arabic) HSS", cat: "HSS General", venue_n: 9, day: "Thursday (19.11.2026)", time: "12:30 PM" },
-  { item: "Padyam Chollal (Arabic) LP", cat: "LP Arabic", venue_n: 9, day: "Thursday (19.11.2026)", time: "01:00 PM" },
+  // Venue 9 - HS II Floor · Today is Kannada (Arabic Padyam Chollal moved to Friday Venue 4)
+  { item: "Prasangam (Kannada) HS", cat: "HS General", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:00 AM" },
+  { item: "Prasangam (Kannada) UP", cat: "UP General", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:10 AM" },
+  { item: "Prasangam (Kannada) LP", cat: "LP General", venue_n: 9, day: "Thursday (19.11.2026)", time: "09:20 AM" },
+  { item: "Padyam Chollal (Kannada) HS", cat: "HS General", venue_n: 9, day: "Thursday (19.11.2026)", time: "10:00 AM" },
+  { item: "Padyam Chollal (Kannada) UP", cat: "UP General", venue_n: 9, day: "Thursday (19.11.2026)", time: "10:35 AM" },
+  { item: "Padyam Chollal (Kannada) HSS", cat: "HSS General", venue_n: 9, day: "Thursday (19.11.2026)", time: "12:30 PM" },
+  { item: "Padyam Chollal (Kannada) LP", cat: "LP General", venue_n: 9, day: "Thursday (19.11.2026)", time: "01:00 PM" },
 
   // Venue 26 - Maliekkal Garden
   { item: "Band Melam HS", cat: "HS General", venue_n: 26, day: "Thursday (19.11.2026)", time: "11:00 AM" },
@@ -111,19 +109,19 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Vattappattu UP", cat: "UP Arabic", venue_n: 3, day: "Friday (20.11.2026)", time: "02:10 PM" },
   { item: "Vattappattu HS", cat: "HS Arabic", venue_n: 3, day: "Friday (20.11.2026)", time: "03:00 PM" },
 
-  // Venue 4 - HSS Hall II Floor (Arabic General)
-  { item: "Padyam Chollal (Arabic General) LP", cat: "LP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "09:00 AM" },
-  { item: "Padyam Chollal (Arabic General) UP", cat: "UP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "11:00 AM" },
-  { item: "Padyam Chollal (Arabic General) HS", cat: "HS Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "12:05 PM" },
-  { item: "Kathaprasangam HSS", cat: "HSS General", venue_n: 4, day: "Friday (20.11.2026)", time: "12:10 PM" },
+  // Venue 4 - HSS Hall II Floor (Arabic Padyam Chollal)
+  { item: "Padyam Chollal (Arabic) LP", cat: "LP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "09:00 AM" },
+  { item: "Padyam Chollal (Arabic) UP", cat: "UP Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "11:00 AM" },
+  { item: "Padyam Chollal (Arabic) HS", cat: "HS Arabic", venue_n: 4, day: "Friday (20.11.2026)", time: "12:05 PM" },
+  { item: "Padyam Chollal (Arabic) HSS", cat: "HSS General", venue_n: 4, day: "Friday (20.11.2026)", time: "12:10 PM" },
 
   // Venue 5 - Silver Jubilee Hall III Floor
   { item: "Padyam Chollal Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:00 AM" },
   { item: "Prasangam Sanskrit HSS (SKT)", cat: "HSS General", venue_n: 5, day: "Friday (20.11.2026)", time: "09:25 AM" },
   { item: "Pathakam HS (B)", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "09:30 AM" },
   { item: "Pathakam HS (G)", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "10:15 AM" },
-  { item: "Aksharaslokam UP", cat: "UP Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "11:40 AM" },
-  { item: "Aksharaslokam HS", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "12:10 PM" },
+  { item: "Aksharaslokam Sanskrit UP", cat: "UP Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "11:40 AM" },
+  { item: "Aksharaslokam Sanskrit HS", cat: "HS Sanskrit", venue_n: 5, day: "Friday (20.11.2026)", time: "12:10 PM" },
   { item: "Nadakam UP", cat: "UP General", venue_n: 5, day: "Friday (20.11.2026)", time: "12:30 PM" },
   { item: "Nadakam HS", cat: "HS General", venue_n: 5, day: "Friday (20.11.2026)", time: "02:30 PM" },
 
@@ -132,11 +130,13 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Chendamelam HSS", cat: "HSS General", venue_n: 7, day: "Friday (20.11.2026)", time: "09:30 AM" },
   { item: "Chendamelam HS", cat: "HS General", venue_n: 7, day: "Friday (20.11.2026)", time: "10:00 AM" },
 
-  // Venue 8 - E1 Class (HSS)
-  { item: "Lalithagaanam LP", cat: "LP General", venue_n: 8, day: "Friday (20.11.2026)", time: "09:00 AM" },
-  { item: "Lalithagaanam UP", cat: "UP General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:30 AM" },
-  { item: "Lalithagaanam HS (B)", cat: "HS General", venue_n: 8, day: "Friday (20.11.2026)", time: "02:00 PM" },
-  { item: "Lalithagaanam HSS (B)", cat: "HSS General", venue_n: 8, day: "Friday (20.11.2026)", time: "02:40 PM" },
-  { item: "Lalithagaanam HSS (G)", cat: "HSS General", venue_n: 8, day: "Friday (20.11.2026)", time: "03:20 PM" },
-  { item: "Lalithagaanam HS (G)", cat: "HS General", venue_n: 8, day: "Friday (20.11.2026)", time: "04:00 PM" }
+  // Venue 8 - E1 Class (HSS) · Tomorrow is Prasangam Malayalam, Aksharaslokam & Kavyakeli
+  { item: "Prasangam Malayalam HS", cat: "HS General", venue_n: 8, day: "Friday (20.11.2026)", time: "09:00 AM" },
+  { item: "Prasangam Malayalam UP", cat: "UP General", venue_n: 8, day: "Friday (20.11.2026)", time: "10:00 AM" },
+  { item: "Prasangam Malayalam HSS", cat: "HSS General", venue_n: 8, day: "Friday (20.11.2026)", time: "10:30 AM" },
+  { item: "Aksharaslokam HS", cat: "HS General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:15 AM" },
+  { item: "Aksharaslokam HSS", cat: "HSS General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:20 AM" },
+  { item: "Aksharaslokam UP", cat: "UP General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:25 AM" },
+  { item: "Kavyakeli HS", cat: "HS General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:30 AM" },
+  { item: "Kavyakeli HSS", cat: "HSS General", venue_n: 8, day: "Friday (20.11.2026)", time: "11:35 AM" }
 ];

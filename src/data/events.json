@@ -193,7 +193,7 @@
   },
   {
     "code": "325",
-    "title": "Aksharaslokam UP",
+    "title": "Aksharaslokam Sanskrit UP",
     "category": "UP Sanskrit",
     "venue_id": 5,
     "day": "2026-11-19",
@@ -201,7 +201,7 @@
   },
   {
     "code": "326",
-    "title": "Aksharaslokam HS",
+    "title": "Aksharaslokam Sanskrit HS",
     "category": "HS Sanskrit",
     "venue_id": 5,
     "day": "2026-11-19",
@@ -313,126 +313,110 @@
   },
   {
     "code": "340",
-    "title": "Prasangam Malayalam HS",
-    "category": "HS General",
+    "title": "Lalithagaanam LP",
+    "category": "LP General",
     "venue_id": 8,
     "day": "2026-11-19",
     "scheduled_time": "09:00 am"
   },
   {
     "code": "341",
-    "title": "Prasangam Malayalam UP",
+    "title": "Lalithagaanam UP",
     "category": "UP General",
-    "venue_id": 8,
-    "day": "2026-11-19",
-    "scheduled_time": "10:00 am"
-  },
-  {
-    "code": "342",
-    "title": "Prasangam Malayalam HSS",
-    "category": "HSS General",
-    "venue_id": 8,
-    "day": "2026-11-19",
-    "scheduled_time": "10:30 am"
-  },
-  {
-    "code": "343",
-    "title": "Aksharaslokam HS",
-    "category": "HS General",
-    "venue_id": 8,
-    "day": "2026-11-19",
-    "scheduled_time": "11:15 am"
-  },
-  {
-    "code": "344",
-    "title": "Aksharaslokam HSS",
-    "category": "HSS General",
-    "venue_id": 8,
-    "day": "2026-11-19",
-    "scheduled_time": "11:20 am"
-  },
-  {
-    "code": "345",
-    "title": "Aksharaslokam UP",
-    "category": "UP General",
-    "venue_id": 8,
-    "day": "2026-11-19",
-    "scheduled_time": "11:25 am"
-  },
-  {
-    "code": "346",
-    "title": "Kavyakeli HS",
-    "category": "HS General",
     "venue_id": 8,
     "day": "2026-11-19",
     "scheduled_time": "11:30 am"
   },
   {
-    "code": "347",
-    "title": "Kavyakeli HSS",
+    "code": "342",
+    "title": "Lalithagaanam HS (B)",
+    "category": "HS General",
+    "venue_id": 8,
+    "day": "2026-11-19",
+    "scheduled_time": "02:00 pm"
+  },
+  {
+    "code": "343",
+    "title": "Lalithagaanam HSS (B)",
     "category": "HSS General",
     "venue_id": 8,
     "day": "2026-11-19",
-    "scheduled_time": "11:35 am"
+    "scheduled_time": "02:40 pm"
   },
   {
-    "code": "348",
-    "title": "Prasangam (Arabic) HS",
-    "category": "HS Arabic",
+    "code": "344",
+    "title": "Lalithagaanam HSS (G)",
+    "category": "HSS General",
+    "venue_id": 8,
+    "day": "2026-11-19",
+    "scheduled_time": "03:20 pm"
+  },
+  {
+    "code": "345",
+    "title": "Lalithagaanam HS (G)",
+    "category": "HS General",
+    "venue_id": 8,
+    "day": "2026-11-19",
+    "scheduled_time": "04:00 pm"
+  },
+  {
+    "code": "346",
+    "title": "Prasangam (Kannada) HS",
+    "category": "HS General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "09:00 am"
   },
   {
-    "code": "349",
-    "title": "Prasangam (Arabic) UP",
-    "category": "UP Arabic",
+    "code": "347",
+    "title": "Prasangam (Kannada) UP",
+    "category": "UP General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "09:10 am"
   },
   {
-    "code": "350",
-    "title": "Prasangam (Arabic) LP",
-    "category": "LP Arabic",
+    "code": "348",
+    "title": "Prasangam (Kannada) LP",
+    "category": "LP General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "09:20 am"
   },
   {
-    "code": "351",
-    "title": "Padyam Chollal (Arabic) HS",
-    "category": "HS Arabic",
+    "code": "349",
+    "title": "Padyam Chollal (Kannada) HS",
+    "category": "HS General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "10:00 am"
   },
   {
-    "code": "352",
-    "title": "Padyam Chollal (Arabic) UP",
-    "category": "UP Arabic",
+    "code": "350",
+    "title": "Padyam Chollal (Kannada) UP",
+    "category": "UP General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "10:35 am"
   },
   {
-    "code": "353",
-    "title": "Padyam Chollal (Arabic) HSS",
+    "code": "351",
+    "title": "Padyam Chollal (Kannada) HSS",
     "category": "HSS General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "12:30 pm"
   },
   {
-    "code": "354",
-    "title": "Padyam Chollal (Arabic) LP",
-    "category": "LP Arabic",
+    "code": "352",
+    "title": "Padyam Chollal (Kannada) LP",
+    "category": "LP General",
     "venue_id": 9,
     "day": "2026-11-19",
     "scheduled_time": "01:00 pm"
   },
   {
-    "code": "355",
+    "code": "353",
     "title": "Band Melam HS",
     "category": "HS General",
     "venue_id": 26,
@@ -625,7 +609,7 @@
   },
   {
     "code": "424",
-    "title": "Padyam Chollal (Arabic General) LP",
+    "title": "Padyam Chollal (Arabic) LP",
     "category": "LP Arabic",
     "venue_id": 4,
     "day": "2026-11-20",
@@ -633,7 +617,7 @@
   },
   {
     "code": "425",
-    "title": "Padyam Chollal (Arabic General) UP",
+    "title": "Padyam Chollal (Arabic) UP",
     "category": "UP Arabic",
     "venue_id": 4,
     "day": "2026-11-20",
@@ -641,7 +625,7 @@
   },
   {
     "code": "426",
-    "title": "Padyam Chollal (Arabic General) HS",
+    "title": "Padyam Chollal (Arabic) HS",
     "category": "HS Arabic",
     "venue_id": 4,
     "day": "2026-11-20",
@@ -649,7 +633,7 @@
   },
   {
     "code": "427",
-    "title": "Kathaprasangam HSS",
+    "title": "Padyam Chollal (Arabic) HSS",
     "category": "HSS General",
     "venue_id": 4,
     "day": "2026-11-20",
@@ -689,7 +673,7 @@
   },
   {
     "code": "432",
-    "title": "Aksharaslokam UP",
+    "title": "Aksharaslokam Sanskrit UP",
     "category": "UP Sanskrit",
     "venue_id": 5,
     "day": "2026-11-20",
@@ -697,7 +681,7 @@
   },
   {
     "code": "433",
-    "title": "Aksharaslokam HS",
+    "title": "Aksharaslokam Sanskrit HS",
     "category": "HS Sanskrit",
     "venue_id": 5,
     "day": "2026-11-20",
@@ -745,50 +729,66 @@
   },
   {
     "code": "439",
-    "title": "Lalithagaanam LP",
-    "category": "LP General",
+    "title": "Prasangam Malayalam HS",
+    "category": "HS General",
     "venue_id": 8,
     "day": "2026-11-20",
     "scheduled_time": "09:00 am"
   },
   {
     "code": "440",
-    "title": "Lalithagaanam UP",
+    "title": "Prasangam Malayalam UP",
     "category": "UP General",
+    "venue_id": 8,
+    "day": "2026-11-20",
+    "scheduled_time": "10:00 am"
+  },
+  {
+    "code": "441",
+    "title": "Prasangam Malayalam HSS",
+    "category": "HSS General",
+    "venue_id": 8,
+    "day": "2026-11-20",
+    "scheduled_time": "10:30 am"
+  },
+  {
+    "code": "442",
+    "title": "Aksharaslokam HS",
+    "category": "HS General",
+    "venue_id": 8,
+    "day": "2026-11-20",
+    "scheduled_time": "11:15 am"
+  },
+  {
+    "code": "443",
+    "title": "Aksharaslokam HSS",
+    "category": "HSS General",
+    "venue_id": 8,
+    "day": "2026-11-20",
+    "scheduled_time": "11:20 am"
+  },
+  {
+    "code": "444",
+    "title": "Aksharaslokam UP",
+    "category": "UP General",
+    "venue_id": 8,
+    "day": "2026-11-20",
+    "scheduled_time": "11:25 am"
+  },
+  {
+    "code": "445",
+    "title": "Kavyakeli HS",
+    "category": "HS General",
     "venue_id": 8,
     "day": "2026-11-20",
     "scheduled_time": "11:30 am"
   },
   {
-    "code": "441",
-    "title": "Lalithagaanam HS (B)",
-    "category": "HS General",
-    "venue_id": 8,
-    "day": "2026-11-20",
-    "scheduled_time": "02:00 pm"
-  },
-  {
-    "code": "442",
-    "title": "Lalithagaanam HSS (B)",
+    "code": "446",
+    "title": "Kavyakeli HSS",
     "category": "HSS General",
     "venue_id": 8,
     "day": "2026-11-20",
-    "scheduled_time": "02:40 pm"
-  },
-  {
-    "code": "443",
-    "title": "Lalithagaanam HSS (G)",
-    "category": "HSS General",
-    "venue_id": 8,
-    "day": "2026-11-20",
-    "scheduled_time": "03:20 pm"
-  },
-  {
-    "code": "444",
-    "title": "Lalithagaanam HS (G)",
-    "category": "HS General",
-    "venue_id": 8,
-    "day": "2026-11-20",
-    "scheduled_time": "04:00 pm"
+    "scheduled_time": "11:35 am"
   }
 ]
