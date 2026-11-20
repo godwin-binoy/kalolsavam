@@ -8,7 +8,7 @@ const sortedVenues = [...stages].sort((a, b) => Number(a.n) - Number(b.n));
 ---
 <BaseLayout title="All Venues & Blueprints | Mala Kalolsavam" active="venues">
   <div class="main-container">
-    <PageHead badge="Locations & Blueprints" title="All Active Stages (Thu–Fri)" intro="All 10 active competition stages for Day 3 & Day 4 (Thu–Fri) (Stages 1–9 & Stage 26). Tap any stage for campus blueprints, directions, and schedule." />
+    <PageHead badge="Locations & Blueprints" title="All Active Stages (Day 4 · Fri 20.11)" intro="All 10 active competition stages for Day 4 (Friday, 20.11.2026) (Stages 1–9 & Stage 26). Tap any stage for campus blueprints, directions, and schedule." />
     <div class="grid-3">
       {sortedVenues.map((s) => (
         <a href={url(`/venues-stage/${s.n}`)} class="fest-card" data-tone={s.kind === 'stage' ? 'rose' : 'blue'} style="text-decoration:none;color:inherit">

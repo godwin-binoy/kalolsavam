@@ -89,7 +89,7 @@ class EventIn(BaseModel):
     category: str | None = Field(default=None, max_length=64)
     venue_id: int | None = None
     day: str | None = Field(default=None, max_length=32)
-    scheduled_time: str | None = Field(default=None, max_length=16)
+    scheduled_time: str | None = Field(default=None, max_length=32)
 
 
 class EventUpdateIn(BaseModel):
@@ -98,7 +98,7 @@ class EventUpdateIn(BaseModel):
     category: str | None = Field(default=None, max_length=64)
     venue_id: int | None = None
     day: str | None = Field(default=None, max_length=32)
-    scheduled_time: str | None = Field(default=None, max_length=16)
+    scheduled_time: str | None = Field(default=None, max_length=32)
 
 
 class UserIn(BaseModel):
