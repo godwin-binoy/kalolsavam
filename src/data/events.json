@@ -83,7 +83,7 @@
     "code": "411",
     "title": "Margamkali HS",
     "category": "HS General",
-    "venue_id": 2,
+    "venue_id": 1,
     "day": "2026-11-20",
     "scheduled_time": "time tbd"
   },
@@ -91,7 +91,7 @@
     "code": "412",
     "title": "Margamkali HSS",
     "category": "HSS General",
-    "venue_id": 2,
+    "venue_id": 1,
     "day": "2026-11-20",
     "scheduled_time": "time tbd"
   },

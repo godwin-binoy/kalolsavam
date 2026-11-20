@@ -21,8 +21,8 @@ export const FESTIVAL_SCHEDULE: ProgramItem[] = [
   { item: "Nadan Pattu HS", cat: "HS General", venue_n: 2, day: "Friday (20.11.2026)", time: "09:40 AM" },
   { item: "Vanchippattu HSS", cat: "HSS General", venue_n: 2, day: "Friday (20.11.2026)", time: "11:45 AM" },
   { item: "Vanchippattu HS", cat: "HS General", venue_n: 2, day: "Friday (20.11.2026)", time: "01:30 PM" },
-  { item: "Margamkali HS", cat: "HS General", venue_n: 2, day: "Friday (20.11.2026)", time: "Time TBD" },
-  { item: "Margamkali HSS", cat: "HSS General", venue_n: 2, day: "Friday (20.11.2026)", time: "Time TBD" },
+  { item: "Margamkali HS", cat: "HS General", venue_n: 1, day: "Friday (20.11.2026)", time: "Time TBD" },
+  { item: "Margamkali HSS", cat: "HSS General", venue_n: 1, day: "Friday (20.11.2026)", time: "Time TBD" },
 
   // Venue 3 - GMLPS, Mala (Chendamelam followed by Sanskrit Drama from Venue 5)
   { item: "Chenda / Thayambaka HS", cat: "HS General", venue_n: 3, day: "Friday (20.11.2026)", time: "09:00 AM" },
